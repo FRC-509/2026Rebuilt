@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -33,7 +34,11 @@ public class Turret extends SubsystemBase {
     private final DoubleSupplier robotYawDegreesSupplier;
 
     private AimTarget aimTarget;
-    private boolean canShoot;
+    private double angleToTarget;
+    private boolean canAim;
+    private boolean overrideAimTarget;
+    private double targetBottomFlywheelSpeed;
+    private double targetTopFlywheelSpeed;
 
     public Turret(
             int rotationMotorId, 
@@ -95,12 +100,20 @@ public class Turret extends SubsystemBase {
         this.robotYawDegreesSupplier = robotYawDegreesSupplier;
 
         this.aimTarget = AimTarget.HOPPER;
-        this.canShoot = false;
+        this.angleToTarget = 0;
+        this.overrideAimTarget = false;
+        this.targetBottomFlywheelSpeed = 0; // change this to spin up at start of match?
+        this.targetTopFlywheelSpeed = 0;
+        this.canAim = false;
     }
  
     public enum AimTarget {
 
-        HOPPER(new Translation3d(), new Translation3d());
+        HOPPER(new Translation3d(), new Translation3d()),
+        NEUTRALZONE_FEED_LEFT(new Translation3d(), new Translation3d()),
+        NEUTRALZONE_FEED_RIGHT(new Translation3d(), new Translation3d()),
+        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(), new Translation3d()),
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(), new Translation3d());
 
         Translation3d bluePosition;
         Translation3d redPosition;
@@ -115,26 +128,64 @@ public class Turret extends SubsystemBase {
         }
     }
 
-    public void setRotation(double degrees) {
-        kRotationMotor.setControl(kPositionDutyCycle.withPosition(degrees));
+    private void setRotation(double degrees) {
+        angleToTarget = degrees;
+        kRotationMotor.setControl(kPositionDutyCycle.withPosition(angleToTarget));
+    }
+
+    public void setAimTarget(AimTarget aimTarget) {
+        this.aimTarget = aimTarget;
+    }
+
+    public Translation2d getTurretGlobalPosition() {
+        return positionEstimate.getAsTranslation2d().plus(offsetTranslation.toTranslation2d());
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
-        Translation2d turretGlobal = positionEstimate.getAsTranslation2d().plus(offsetTranslation.toTranslation2d());
-        Translation2d targetTurretRelative = targetPosition.getBasedOnAlliance().toTranslation2d().minus(turretGlobal);
-
+        Translation2d targetTurretRelative = targetPosition.getBasedOnAlliance().toTranslation2d().minus(getTurretGlobalPosition());
         double angle = Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - robotYawDegreesSupplier.getAsDouble(); // TODO: confirm minus
         return angle;
     }
 
     public boolean isAbleToShoot() {
-        return canShoot;
+        return canAim
+            && MathUtil.isNear(angleToTarget, kRotationMotor.getPosition().getValueAsDouble(), Constants.Turret.kRotationTolerance)
+            && MathUtil.isNear(targetBottomFlywheelSpeed, kBottomFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance)
+            && MathUtil.isNear(targetTopFlywheelSpeed, kTopFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance);
+    }
+
+    public void setOverrideAimTarget(boolean override) {
+        this.overrideAimTarget = override;
+    }
+
+    private AimTarget getTargetFromPosition() {
+        /* Field orientation
+        * ^
+	    * | X+
+	    * ----> Y-
+        */
+        Translation2d turretGlobal = getTurretGlobalPosition();
+        Translation2d turretRelative = DriverStation.getAlliance().get().equals(Alliance.Red) //TODO: confirm blue alliance has 0,0
+            ? new Translation2d(Constants.Field.kFullFieldLength,Constants.Field.kFieldWidth).minus(turretGlobal)
+            : turretGlobal;
+
+        if (turretRelative.getX() > Constants.Field.kAllianceZoneLength + Constants.Field.kNeutralZoneLength) {
+            if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.OPPOSING_ALLIANCE_FEED_LEFT;
+            return AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
+        } 
+        if (turretRelative.getX() > Constants.Field.kAllianceZoneLength + Constants.Field.kNeutralZoneLength) {
+            if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.NEUTRALZONE_FEED_LEFT;
+            return AimTarget.NEUTRALZONE_FEED_RIGHT;
+        }
+        return AimTarget.HOPPER;
     }
 
     @Override
     public void periodic() {
-        double angleToTarget = getRotationToTarget(aimTarget);
-        this.canShoot = angleToTarget <= maxRotationClockwise || angleToTarget >= maxRotationCounterclockwise; // TODO: double check which direction is min and max        
-        setRotation(canShoot ? angleToTarget : 0);
+        // decide on target based on position
+        if (!overrideAimTarget) aimTarget = getTargetFromPosition(); // override needed?
+        angleToTarget = getRotationToTarget(aimTarget);
+        this.canAim = angleToTarget <= maxRotationClockwise && angleToTarget >= maxRotationCounterclockwise; // check if desired angle is within bounds // TODO: double check which direction is positive or negative
+        setRotation(canAim ? angleToTarget : 0);
     }
 }

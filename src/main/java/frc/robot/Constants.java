@@ -27,7 +27,7 @@ public final class Constants {
 		public static final double kKrakenFreeSpeedRPM = 6000.0d;
 		public static final double kKrakenFreeSpeedRPS = kKrakenFreeSpeedRPM / 60.0d;
 		public static final double kMaxSpeed = Conversions.falconToMPS(kKrakenFreeSpeedRPS, N5.kWheelCircumference,
-			N5.kDriveGearRatio); // test8t
+			N5.kDriveGearRatio); // test
 		
 		public static class N5 { // R2 config
 			public static final double kWheelRadius = Units.inchesToMeters(2.0);
@@ -90,6 +90,18 @@ public final class Constants {
         public static final double kValidPositionTolerance = 0;
         public static final double kValidHeadingTolerance = 0;
 	}
+
+	public static class Turret {
+		// TODO: find me
+		public static final double kRotationMotorToMechanismRatio = 0.0d;
+		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
+		public static final int kPitch = 0; // degrees
+
+		public static final double kRotationTolerance = 0.25; // degrees
+		public static final double kFlywheelSpeedTolerance = 25; // rpm
+
+	}
+
 	public static class IDs {
 		// Swerve Drive
 		public static final int kFrontRightDrive = 11;
@@ -107,6 +119,15 @@ public final class Constants {
 		public static final int kBackLeftDrive = 12;
 		public static final int kBackLeftSteer = 7;
 		public static final int kBackLeftEncoder = 2;
+
+		// Shooters
+		public static final int kLeftBottomFlywheel = 0;
+		public static final int kLeftTopFlywheel = 0;
+		public static final int kLeftRotationMotor = 0;
+		
+		public static final int kRightBottomFlywheel = 0;
+		public static final int kRightTopFlywheel = 0;
+		public static final int kRightRotationMotor = 0;
 	}
 
 	public static class PathGeneration {
@@ -140,16 +161,34 @@ public final class Constants {
 			public static final double kHeadingTimeout = 0.25;
 			public static final double kMinHeadingCorrectionSpeed = 0.1;
 		}
+
+		public static class Turret {
+            public static final double kFlywheelP = 0;
+            public static final double kFlywheelI = 0;
+            public static final double kFlywheelD = 0;
+
+			public static final double kRotationP = 0;
+            public static final double kRotationI = 0;
+            public static final double kRotationD = 0;
+		}
 	}
 
 	public static class CurrentLimits {
 		public static final double kSwerveModuleSupply = 35.0d;
 		// SwerveStator ?
+
+        public static final double kTurretRotationSupply = 0;
+        public static final double kTurretRotationStator = 0;
+
+		public static final double kTurretFlywheelSupply = 0;
+        public static final double kTurretFlywheelStator = 0;
 	}
 
 	public static class Field {
 		public static final double kFullFieldLength = 16.54d; // Double check
         public static final double kFieldWidth = 8.1;
+        public static final double kAllianceZoneLength = 0.0d; // TODO: find
+        public static final double kNeutralZoneLength = kFullFieldLength - 2 * kAllianceZoneLength;
 	}
 
 	public static double tunableNumber(String name, double defaultValue){
