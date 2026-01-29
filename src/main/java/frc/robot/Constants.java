@@ -6,6 +6,7 @@ package frc.robot;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.util.math.Conversions;
 
@@ -128,6 +129,12 @@ public final class Constants {
 		public static final int kRightBottomFlywheel = 0;
 		public static final int kRightTopFlywheel = 0;
 		public static final int kRightRotationMotor = 0;
+		
+		// Hopper
+        public static final int kIntakeExtension = 0;
+        public static final int kIntakeRotation = 0;
+        public static final int kIndexerRotation = 0;
+		public static final int kIndexWallRotation = 0;
 	}
 
 	public static class PathGeneration {
@@ -162,14 +169,22 @@ public final class Constants {
 			public static final double kMinHeadingCorrectionSpeed = 0.1;
 		}
 
-		public static class Turret {
-            public static final double kFlywheelP = 0;
-            public static final double kFlywheelI = 0;
-            public static final double kFlywheelD = 0;
+		public static class Hopper {
+            public static final double kExtensionP = 0;
+            public static final double kExtensionI = 0;
+            public static final double kExtensionD = 0;
 
-			public static final double kRotationP = 0;
-            public static final double kRotationI = 0;
-            public static final double kRotationD = 0;
+			public static final double kIntakeP = 0;
+            public static final double kIntakeI = 0;
+            public static final double kIntakeD = 0;
+			
+			public static final double kIndexerP = 0;
+            public static final double kIndexerI = 0;
+            public static final double kIndexerD = 0;
+			
+			public static final double kIndexerWallP = 0;
+            public static final double kIndexerWallI = 0;
+            public static final double kIndexerWallD = 0;
 		}
 	}
 
@@ -182,6 +197,18 @@ public final class Constants {
 
 		public static final double kTurretFlywheelSupply = 0;
         public static final double kTurretFlywheelStator = 0;
+
+		public static final double kIntakeExtensionSupply = 0;
+        public static final double kIntakeExtensionStator = 0;
+
+		public static final double kIntakeSupply = 0;
+        public static final double kIntakeStator = 0;
+
+        public static final double kIndexerSupply = 0;
+        public static final double kIndexerStator = 0;
+
+        public static final double kIndexerWallSupply = 0;
+        public static final double kIndexerWallStator = 0;
 	}
 
 	public static class Field {
@@ -189,6 +216,15 @@ public final class Constants {
         public static final double kFieldWidth = 8.1;
         public static final double kAllianceZoneLength = 0.0d; // TODO: find
         public static final double kNeutralZoneLength = kFullFieldLength - 2 * kAllianceZoneLength;
+	}
+
+	public static class Hopper { // TODO: find me
+        public static final double kIntakingVelocity = 0.0;
+        public static final double kOuttakingVelocity = 0.0;
+		public static final double kIndexingVelocity = 0.0;
+		public static final double kIntakeExtension = 0.0;
+        public static final double kIndexerWallMaximumRotation = 0.0;
+
 	}
 
 	public static double tunableNumber(String name, double defaultValue){
