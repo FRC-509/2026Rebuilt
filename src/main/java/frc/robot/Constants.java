@@ -6,7 +6,6 @@ package frc.robot;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.util.math.Conversions;
 
@@ -147,13 +146,12 @@ public final class Constants {
 	public static class PIDConstants {
 		public static class Drive {
 			// TODO: Tune Me
-			public static final double kDriveVelocityS = 0.124;
-			public static final double kDriveVelocityV = 0.109;
-			public static final double kDriveVelocityA = 0.0;
-
 			public static final double kDriveVelocityP = 0.2;
 			public static final double kDriveVelocityI = 3.0;
 			public static final double kDriveVelocityD = 0.0;
+			public static final double kDriveVelocityS = 0.124;
+			public static final double kDriveVelocityV = 0.109;
+			public static final double kDriveVelocityA = 0.0;
 
 			public static final double kSteerAngleP = 100.0;
 			public static final double kSteerAngleI = 0.0;
@@ -167,6 +165,16 @@ public final class Constants {
 			public static final double kHeadingAggressiveD = 0.0;
 			public static final double kHeadingTimeout = 0.25;
 			public static final double kMinHeadingCorrectionSpeed = 0.1;
+		}
+
+		public static class Turret {
+            public static final double kRotationP = 0;
+            public static final double kRotationI = 0;
+            public static final double kRotationD = 0;
+
+            public static final double kFlywheelP = 0;
+            public static final double kFlywheelI = 0;
+            public static final double kFlywheelD = 0;
 		}
 
 		public static class Hopper {
