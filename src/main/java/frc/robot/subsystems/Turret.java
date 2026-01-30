@@ -31,7 +31,7 @@ public class Turret extends SubsystemBase {
     private final double maxRotationCounterclockwise;
 
     private final Translation2dSupplier positionEstimate;
-    private final DoubleSupplier robotYawDegreesSupplier;
+    private final DoubleSupplier robotYawRadiansSupplier;
 
     private AimTarget aimTarget;
     private double angleToTarget;
@@ -41,8 +41,8 @@ public class Turret extends SubsystemBase {
     private double targetTopFlywheelSpeed;
 
     public Turret(
-            int rotationMotorId, 
-            int topFlywheelMotorId, 
+            int rotationMotorId,
+            int topFlywheelMotorId,
             int bottomFlywheelMotorId,
             Translation3d offsetTranslation,
             double maxRotationClockwise,
@@ -64,6 +64,7 @@ public class Turret extends SubsystemBase {
 		rotationMotorConfig.Slot0.kP = Constants.PIDConstants.Turret.kRotationP;
 		rotationMotorConfig.Slot0.kI = Constants.PIDConstants.Turret.kRotationI;
 		rotationMotorConfig.Slot0.kD = Constants.PIDConstants.Turret.kRotationD;
+
 
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kTurretRotationSupply; 
@@ -97,7 +98,7 @@ public class Turret extends SubsystemBase {
         this.offsetTranslation = offsetTranslation;
         this.maxRotationClockwise = maxRotationClockwise;
         this.maxRotationCounterclockwise = maxRotationCounterclockwise;
-        this.robotYawDegreesSupplier = robotYawDegreesSupplier;
+        this.robotYawRadiansSupplier = robotYawDegreesSupplier;
 
         this.aimTarget = AimTarget.HOPPER;
         this.angleToTarget = 0;
@@ -138,12 +139,16 @@ public class Turret extends SubsystemBase {
     }
 
     public Translation2d getTurretGlobalPosition() {
-        return positionEstimate.getAsTranslation2d().plus(offsetTranslation.toTranslation2d());
+        return positionEstimate.getAsTranslation2d().plus(
+            new Translation2d(
+                offsetTranslation.getX() * Math.cos(robotYawRadiansSupplier.getAsDouble()) + offsetTranslation.getY() * Math.sin(robotYawRadiansSupplier.getAsDouble()),
+                offsetTranslation.getX() * -Math.sin(robotYawRadiansSupplier.getAsDouble()) + offsetTranslation.getY() * Math.cos(robotYawRadiansSupplier.getAsDouble())
+            ));
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
         Translation2d targetTurretRelative = targetPosition.getBasedOnAlliance().toTranslation2d().minus(getTurretGlobalPosition());
-        double angle = Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - robotYawDegreesSupplier.getAsDouble(); // TODO: confirm minus
+        double angle = Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - robotYawRadiansSupplier.getAsDouble(); // TODO: confirm minus
         return angle;
     }
 
