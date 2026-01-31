@@ -100,6 +100,13 @@ public final class Constants {
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25; // rpm
 
+        public static final double kTurretHeightFromGround = 0;
+        public static final double kTurretAngleDegrees = 0;
+		public static final double kMaxExitVelocity = 0;
+
+		public static final double kFlywheelRadius = 0;
+		public static final double kFlywheelMass = 0;
+        public static final double kFlywheelMOI = 0.5 * kFlywheelMass * kFlywheelRadius * kFlywheelRadius;
 	}
 
 	public static class IDs {

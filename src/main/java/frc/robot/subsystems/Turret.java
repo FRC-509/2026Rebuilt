@@ -1,14 +1,18 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Newton;
+
 import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
+import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,7 +27,7 @@ public class Turret extends SubsystemBase {
     private final TalonFX kTopFlywheelMotor;
     private final TalonFX kBottomFlywheelMotor;
 
-    private final VelocityVoltage kVelocityVoltage = new VelocityVoltage(0.0d);
+    private final VelocityDutyCycle kVelocityDutyCycle = new VelocityDutyCycle(0.0d);
     private final PositionDutyCycle kPositionDutyCycle = new PositionDutyCycle(0.0d);
 
     private final Translation3d offsetTranslation;
@@ -110,22 +114,17 @@ public class Turret extends SubsystemBase {
  
     public enum AimTarget {
 
-        HOPPER(new Translation3d(), new Translation3d()),
-        NEUTRALZONE_FEED_LEFT(new Translation3d(), new Translation3d()),
-        NEUTRALZONE_FEED_RIGHT(new Translation3d(), new Translation3d()),
-        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(), new Translation3d()),
-        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(), new Translation3d());
+        NONE(Translation3d.kZero),
+        HOPPER(new Translation3d()),
+        NEUTRALZONE_FEED_LEFT(new Translation3d()),
+        NEUTRALZONE_FEED_RIGHT(new Translation3d()),
+        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d()),
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d());
 
-        Translation3d bluePosition;
-        Translation3d redPosition;
+        public final Translation3d position;
 
-        private AimTarget(Translation3d bluePosition, Translation3d redPosition) {
-            this.bluePosition = bluePosition;
-            this.redPosition = redPosition;
-        }
-
-        public Translation3d getBasedOnAlliance() {
-            return DriverStation.getAlliance().get().equals(Alliance.Red) ? redPosition : bluePosition;
+        private AimTarget(Translation3d position) {
+            this.position = position;
         }
     }
 
@@ -147,7 +146,7 @@ public class Turret extends SubsystemBase {
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
-        Translation2d targetTurretRelative = targetPosition.getBasedOnAlliance().toTranslation2d().minus(getTurretGlobalPosition());
+        Translation2d targetTurretRelative = targetPosition.position.toTranslation2d().minus(getTurretGlobalPosition());
         double angle = Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - robotYawRadiansSupplier.getAsDouble(); // TODO: confirm minus
         return angle;
     }
@@ -185,12 +184,38 @@ public class Turret extends SubsystemBase {
         return AimTarget.HOPPER;
     }
 
+    private double calculateFlywheelSpeeds() {     
+        Translation2d turretGlobal = getTurretGlobalPosition();
+        Translation3d targetTurretRelative = aimTarget.position.minus(new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
+
+        double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
+        double cosT = Math.cos(theta);
+        double tanT = Math.tan(theta);
+        
+        double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
+        double denom = (dist * tanT) - targetTurretRelative.getZ();
+        if (!(denom > 0 && Math.abs(cosT) > 0.001)) return 0d;
+
+        double exitVelocity = MathUtil.clamp(
+            Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom)),
+            0.0d,
+            Constants.Turret.kMaxExitVelocity); // divide by efficiency?
+        
+        double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
+        return angularVelocityRadPerSec / 2 / Math.PI;
+    }
+
     @Override
     public void periodic() {
         // decide on target based on position
         if (!overrideAimTarget) aimTarget = getTargetFromPosition(); // override needed?
         angleToTarget = getRotationToTarget(aimTarget);
-        this.canAim = angleToTarget <= maxRotationClockwise && angleToTarget >= maxRotationCounterclockwise; // check if desired angle is within bounds // TODO: double check which direction is positive or negative
+        this.canAim = !aimTarget.equals(AimTarget.NONE) && angleToTarget <= maxRotationClockwise && angleToTarget >= maxRotationCounterclockwise; // check if desired angle is within bounds // TODO: double check which direction is positive or negative
         setRotation(canAim ? angleToTarget : 0);
+
+        // decide flywheel speed every 0.02s (ie always) for target
+        double flywheelSpeed = canAim ? calculateFlywheelSpeeds() : 25d;
+        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeed));
+        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeed));
     }
 }
