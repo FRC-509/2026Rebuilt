@@ -24,13 +24,15 @@ public class Hopper extends SubsystemBase {
     private final TalonFX kIndexerWall = new TalonFX(Constants.IDs.kIndexWallRotation);
     private PositionDutyCycle indexerWallDutyCycle = new PositionDutyCycle(0.0d);
 
-    public HopperState state;
-    public HopperState previousState;
+    private HopperState state;
+    private HopperState previousState;
 
     public enum HopperState {
         PASSIVE(false, 0.0d, 0.0d, IndexerWallState.PASSIVE),
         INDEXING(false, 0.0d, Constants.Hopper.kIndexingVelocity, IndexerWallState.ACTIVE), // depending on final geometry run intake wheels aswell 
         INTAKING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.PASSIVE),
+        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.ACTIVE), // difference between intaking_and_ 
+        FEEDING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.CONSTANT), // indexing and feeding is the indexer wall state
         OUTTAKING(true, Constants.Hopper.kOuttakingVelocity, -Constants.Hopper.kIndexingVelocity, IndexerWallState.CONSTANT);
 
         public boolean hopperIsExtended;
@@ -51,7 +53,7 @@ public class Hopper extends SubsystemBase {
         ACTIVE(Constants.Hopper.kIndexerWallMaximumRotation/2.0), // different implemented behavior, but fallback
         CONSTANT(Constants.Hopper.kIndexerWallMaximumRotation);
 
-        public double rotation;
+        public final double rotation;
 
         private IndexerWallState(double rotation) {
             this.rotation = rotation;

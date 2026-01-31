@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.SwerveDrive;
 
-public class Vortex extends SubsystemBase {
+public class Vortex {
 
     private SwerveDrivePoseEstimator poseEstimator;
     private SwerveDrive swerveDrive;
