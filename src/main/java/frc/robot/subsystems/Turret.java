@@ -1,18 +1,14 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Newton;
-
 import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
-import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -190,10 +186,9 @@ public class Turret extends SubsystemBase {
 
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
         double cosT = Math.cos(theta);
-        double tanT = Math.tan(theta);
         
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
-        double denom = (dist * tanT) - targetTurretRelative.getZ();
+        double denom = (dist * Math.tan(theta)) - targetTurretRelative.getZ();
         if (!(denom > 0 && Math.abs(cosT) > 0.001)) return 0d;
 
         double exitVelocity = MathUtil.clamp(
@@ -205,6 +200,66 @@ public class Turret extends SubsystemBase {
         return angularVelocityRadPerSec / 2 / Math.PI;
     }
 
+    private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect
+        Translation2d turretGlobal = getTurretGlobalPosition();
+        Translation3d targetTurretRelative = aimTarget.position.minus(
+            new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
+
+        double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
+        double targetZ = targetTurretRelative.getZ();
+        double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
+    
+        double liftAcceleration = Constants.Turret.kMagnusCoefficient * Constants.Turret.kTargetSpinRadSec; // magnus effect approximationn
+        double gEff = 9.8 - liftAcceleration;
+        double cosT = Math.cos(theta);
+        double denom = (dist * Math.tan(theta)) - targetZ;
+        if (!(denom > 0 && Math.abs(cosT) > 0.001)) return new double[] {0, 0};
+
+        double exitVelocity = MathUtil.clamp(
+            Math.sqrt((gEff * dist * dist) / (2 * cosT * cosT * denom)),
+            0.0d, Constants.Turret.kMaxExitVelocity);
+
+        // v_exit = (Vb + Vt)/2, Spin_surface = (Vb - Vt)/2, therefore: Vb = V_exit + Spin_surface
+        double surfaceSpeedDiff = Constants.Turret.kTargetSpinRadSec * Constants.Field.kFuelRadiusMeters;
+        double vBottom = (exitVelocity + surfaceSpeedDiff) / Constants.Turret.kEfficiency;
+        double vTop = (exitVelocity - surfaceSpeedDiff) / Constants.Turret.kEfficiency;
+
+        double circ = 2 * Math.PI * Constants.Turret.kFlywheelRadiusMeters;
+        return new double[] { vBottom / circ, vTop / circ };
+    }
+
+    private double[] calculateSpeedsManualMagnus() {
+        Translation2d turretGlobal = getTurretGlobalPosition();
+        Translation3d targetTurretRelative = aimTarget.position.minus(
+            new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
+
+        double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
+        double targetZ = targetTurretRelative.getZ();
+        double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
+        double cosT = Math.cos(theta);
+        double initialV = Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * ((dist * Math.tan(theta)) - targetZ)));
+
+        // magnus force = 1/2 * rho * A * liftCoeff * v^2   (liftCoeff for a sphere is often approximated as (r * spin / v))
+        double airDensity = 1.225;
+        double crossSectionArea = Math.PI * Math.pow(Constants.Field.kFuelRadiusMeters, 2);
+        double spinRatio = (Constants.Field.kFuelRadiusMeters * Constants.Turret.kTargetSpinRadSec) / initialV;
+        double liftCoefficient = 1.5 * spinRatio; 
+        
+        double forceLift = 0.5 * airDensity * Math.pow(initialV, 2) * crossSectionArea * liftCoefficient;
+        double accelLift = forceLift / Constants.Turret.kAverageFuelMass;
+
+        double denom = (dist * Math.tan(theta)) - targetZ;
+        double finalExitVelocity = Math.sqrt(((9.8 - accelLift) * dist * dist) / (2 * cosT * cosT * denom));
+
+        // split between flywheels
+        double surfaceSpeedDiff = Constants.Turret.kTargetSpinRadSec * Constants.Field.kFuelRadiusMeters;
+        double vBottom = (finalExitVelocity + surfaceSpeedDiff) / Constants.Turret.kEfficiency;
+        double vTop = (finalExitVelocity - surfaceSpeedDiff) / Constants.Turret.kEfficiency;
+
+        double circ = 2 * Math.PI * Constants.Turret.kFlywheelRadiusMeters;
+        return new double[] { vBottom / circ, vTop / circ };
+    }
+
     @Override
     public void periodic() {
         // decide on target based on position
@@ -214,8 +269,10 @@ public class Turret extends SubsystemBase {
         setRotation(canAim ? angleToTarget : 0);
 
         // decide flywheel speed every 0.02s (ie always) for target
-        double flywheelSpeed = canAim ? calculateFlywheelSpeeds() : 25d;
-        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeed));
-        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeed));
+        if (canAim) {
+            double[] flywheelSpeeds = calculateSpeedsManualMagnus();
+            kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
+            kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
+        }
     }
 }

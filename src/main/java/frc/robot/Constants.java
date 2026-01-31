@@ -95,7 +95,6 @@ public final class Constants {
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 0.0d;
 		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
-		public static final int kPitch = 0; // degrees
 
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25; // rpm
@@ -104,9 +103,23 @@ public final class Constants {
         public static final double kTurretAngleDegrees = 0;
 		public static final double kMaxExitVelocity = 0;
 
-		public static final double kFlywheelRadius = 0;
+		public static final double kFlywheelRadiusMeters = 0;
 		public static final double kFlywheelMass = 0;
-        public static final double kFlywheelMOI = 0.5 * kFlywheelMass * kFlywheelRadius * kFlywheelRadius;
+        public static final double kFlywheelMOI = 0.5 * kFlywheelMass * kFlywheelRadiusMeters * kFlywheelRadiusMeters;
+
+        public static final double kAverageFuelMass = 0;
+        public static final double kTargetSpinRadSec = 0;
+
+        public static final double kEfficiency = 0;
+        public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
+	}
+
+	public static class Hopper { // TODO: find me
+        public static final double kIntakingVelocity = 0.0;
+        public static final double kOuttakingVelocity = 0.0;
+		public static final double kIndexingVelocity = 0.0;
+		public static final double kIntakeExtension = 0.0;
+        public static final double kIndexerWallMaximumRotation = 0.0;
 	}
 
 	public static class IDs {
@@ -231,15 +244,9 @@ public final class Constants {
         public static final double kFieldWidth = 8.1;
         public static final double kAllianceZoneLength = 0.0d; // TODO: find
         public static final double kNeutralZoneLength = kFullFieldLength - 2 * kAllianceZoneLength;
-	}
-
-	public static class Hopper { // TODO: find me
-        public static final double kIntakingVelocity = 0.0;
-        public static final double kOuttakingVelocity = 0.0;
-		public static final double kIndexingVelocity = 0.0;
-		public static final double kIntakeExtension = 0.0;
-        public static final double kIndexerWallMaximumRotation = 0.0;
-
+		
+        public static final double kAverageFuelMass = 0;
+		public static final double kFuelRadiusMeters = 0;
 	}
 
 	public static double tunableNumber(String name, double defaultValue){
