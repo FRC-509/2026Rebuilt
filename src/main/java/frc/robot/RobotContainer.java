@@ -21,7 +21,6 @@ import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Vortex;
-import frc.robot.subsystems.Hopper.HopperState;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
@@ -138,6 +137,12 @@ public class RobotContainer {
 
 	public void robotPeriodic() {
 		vortex.updatePositionEstimate();
+	}
+
+	public void zeroMechanisms() {
+		leftTurret.zeroPosition();
+		leftTurret.zeroPosition();
+		hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

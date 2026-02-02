@@ -4,6 +4,7 @@ import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -25,6 +26,7 @@ public class Turret extends SubsystemBase {
 
     private final VelocityDutyCycle kVelocityDutyCycle = new VelocityDutyCycle(0.0d);
     private final PositionDutyCycle kPositionDutyCycle = new PositionDutyCycle(0.0d);
+    private final VoltageOut kVoltageOut = new VoltageOut(0.0d);
 
     private final Translation3d offsetTranslation;
     private final double maxRotationClockwise;
@@ -39,6 +41,9 @@ public class Turret extends SubsystemBase {
     private boolean overrideAimTarget;
     private double targetBottomFlywheelSpeed;
     private double targetTopFlywheelSpeed;
+
+    private boolean hasZeroedPosition;
+    private double zeroedRotationOffset;
 
     public Turret(
             int rotationMotorId,
@@ -106,6 +111,9 @@ public class Turret extends SubsystemBase {
         this.targetBottomFlywheelSpeed = 0; // change this to spin up at start of match?
         this.targetTopFlywheelSpeed = 0;
         this.canAim = false;
+
+        this.hasZeroedPosition = false;
+        this.zeroedRotationOffset = 0;
     }
  
     public enum AimTarget {
@@ -125,7 +133,7 @@ public class Turret extends SubsystemBase {
     }
 
     private void setRotation(double degrees) {
-        angleToTarget = degrees;
+        angleToTarget = degrees - zeroedRotationOffset; // TODO: change to actual conversion
         kRotationMotor.setControl(kPositionDutyCycle.withPosition(angleToTarget));
     }
 
@@ -180,7 +188,7 @@ public class Turret extends SubsystemBase {
         return AimTarget.HOPPER;
     }
 
-    private double calculateFlywheelSpeeds() {     
+    private double calculateFlywheelSpeeds() {
         Translation2d turretGlobal = getTurretGlobalPosition();
         Translation3d targetTurretRelative = aimTarget.position.minus(new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
 
@@ -262,6 +270,19 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // zeroing functionality to move until you hit minimum hardstop
+        if (!hasZeroedPosition) {
+            // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances
+            if (kRotationMotor.getVelocity().getValueAsDouble() == 0 && kRotationMotor.getAppliedControl().getClass().equals(kVoltageOut.getClass())) {
+                kRotationMotor.setControl(kVoltageOut.withOutput(0));
+                zeroedRotationOffset = kRotationMotor.getPosition().getValueAsDouble();
+                hasZeroedPosition = true;
+            } else kRotationMotor.setControl(kVoltageOut.withOutput(1)); // TODO: change zeroing voltage
+
+            if (!hasZeroedPosition) return;
+        }
+
+
         // decide on target based on position
         if (!overrideAimTarget) aimTarget = getTargetFromPosition(); // override needed?
         angleToTarget = getRotationToTarget(aimTarget);
@@ -274,5 +295,9 @@ public class Turret extends SubsystemBase {
             kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
             kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
         }
+    }
+
+    public void zeroPosition() {
+        this.hasZeroedPosition = false;
     }
 }
