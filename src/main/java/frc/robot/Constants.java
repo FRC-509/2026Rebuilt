@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -100,7 +101,7 @@ public final class Constants {
 		public static final double kFlywheelSpeedTolerance = 25; // rpm
 
         public static final double kTurretHeightFromGround = 0;
-        public static final double kTurretAngleDegrees = 0;
+        public static final double kTurretAngleDegrees = 17;
 		public static final double kMaxExitVelocity = 0;
 
 		public static final double kFlywheelRadiusMeters = 0;
@@ -112,6 +113,18 @@ public final class Constants {
 
         public static final double kEfficiency = 0;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
+
+        public static class LeftTurret {
+            public static final Translation3d kLeftTurretOffset = new Translation3d();
+            public static final double kMaxRotationClockwiseDegrees = 0;
+			public static final double kMaxRotationCounterClockwiseDegrees = 0;
+		}
+		
+        public static class RightTurret {
+            public static final Translation3d kRightTurretOffset = new Translation3d();
+            public static final double kMaxRotationClockwiseDegrees = 0;
+			public static final double kMaxRotationCounterClockwiseDegrees = 0;
+		}
 	}
 
 	public static class Hopper { // TODO: find me

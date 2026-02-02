@@ -46,7 +46,7 @@ public class SwerveDrive extends SubsystemBase {
 	 * module 1 (+, +) |--f--| module 0 (+, -)
 	 * module 2 (-, +) |--b--| module 3 (-, -)
 	 */
-	private final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
+	public final SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
 				new Translation2d(+Constants.Chassis.kOffsetToSwerveModule, -Constants.Chassis.kOffsetToSwerveModule),
 				new Translation2d(+Constants.Chassis.kOffsetToSwerveModule, +Constants.Chassis.kOffsetToSwerveModule),
 				new Translation2d(-Constants.Chassis.kOffsetToSwerveModule, +Constants.Chassis.kOffsetToSwerveModule),

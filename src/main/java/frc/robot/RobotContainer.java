@@ -5,6 +5,8 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.Turret;
 import frc.robot.commands.AlignToHeading;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
@@ -21,6 +24,7 @@ import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.Hopper.HopperState;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
+import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
 
 public class RobotContainer {
@@ -32,6 +36,8 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
+	private final Turret leftTurret;
+	private final Turret rightTurret;
 	private final Hopper hopper;
 
 	private final Vortex vortex;
@@ -40,9 +46,25 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
+		this.vortex = new Vortex(swerve, new Pose2d());
 		this.hopper = new Hopper();
 
-		this.vortex = new Vortex(swerve, null);
+		this.leftTurret = new Turret(
+			Constants.IDs.kLeftRotationMotor, Constants.IDs.kLeftTopFlywheel, Constants.IDs.kLeftBottomFlywheel,
+			Constants.Turret.LeftTurret.kLeftTurretOffset, 
+			Constants.Turret.LeftTurret.kMaxRotationClockwiseDegrees, 
+			Constants.Turret.LeftTurret.kMaxRotationCounterClockwiseDegrees,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			() -> swerve.getYaw().getDegrees());
+			
+			
+		this.rightTurret = new Turret(
+			Constants.IDs.kRightRotationMotor, Constants.IDs.kRightTopFlywheel, Constants.IDs.kRightBottomFlywheel,
+			Constants.Turret.RightTurret.kRightTurretOffset, 
+			Constants.Turret.RightTurret.kMaxRotationClockwiseDegrees, 
+			Constants.Turret.RightTurret.kMaxRotationCounterClockwiseDegrees,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			() -> swerve.getYaw().getDegrees());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -95,6 +117,8 @@ public class RobotContainer {
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
 			() -> operatorController.getRightTriggerAxis() > 0.5,
+			() -> leftTurret.isAbleToShoot(),
+			() -> rightTurret.isAbleToShoot(),
 			() -> operatorController.b().getAsBoolean(),
 			() -> driverLeft.getTrigger()));
 	}

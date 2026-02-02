@@ -18,33 +18,53 @@ public class Hopper extends SubsystemBase {
     private final TalonFX kIntakeRotation = new TalonFX(Constants.IDs.kIntakeRotation);
     private VelocityDutyCycle intakeDutyCycle = new VelocityDutyCycle(0.0d);
 
-    private final TalonFX kIndexerRotation = new TalonFX(Constants.IDs.kIndexerRotation);
-    private VelocityDutyCycle indexerDutyCycle = new VelocityDutyCycle(0.0d);
+    private final TalonFX kLeftIndexerRotation = new TalonFX(Constants.IDs.kIndexerRotation);
+    private VelocityDutyCycle leftIndexerDutyCycle = new VelocityDutyCycle(0.0d);
+
+    private final TalonFX kRightIndexerRotation = new TalonFX(Constants.IDs.kIndexerRotation);
+    private VelocityDutyCycle rightIndexerDutyCycle = new VelocityDutyCycle(0.0d);
 
     private final TalonFX kIndexerWall = new TalonFX(Constants.IDs.kIndexWallRotation);
     private PositionDutyCycle indexerWallDutyCycle = new PositionDutyCycle(0.0d);
 
-    private HopperState state;
-    private HopperState previousState;
+    private HopperState hopperState;
+    private HopperState previousHopperState;
+    
+    private IndexerState indexerState;
+    private IndexerState previousIndexerState;
 
     public enum HopperState {
-        PASSIVE(false, 0.0d, 0.0d, IndexerWallState.PASSIVE),
-        INDEXING(false, 0.0d, Constants.Hopper.kIndexingVelocity, IndexerWallState.ACTIVE), // depending on final geometry run intake wheels aswell 
-        INTAKING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.PASSIVE),
-        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.ACTIVE), // difference between intaking_and_ 
-        FEEDING(true, Constants.Hopper.kIntakingVelocity, Constants.Hopper.kIndexingVelocity, IndexerWallState.CONSTANT), // indexing and feeding is the indexer wall state
-        OUTTAKING(true, Constants.Hopper.kOuttakingVelocity, -Constants.Hopper.kIndexingVelocity, IndexerWallState.CONSTANT);
+        PASSIVE(false, 0.0d, IndexerWallState.PASSIVE),
+        INDEXING(false, 0.0d, IndexerWallState.ACTIVE), // depending on final geometry run intake wheels aswell 
+        INTAKING(true, Constants.Hopper.kIntakingVelocity, IndexerWallState.PASSIVE),
+        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity, IndexerWallState.ACTIVE), // difference between intaking_and_ 
+        FEEDING(true, Constants.Hopper.kIntakingVelocity, IndexerWallState.CONSTANT), // indexing and feeding is the indexer wall state
+        OUTTAKING(true, Constants.Hopper.kOuttakingVelocity, IndexerWallState.CONSTANT);
 
         public boolean hopperIsExtended;
         public double intakingVelocity;
         public double indexingVelocity;
         public IndexerWallState indexerWallState;
 
-        private HopperState(boolean hopperIsExtended, double intakingVelocity, double indexingVelocity, IndexerWallState indexerWallState) {
+        private HopperState(boolean hopperIsExtended, double intakingVelocity, IndexerWallState indexerWallState) {
             this.hopperIsExtended = hopperIsExtended;
             this.intakingVelocity = intakingVelocity;
-            this.indexingVelocity = indexingVelocity;
             this.indexerWallState = indexerWallState;
+        }
+    }
+
+    public enum IndexerState {
+        PASSIVE(false, false),
+        LEFT(true,false),
+        RIGHT(false,true),
+        BOTH(true,true);
+
+        public boolean leftTurret;
+        public boolean rightTurret;
+
+        private IndexerState(boolean leftTurret, boolean rightTurret) {
+            this.leftTurret = leftTurret;
+            this.rightTurret = rightTurret;
         }
     }
 
@@ -113,7 +133,8 @@ public class Hopper extends SubsystemBase {
         indexerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         indexerConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIndexerStator;
 
-        kIndexerRotation.getConfigurator().apply(indexerConfig);
+        kLeftIndexerRotation.getConfigurator().apply(indexerConfig);
+        kRightIndexerRotation.getConfigurator().apply(indexerConfig);
 
         
         TalonFXConfiguration indexerWallConfig = new TalonFXConfiguration();
@@ -134,28 +155,37 @@ public class Hopper extends SubsystemBase {
 
         kIndexerWall.getConfigurator().apply(indexerWallConfig);
 
-        this.state = HopperState.PASSIVE;
-        this.previousState = HopperState.PASSIVE;
+        this.hopperState = HopperState.PASSIVE;
+        this.previousHopperState = HopperState.PASSIVE;
+
+        this.indexerState = IndexerState.PASSIVE;
+        this.previousIndexerState = IndexerState.PASSIVE;
     }
 
-    public void setHopperState(HopperState newState) {
-        this.previousState = this.state;
-        this.state = newState;
+    public void setHopperState(HopperState newState, IndexerState indexerState) {
+        this.previousHopperState = this.hopperState;
+        this.hopperState = newState;
     }
     
     @Override
     public void periodic() {
-        if (!state.equals(previousState)) { // only change instruction on state change, not every 20ms
-            if (state.hopperIsExtended != previousState.hopperIsExtended) 
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(state.hopperIsExtended ? Constants.Hopper.kIntakeExtension : 0));
-            if (state.intakingVelocity != previousState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(state.intakingVelocity));
-            if (state.indexingVelocity != previousState.indexingVelocity) kIndexerRotation.setControl(indexerDutyCycle.withVelocity(state.indexingVelocity));
+        if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
+            if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) 
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? Constants.Hopper.kIntakeExtension : 0));
+            if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
-        if (state.indexerWallState.equals(IndexerWallState.ACTIVE)){
+        if (!indexerState.equals(indexerState)) { // only change instruction on state change, not every 20ms
+            if (indexerState.leftTurret != previousIndexerState.leftTurret)
+                kLeftIndexerRotation.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity : 0));
+            if (indexerState.rightTurret != previousIndexerState.rightTurret) 
+                kRightIndexerRotation.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
+        }
+
+        if (hopperState.indexerWallState.equals(IndexerWallState.ACTIVE)){
             // fold in
-            kIndexerWall.setControl(indexerWallDutyCycle.withPosition(state.indexerWallState.rotation)); // TODO: replace me when sensor implemented
-        } else if (!state.equals(previousState) && !state.indexerWallState.equals(previousState.indexerWallState))
-            kIndexerWall.setControl(indexerWallDutyCycle.withPosition(state.indexerWallState.rotation));
+            kIndexerWall.setControl(indexerWallDutyCycle.withPosition(hopperState.indexerWallState.rotation)); // TODO: replace me when sensor implemented
+        } else if (!hopperState.equals(previousHopperState) && !hopperState.indexerWallState.equals(previousHopperState.indexerWallState))
+            kIndexerWall.setControl(indexerWallDutyCycle.withPosition(hopperState.indexerWallState.rotation));
     }
 }
