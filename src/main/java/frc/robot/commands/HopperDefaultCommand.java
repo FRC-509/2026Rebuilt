@@ -38,6 +38,26 @@ public class HopperDefaultCommand extends Command {
         addRequirements(hopper);
     }
 
+    public HopperDefaultCommand( // for use in auto
+            Hopper hopper, 
+            boolean isIntaking, 
+            boolean isIndexing, 
+            boolean isFeeding, 
+            boolean isOuttaking,
+            BooleanSupplier leftTurretCanShootSupplier,
+            BooleanSupplier rightTurretCanShootSupplier) {
+        this.hopper = hopper;
+
+        this.intakeSupplier = () -> isIntaking;
+        this.indexingSupplier = () -> isIndexing;
+        this.feedingSupplier = () -> isFeeding;
+        this.outtakingSupplier = () -> isOuttaking;
+        this.leftIndexingSupplier = leftTurretCanShootSupplier;
+        this.rightIndexingSupplier = rightTurretCanShootSupplier;
+
+        addRequirements(hopper);
+    }
+
     @Override
     public void execute() {
         if (intakeSupplier.getAsBoolean()) {
