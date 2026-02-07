@@ -1,0 +1,14 @@
+{
+    "crop": {
+        "left": "227",
+        "right": "852",
+        "top": "262",
+        "bottom": "569"
+    },
+    "robot": {
+        "width": 0.6604,
+        "height": 0.6604,
+        "bumper": 0.127,
+        "speed": 3.048
+    }
+}
