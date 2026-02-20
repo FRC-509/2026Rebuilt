@@ -334,6 +334,10 @@ public class SwerveDrive extends SubsystemBase {
 		return pigeon.getRotation2d();
 	}
 
+	public double getAngularVelocity() {
+		return pigeon.getAngularVelocityZWorld();
+	}
+
 	public Field2d getField(){
 		return field2d;
 	}

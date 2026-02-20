@@ -4,7 +4,12 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -139,6 +144,14 @@ public final class Constants {
 		
 		public static final double kIntakeExtension = 0.0;
         public static final double kIntakeExtensionToMetersConversion = 0;
+	}
+
+	public static class Vortex {
+
+        public static final String kLimelightName = "intake";
+        public static final Vector<N3> kLimelightMeasurementStdDevs = VecBuilder.fill(.7, .7, 99999);
+		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.7, .7, 0.9); // TODO: find n3 confidence
+
 	}
 
 	public static class IDs {

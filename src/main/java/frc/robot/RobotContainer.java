@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -22,6 +23,7 @@ import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.drive.SwerveDrive;
+import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
@@ -45,8 +47,8 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
-		this.vortex = new Vortex(swerve, new Pose2d());
 		this.hopper = new Hopper();
+		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
 		this.leftTurret = new Turret(
 			Constants.IDs.kLeftRotationMotor, Constants.IDs.kLeftTopFlywheel, Constants.IDs.kLeftBottomFlywheel,
