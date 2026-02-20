@@ -118,7 +118,6 @@ public class RobotContainer {
 			() -> operatorController.getRightTriggerAxis() > 0.5,
 			() -> leftTurret.isAbleToShoot(),
 			() -> rightTurret.isAbleToShoot(),
-			() -> operatorController.b().getAsBoolean(),
 			() -> driverLeft.getTrigger()));
 	}
 

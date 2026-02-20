@@ -15,7 +15,6 @@ public class HopperDefaultCommand extends Command {
     private BooleanSupplier indexingSupplier;
     private BooleanSupplier leftIndexingSupplier;
     private BooleanSupplier rightIndexingSupplier; 
-    private BooleanSupplier feedingSupplier;
     private BooleanSupplier outtakingSupplier;
 
     public HopperDefaultCommand(
@@ -24,7 +23,6 @@ public class HopperDefaultCommand extends Command {
             BooleanSupplier indexingSupplier,
             BooleanSupplier leftIndexingSupplier,
             BooleanSupplier rightIndexingSupplier, 
-            BooleanSupplier feedingSupplier, 
             BooleanSupplier outtakingSupplier) {
         this.hopper = hopper;
 
@@ -32,7 +30,6 @@ public class HopperDefaultCommand extends Command {
         this.indexingSupplier = indexingSupplier;
         this.leftIndexingSupplier = leftIndexingSupplier;
         this.rightIndexingSupplier = rightIndexingSupplier;
-        this.feedingSupplier = feedingSupplier;
         this.outtakingSupplier = outtakingSupplier;
 
         addRequirements(hopper);
@@ -50,7 +47,6 @@ public class HopperDefaultCommand extends Command {
 
         this.intakeSupplier = () -> isIntaking;
         this.indexingSupplier = () -> isIndexing;
-        this.feedingSupplier = () -> isFeeding;
         this.outtakingSupplier = () -> isOuttaking;
         this.leftIndexingSupplier = leftTurretCanShootSupplier;
         this.rightIndexingSupplier = rightTurretCanShootSupplier;
@@ -65,7 +61,6 @@ public class HopperDefaultCommand extends Command {
             else hopper.setHopperState(HopperState.INTAKING, getDesiredIndexerState());
         } else if (indexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
         else if (outtakingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.OUTTAKING, IndexerState.PASSIVE);
-        else if (feedingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.FEEDING, getDesiredIndexerState());
         else hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE);
     }
 

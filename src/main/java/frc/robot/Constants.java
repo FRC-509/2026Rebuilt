@@ -134,9 +134,11 @@ public final class Constants {
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 0.0;
         public static final double kOuttakingVelocity = 0.0;
+		public static final double kIndexerRollersVelocity = 0.0;
 		public static final double kIndexingVelocity = 0.0;
+		
 		public static final double kIntakeExtension = 0.0;
-        public static final double kIndexerWallMaximumRotation = 0.0;
+        public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
 	public static class IDs {
@@ -170,7 +172,6 @@ public final class Constants {
         public static final int kIntakeExtension = 0;
         public static final int kIntakeRotation = 0;
         public static final int kIndexerRotation = 0;
-		public static final int kIndexWallRotation = 0;
 	}
 
 	public static class PathGeneration {
@@ -228,10 +229,10 @@ public final class Constants {
 			public static final double kIndexerP = 0;
             public static final double kIndexerI = 0;
             public static final double kIndexerD = 0;
-			
-			public static final double kIndexerWallP = 0;
-            public static final double kIndexerWallI = 0;
-            public static final double kIndexerWallD = 0;
+
+            public static final double kIndexerRollersP = 0;
+            public static final double kIndexerRollersI = 0;
+            public static final double kIndexerRollersD = 0;
 		}
 	}
 
@@ -254,8 +255,9 @@ public final class Constants {
         public static final double kIndexerSupply = 0;
         public static final double kIndexerStator = 0;
 
-        public static final double kIndexerWallSupply = 0;
-        public static final double kIndexerWallStator = 0;
+        public static final double kIndexerRollersSupply = 0;
+
+        public static final double kIndexerRollersStator = 0;
 	}
 
 	public static class Field {

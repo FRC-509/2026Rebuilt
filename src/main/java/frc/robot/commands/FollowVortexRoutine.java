@@ -3,12 +3,10 @@ package frc.robot.commands;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.DoubleSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -21,7 +19,7 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.vortex.FollowPath;
 import frc.robot.vortex.PathPoint;
 
-public class FollowVortexRoutine extends SequentialCommandGroup {
+public class FollowVortexRoutine extends ParallelCommandGroup {
     
     private class Event {
         public String name;
@@ -107,14 +105,6 @@ public class FollowVortexRoutine extends SequentialCommandGroup {
                 true,
                 true,
                 false,
-                false,
-                () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
-
-            case "feed":
-                return new HopperDefaultCommand(hopper,
-                true,
-                false,
-                true,
                 false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
