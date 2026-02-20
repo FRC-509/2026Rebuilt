@@ -148,7 +148,7 @@ public class FollowPath extends Command {
 
         idxSegment = Math.min(idxSegment, numSegments-1);
 
-        return path.get(idxSegment+2);
+        return path.get(idxSegment+2); // TODO: double check this is next in the quartet
     }
 
     
