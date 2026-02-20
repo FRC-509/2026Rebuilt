@@ -8,7 +8,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.SwerveDrive;
 
@@ -20,7 +19,7 @@ public class Vortex {
     public Vortex(SwerveDrive swerve, Pose2d initialPose) {
         this.poseEstimator = new SwerveDrivePoseEstimator(
             swerve.kinematics, 
-            swerve.getYaw(), 
+            swerve.getYaw(),
             swerve.getModulePositions(), 
             initialPose);
 

@@ -1,6 +1,7 @@
 package frc.robot.vortex;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 
 // Position Vector
 public class PVector {
@@ -42,7 +43,7 @@ public class PVector {
 
     public PVector norm() {
         double norm = this.distanceTo(kOrigin);
-        return norm < kEps ? new PVector(x/norm, y/norm) : kOrigin;
+        return norm < kEps ? new PVector(x / norm, y / norm) : kOrigin;
     }
 
     public double dot(PVector other) {
@@ -58,5 +59,9 @@ public class PVector {
             estimatedPose.getX(),
             estimatedPose.getY()
         );
+    }
+
+    public Translation2d toTranslation2d() {
+        return new Translation2d(this.x, this.y);
     }
 }

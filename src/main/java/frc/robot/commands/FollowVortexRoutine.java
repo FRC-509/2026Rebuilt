@@ -62,12 +62,12 @@ public class FollowVortexRoutine extends SequentialCommandGroup {
     private Turret leftTurret;
     private Turret rightTurret;
 
-    public FollowVortexRoutine(String name, Vortex vortex, SwerveDrive swerve, Hopper hopper, Turret leftTurret, Turret rightTurret) {
+    public FollowVortexRoutine(String name, double exitVelocity, double maxVelocity, Vortex vortex, SwerveDrive swerve, Hopper hopper, Turret leftTurret, Turret rightTurret) {
         StormChaserPath pathFile = StormChaserPath.pathFromFile(name);
         ArrayList<PathPoint> pathPoints = new ArrayList<PathPoint>(pathFile.points.size());
         for (int i = 0; i < pathPoints.size(); i++) pathPoints.add(pathFile.points.get(i).toPathPoint());
 
-        FollowPath path = new FollowPath(pathPoints, swerve);
+        FollowPath path = new FollowPath(pathPoints, exitVelocity, maxVelocity, swerve);
         
         DoubleSupplier pathProgress = () -> path.getPathProgress(); // TODO: check if this works?
         SequentialCommandGroup[] eventCommands = new SequentialCommandGroup[pathFile.events.size()];

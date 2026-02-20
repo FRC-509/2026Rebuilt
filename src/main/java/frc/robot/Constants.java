@@ -85,11 +85,15 @@ public final class Constants {
 			IDs.kBackRightSteer,
 			IDs.kBackRightDrive,
 			140.425782);
-		public static final double kRobotWidth = 0;
-		public static final double kBumperWidth = 0;
+
+		public static final double kRobotWidth = Units.inchesToMeters(26);
+		public static final double kBumperWidth = Units.inchesToMeters(3.5);
         public static final double kSafePathingTolerance = 0; // TODO: set me pretty please
         public static final double kValidPositionTolerance = 0;
         public static final double kValidHeadingTolerance = 0;
+
+		public static final double kMaxAcceleration = 0;
+        public static final double kMaxDecceleration = 0;
 	}
 
 	public static class Turret {
@@ -174,6 +178,8 @@ public final class Constants {
         public static final double kAdjustRate = 0.01;
         public static final double kCurvaturePointRemovalRadius = 0; // m
 		public static final double kRetryPathingDelay = 0.2;
+        public static final int kLengthApproximationSegments = 25;
+		public static final double kStoppingDistance = 0.5; //m
 	}
 
 	public static class PIDConstants {
