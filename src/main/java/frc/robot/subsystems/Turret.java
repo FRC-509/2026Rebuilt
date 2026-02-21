@@ -45,6 +45,13 @@ public class Turret extends SubsystemBase {
     private boolean hasZeroedPosition;
     private double zeroedRotationOffset;
 
+    private final NetworkTable turretTable = NetworkTableInstance.getDefault().getTable("turret");
+
+    private final NetworkTableEntry isAbleToShootEntry = turretTable.getEntry("isAbleToShoot");
+    private final NetworkTableEntry topFlyWheelSpeedsEntry = turretTable.getEntry("topFlywheelSpeeds");
+    private final NetworkTableEntry bottomFlyWheelSpeedsEntry = turretTable.getEntry("bottomFlywheelSpeeds");
+    private final NetworkTableEntry angleToTargetEntry = turretTable.getEntry("angleToTarget");
+
     public Turret(
             int rotationMotorId,
             int topFlywheelMotorId,
@@ -270,6 +277,12 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
+        //network table updates
+        isAbleToShootEntry.setBoolean(isAbleToShoot());
+        topFlyWheelSpeedsEntry.setDouble(kTopFlywheelMotor.getVelocity().getValueAsDouble());
+        bottomFlyWheelSpeedsEntry.setDouble(kBottomFlywheelMotor.getVelocity().getValueAsDouble());
+        angleToTargetEntry.setDouble(kRotationMotor.getPosition().getValueAsDouble());
+
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
             // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances

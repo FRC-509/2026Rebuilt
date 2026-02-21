@@ -39,6 +39,12 @@ public class Hopper extends SubsystemBase {
     private boolean hasZeroedPosition;
     private double zeroedRotationOffset;
 
+    private final NetworkTable hopperTable = NetworkTableInstance.getDefault().getTable("hopper");
+
+    private final NetworkTableEntry hopperIsExtendedEntry = hopperTable.getEntry("hopperIsExtended");
+    private final NetworkTableEntry intakingVelocityEntry = hopperTable.getEntry("intakingVelocity");
+    private final NetworkTableEntry indexingVelocityEntry = hopperTable.getEntry("indexingVelocity");
+
     public enum HopperState {
         PASSIVE(false, 0.0d),
         INDEXING(false, 0.0d), // depending on final geometry run intake wheels aswell 
@@ -162,6 +168,11 @@ public class Hopper extends SubsystemBase {
     
     @Override
     public void periodic() {
+        //network table updates
+        hopperIsExtendedEntry.setBoolean(hopperState.hopperIsExtended);
+        intakingVelocityEntry.setBoolean(hopperState.intakingVelocity);
+        indexingVelocityEntry.setBoolean(hopperState.indexingVelocity);
+
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
             // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances
