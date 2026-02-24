@@ -152,12 +152,15 @@ public class Hopper extends SubsystemBase {
         this.previousIndexerState = IndexerState.PASSIVE;
 
         this.hasZeroedPosition = false;
-        this.zeroedRotationOffset = 0;    
+        this.zeroedRotationOffset = this.kIntakeExtension.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
     }
 
-    public void setHopperState(HopperState newState, IndexerState indexerState) {
+    public void setHopperState(HopperState newHopperState, IndexerState newIndexerState) {
         this.previousHopperState = this.hopperState;
-        this.hopperState = newState;
+        this.hopperState = newHopperState;
+
+        this.previousIndexerState = this.indexerState;
+        this.indexerState = newIndexerState;
     }
     
     @Override
@@ -182,7 +185,7 @@ public class Hopper extends SubsystemBase {
         }
 
         if (!indexerState.equals(indexerState)) { // only change instruction on state change, not every 20ms
-            kIndexerRollers.setControl(indexerRollersDutyCycle.withVelocity(Constants.Hopper.kIndexerRollersVelocity));
+            kIndexerRollers.setControl(indexerRollersDutyCycle.withVelocity(!indexerState.equals(IndexerState.PASSIVE) ? Constants.Hopper.kIndexerRollersVelocity : 0));
             if (indexerState.leftTurret != previousIndexerState.leftTurret)
                 kLeftIndexerRotation.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity : 0));
             if (indexerState.rightTurret != previousIndexerState.rightTurret) 

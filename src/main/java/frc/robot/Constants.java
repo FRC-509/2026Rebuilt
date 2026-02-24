@@ -147,11 +147,9 @@ public final class Constants {
 	}
 
 	public static class Vortex {
-
         public static final String kLimelightName = "intake";
         public static final Vector<N3> kLimelightMeasurementStdDevs = VecBuilder.fill(.7, .7, 99999);
 		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.7, .7, 0.9); // TODO: find n3 confidence
-
 	}
 
 	public static class IDs {
