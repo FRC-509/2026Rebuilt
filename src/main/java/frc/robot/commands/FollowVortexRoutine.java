@@ -12,12 +12,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.path_generation.FollowPath;
+import frc.robot.path_generation.PathPoint;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.drive.SwerveDrive;
-import frc.robot.vortex.FollowPath;
-import frc.robot.vortex.PathPoint;
 
 public class FollowVortexRoutine extends ParallelCommandGroup {
     

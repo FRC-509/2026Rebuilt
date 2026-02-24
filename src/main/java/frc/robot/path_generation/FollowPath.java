@@ -1,123 +1,102 @@
-package frc.robot.vortex;
+package frc.robot.path_generation;
 
 import java.util.ArrayList;
 
-import edu.wpi.first.math.Pair;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.SwerveDrive;
 
-public class PathTo extends Command {
+public class FollowPath extends Command {
 
-    private SwerveDrive swerveDrive;
-    private Pair<ArrayList<PathPoint>,Boolean> path;
+    private SwerveDrive swerve;
+    private ArrayList<PathPoint> path;
 
-    private boolean pathIsValid;
-    private boolean forceValid;
     private boolean isFinished;
-    private boolean finishOnceDone;
 
     private Timer elapsedTimer;
-    private double lastRetryTimestamp;
     private double lastUpdateTimestamp;
 
     private double pathProgress;
-    private boolean followPath;
-    
-    private Pose2d theoreticalPose;
-    private Pose2d targetPose;
+    private double pathLength;
+    private double initialVelocity;
     private double targetVelocity;
-    private PVector exitVelocity;
-    
-    private TrapezoidProfile speedProfile;
-    private TrapezoidProfile thetaMotionProfile;
+    private double maxVelocity;
+    private double usableVelocity;
 
-    // TODO: Implement collision detection in execute with acceleration from gyro
+    private double acclerationEndT;
+    private double decelerationStartT;
 
-    public PathTo(Pose2d targetPose, SwerveDrive swerve) {
-        this(swerve.getEstimatedPose(), targetPose, false, false, new PVector(0, 0), swerve);
-    }
-
-    public PathTo(Pose2d targetPose, PVector exitVelocity, SwerveDrive swerve) {
-        this(swerve.getEstimatedPose(), targetPose, false, false, exitVelocity, swerve);
-    }
-
-    public PathTo(Pose2d initialPose, Pose2d targetPose, boolean forceValid, boolean finishOnceDone, PVector exitVelocity, SwerveDrive swerve) {
-        this.theoreticalPose = initialPose;
-        this.targetPose = targetPose;
-        this.pathIsValid = false;
-        this.forceValid = forceValid;
-        this.followPath = true;
-        this.finishOnceDone = finishOnceDone;
+    public FollowPath(ArrayList<PathPoint> path, double exitVelocity, double maxVelocity, SwerveDrive swerve) {
+        this.path = path;
+        this.swerve = swerve;
         this.isFinished = false;
         this.elapsedTimer = new Timer();
-        this.exitVelocity = exitVelocity;
+        this.targetVelocity = MathUtil.clamp(exitVelocity, 0.0, Constants.Chassis.kMaxSpeed);
+        
+        this.pathLength = 0;
+        PVector prev = path.get(0), next;
+        for (int i = 1; i <= Constants.PathGeneration.kLengthApproximationSegments; i++) {
+            next = catmullRomSpline(i / Constants.PathGeneration.kLengthApproximationSegments);
+            this.pathLength += prev.distanceTo(next);
+            prev = next;
+        }
 
-        this.targetVelocity = Constants.Chassis.kMaxSpeed * 0.2; // Max Speed Wanted to reach, make clamp of distanceTo start/finish
-
-        thetaMotionProfile = new TrapezoidProfile(new Constraints(targetVelocity, 1.0)); // TODO: find acceleration
         addRequirements(swerve);
     }
 
     @Override
     public void initialize() {
-        this.path = PathGeneration.generatePath(null, null, swerveDrive);
-        pathIsValid = this.path.getSecond().booleanValue() || forceValid;
-        if (!pathIsValid) {
-            elapsedTimer.restart();
-            followPath = false;
-        }
+        this.initialVelocity = getCurrentVelocityMagnitude();
+        this.acclerationEndT = 1 - (Math.pow(maxVelocity - initialVelocity, 2) / Constants.Chassis.kMaxAcceleration / pathLength);
+        this.acclerationEndT = (Math.pow(maxVelocity, 2) / Constants.Chassis.kMaxDecceleration) / pathLength;
     }
 
     @Override
     public void execute() {
-        // path validation and handling
-        if (!pathIsValid && !forceValid && elapsedTimer.get() > Constants.PathGeneration.kRetryPathingDelay) {
-            this.path = PathGeneration.generatePath(null, null, swerveDrive);
-            swerveDrive.setChassisSpeeds(new ChassisSpeeds(0,0,0));
-            pathIsValid = this.path.getSecond().booleanValue() || forceValid;
-            return;
-        }
 
         // Path completion behavior
         if (pathProgress >= 1.0) {
-            followPath = false;
-            swerveDrive.setChassisSpeeds(new ChassisSpeeds(0,0,0));
-            if (finishOnceDone) isFinished = true;
+            swerve.setChassisSpeeds(new ChassisSpeeds(0,0,0));
+            isFinished = true;
             return;
         }
 
         // calculate latency
         if (pathProgress != 0.0d) { // no latency on first pass
             pathProgress += elapsedTimer.get() - lastUpdateTimestamp;
-            lastUpdateTimestamp = elapsedTimer.get(); 
+            lastUpdateTimestamp = elapsedTimer.get();
         }
 
+        // get velocity
+        usableVelocity = getCurrentVelocityMagnitude();
+        //prioritize slowing down in cases where path lenght is too low and starting & stopping distances overlap
+        if (pathProgress > decelerationStartT) {
+            usableVelocity -= Constants.Chassis.kMaxDecceleration * 0.01; // averge velocity over 20ms
+            targetVelocity = usableVelocity - Constants.Chassis.kMaxAcceleration * 0.01;
+        } else if (pathProgress < acclerationEndT) {
+            usableVelocity += Constants.Chassis.kMaxAcceleration * 0.01;
+            targetVelocity = usableVelocity + Constants.Chassis.kMaxAcceleration * 0.01;
+        } else targetVelocity = maxVelocity;
+        
         // calculate predictive secant step along spline path through path points 
-        double dt = findStepForLength(pathProgress, Constants.Chassis.kMaxSpeed * 0.02, 0,1);
+        double dt = findStepForLength(pathProgress, usableVelocity, 0,1);
         PVector currentPosition = catmullRomSpline(pathProgress);
         PVector targetPos = catmullRomSpline(pathProgress + dt);
         
+        // get actual 
         PVector deltaMove = targetPos.minus(currentPosition);
-        PVector deltaV = deltaMove.norm().scalar(Constants.Chassis.kMaxSpeed);
+        PVector deltaV = deltaMove.norm().scalar(targetVelocity);
         
-        swerveDrive.drive(
+        swerve.drive(
             new Translation2d(deltaV.x, deltaV.y),
-            thetaMotionProfile.calculate(
-                elapsedTimer.get(),
-                new State(0,0), 
-                new State(targetPose.getRotation().getRadians(),0.0d)
-            ).velocity,
+            0d,
             true, 
             false);
+        swerve.setTargetHeading(getNextPoint(pathProgress).rotationTarget);
     }
 
     private PVector catmullRomPoint(double t, PVector p0, PVector p1, PVector p2, PVector p3) {
@@ -137,24 +116,39 @@ public class PathTo extends Command {
 
     // returns the x and y coordinates for a point on a catmull rom spline at progress t 0-1
     public PVector catmullRomSpline(double t) {
-        if (path.getFirst().size() < 4) {
-            if (path.getFirst().isEmpty()) return PVector.kOrigin;
-            else return path.getFirst().get(0);
+        if (path.size() < 4) {
+            if (path.isEmpty()) return PVector.kOrigin;
+            else return path.get(0);
         }
 
-        int numSegments = path.getFirst().size() - 3;
+        int numSegments = path.size() - 3;
         double tSegment = t*((double)numSegments);
         int idxSegment = ((int)tSegment);
         double tLocal = tSegment - idxSegment;
 
         idxSegment = Math.min(idxSegment, numSegments-1);
 
-        PVector p0 = path.getFirst().get(idxSegment);
-        PVector p1 = path.getFirst().get(idxSegment+1);
-        PVector p2 = path.getFirst().get(idxSegment+2);
-        PVector p3 = path.getFirst().get(idxSegment+3);
+        PVector p0 = path.get(idxSegment);
+        PVector p1 = path.get(idxSegment+1);
+        PVector p2 = path.get(idxSegment+2);
+        PVector p3 = path.get(idxSegment+3);
 
         return catmullRomPoint(tLocal, p0, p1, p2, p3);
+    }
+
+    public PathPoint getNextPoint(double t) {
+        if (path.size() < 4) {
+            if (path.isEmpty()) return (PathPoint) PVector.kOrigin;
+            else return path.get(0);
+        }
+
+        int numSegments = path.size() - 3;
+        double tSegment = t*((double)numSegments);
+        int idxSegment = ((int)tSegment);
+
+        idxSegment = Math.min(idxSegment, numSegments-1);
+
+        return path.get(idxSegment+2); // TODO: double check this is next in the quartet
     }
 
     
@@ -216,17 +210,29 @@ public class PathTo extends Command {
                     previousError = candidateError;
                 }
             }
-        }   
+        }
         return currentStep;
+    }
+
+    private double getCurrentVelocityMagnitude() {
+        ChassisSpeeds speeds = swerve.getChassisSpeeds();
+        return Math.sqrt(
+            speeds.vxMetersPerSecond*speeds.vxMetersPerSecond 
+            + speeds.vyMetersPerSecond*speeds.vyMetersPerSecond);
     }
     
     @Override
     public void end(boolean interrupted) {
-        swerveDrive.setChassisSpeeds(new ChassisSpeeds());
+        swerve.setChassisSpeeds(new ChassisSpeeds());
     }
 
     @Override
     public boolean isFinished() {
         return isFinished;
     }
+
+    public double getPathProgress() {
+        return pathProgress;
+    }
+
 }

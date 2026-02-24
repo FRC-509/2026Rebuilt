@@ -1,4 +1,4 @@
-package frc.robot.vortex;
+package frc.robot.path_generation;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
