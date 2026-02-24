@@ -113,7 +113,7 @@ public class Turret extends SubsystemBase {
         this.canAim = false;
 
         this.hasZeroedPosition = false;
-        this.zeroedRotationOffset = 0;
+        this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
     }
  
     public enum AimTarget {
@@ -133,8 +133,12 @@ public class Turret extends SubsystemBase {
     }
 
     private void setRotation(double degrees) {
-        angleToTarget = degrees - zeroedRotationOffset; // TODO: change to actual conversion
+        angleToTarget = degrees / Constants.Turret.kRotationToTurretDegrees - zeroedRotationOffset; // TODO: change to actual conversion
         kRotationMotor.setControl(kPositionDutyCycle.withPosition(angleToTarget));
+    }
+
+    private double getRotationDegrees() {
+        return (kRotationMotor.getPosition().getValueAsDouble() - zeroedRotationOffset) * Constants.Turret.kRotationToTurretDegrees;
     }
 
     public void setAimTarget(AimTarget aimTarget) {
@@ -157,7 +161,7 @@ public class Turret extends SubsystemBase {
 
     public boolean isAbleToShoot() {
         return canAim
-            && MathUtil.isNear(angleToTarget, kRotationMotor.getPosition().getValueAsDouble(), Constants.Turret.kRotationTolerance)
+            && MathUtil.isNear(angleToTarget, getRotationDegrees(), Constants.Turret.kRotationTolerance)
             && MathUtil.isNear(targetBottomFlywheelSpeed, kBottomFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance)
             && MathUtil.isNear(targetTopFlywheelSpeed, kTopFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance);
     }
@@ -270,6 +274,7 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // TODO: replace with non hard stop version, complient with design change
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
             // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances

@@ -105,6 +105,7 @@ public final class Constants {
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 0.0d;
 		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
+		public static final double kRotationToTurretDegrees = 0;
 
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25; // rpm
