@@ -27,6 +27,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     }
 
     private class StormChaserPoint {
+        @SuppressWarnings("unused")
         public int id;
         public double x;
         public double y;
@@ -42,6 +43,11 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     private class StormChaserPath {
         public ArrayList<StormChaserPoint> points;
         public ArrayList<Event> events;
+        @SuppressWarnings("unused")
+        public class Ties {
+            public String start;
+            public String end;
+        }
 
         private StormChaserPath(){}
         
@@ -125,7 +131,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     }
 
 
-    private ParallelCommandGroup endAuto() {
+    public ParallelCommandGroup endAuto() {
         return new ParallelCommandGroup(
 			Commands.runOnce(() -> swerve.stopModules(), swerve),
 			new HopperDefaultCommand(
