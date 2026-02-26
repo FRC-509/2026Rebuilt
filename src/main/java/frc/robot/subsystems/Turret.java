@@ -252,7 +252,7 @@ public class Turret extends SubsystemBase {
 
     private double[] calculateSpeedsManualMagnus() {
         Translation2d turretGlobal = getTurretGlobalPosition();
-        Translation3d targetTurretRelative = aimTarget.position.minus(
+        Translation3d targetTurretRelative = aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble()).minus(
             new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
 
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
