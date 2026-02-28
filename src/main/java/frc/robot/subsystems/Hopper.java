@@ -88,6 +88,22 @@ public class Hopper extends SubsystemBase {
         }
     }
 
+    public String indexerStateString(IndexerState state) {
+        switch (state) {
+            case PASSIVE:
+                return "Passive";
+            case LEFT:
+                return "Indexing";
+            case RIGHT:
+                return "Intaking";
+            case BOTH:
+                return "Intaking and Indexing";
+        
+            default:
+                return "None somehow";
+        }
+    }
+
     public Hopper() {
         TalonFXConfiguration extensionConfig = new TalonFXConfiguration();
         
@@ -184,18 +200,19 @@ public class Hopper extends SubsystemBase {
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 46) {
-                kIntakeExtension.setControl(voltageOut.withOutput(0));
-                zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
-                hasZeroedPosition = true;
-            } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
+            // if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 46) {
+            //     kIntakeExtension.setControl(voltageOut.withOutput(0));
+            //     zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
+            //     hasZeroedPosition = true;
+            // } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
+            hasZeroedPosition = true;
 
             if (!hasZeroedPosition) return;
         }
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
-            if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.85));
+            // if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
+            //     kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.));
                 // if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
