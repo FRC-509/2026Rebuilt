@@ -32,10 +32,10 @@ public final class Constants {
 		public static final double kOffsetToSwerveModule = 0.395;
 		public static final double kKrakenFreeSpeedRPM = 6000.0d;
 		public static final double kKrakenFreeSpeedRPS = kKrakenFreeSpeedRPM / 60.0d;
-		public static final double kMaxSpeed = Conversions.falconToMPS(kKrakenFreeSpeedRPS, N5.kWheelCircumference,
-			N5.kDriveGearRatio); // test
+		public static final double kMaxSpeed = Conversions.falconToMPS(kKrakenFreeSpeedRPS, M5n.kWheelCircumference,
+			M5n.kDriveGearRatio); // test
 		
-		public static class N5 { // R2 config
+		public static class M5n { // R2 config
 			public static final double kWheelRadius = Units.inchesToMeters(2.0);
 			public static final double kWheelCircumference = 2 * kWheelRadius * Math.PI; // 0.3192 meters
 			public static final double kDriveGearRatio = 6.03 / 1;
@@ -68,28 +68,28 @@ public final class Constants {
 			IDs.kFrontRightEncoder,
 			IDs.kFrontRightSteer,
 			IDs.kFrontRightDrive,
-			118.587891);
+			98.70156);
 
 		public static final SwerveModuleConfiguration kFrontLeft = new SwerveModuleConfiguration(
 			1,
 			IDs.kFrontLeftEncoder,
 			IDs.kFrontLeftSteer,
 			IDs.kFrontLeftDrive,
-			153.337891);
+			153.45344);
 
 		public static final SwerveModuleConfiguration kBackLeft = new SwerveModuleConfiguration(
 			2,
 			IDs.kBackLeftEncoder,
 			IDs.kBackLeftSteer,
 			IDs.kBackLeftDrive,
-			104.066406+1);
+			-17.05068);
 
 		public static final SwerveModuleConfiguration kBackRight = new SwerveModuleConfiguration(
 			3,
 			IDs.kBackRightEncoder,
 			IDs.kBackRightSteer,
 			IDs.kBackRightDrive,
-			140.425782);
+			-9.57996);
 
 		public static final double kRobotWidth = Units.inchesToMeters(26);
 		public static final double kBumperWidth = Units.inchesToMeters(3.5);
@@ -155,7 +155,6 @@ public final class Constants {
 
 	public static class IDs {
 		// Swerve Drive
-
 		public static final int kFrontLeftDrive = 1;
 		public static final int kFrontLeftSteer = 2;
 		public static final int kFrontLeftEncoder = 9;

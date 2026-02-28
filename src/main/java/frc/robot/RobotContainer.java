@@ -37,35 +37,35 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	private final Turret leftTurret;
-	private final Turret rightTurret;
-	private final Hopper hopper;
+	// private final Turret leftTurret;
+	// private final Turret rightTurret;
+	// private final Hopper hopper;
 
-	private final Vortex vortex;
+	// private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
-		this.hopper = new Hopper();
-		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
+		// this.hopper = new Hopper();
+		// this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
-		this.leftTurret = new Turret(
-			Constants.IDs.kLeftRotationMotor, Constants.IDs.kLeftTopFlywheel, Constants.IDs.kLeftBottomFlywheel,
-			Constants.Turret.LeftTurret.kLeftTurretOffset, 
-			Constants.Turret.LeftTurret.kMaxRotationClockwiseDegrees, 
-			Constants.Turret.LeftTurret.kMaxRotationCounterClockwiseDegrees,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-			() -> swerve.getYaw().getDegrees());
+		// this.leftTurret = new Turret(
+		// 	Constants.IDs.kLeftRotationMotor, Constants.IDs.kLeftTopFlywheel, Constants.IDs.kLeftBottomFlywheel,
+		// 	Constants.Turret.LeftTurret.kLeftTurretOffset, 
+		// 	Constants.Turret.LeftTurret.kMaxRotationClockwiseDegrees, 
+		// 	Constants.Turret.LeftTurret.kMaxRotationCounterClockwiseDegrees,
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+		// 	() -> swerve.getYaw().getDegrees());
 			
 			
-		this.rightTurret = new Turret(
-			Constants.IDs.kRightRotationMotor, Constants.IDs.kRightTopFlywheel, Constants.IDs.kRightBottomFlywheel,
-			Constants.Turret.RightTurret.kRightTurretOffset, 
-			Constants.Turret.RightTurret.kMaxRotationClockwiseDegrees, 
-			Constants.Turret.RightTurret.kMaxRotationCounterClockwiseDegrees,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-			() -> swerve.getYaw().getDegrees());
+		// this.rightTurret = new Turret(
+		// 	Constants.IDs.kRightRotationMotor, Constants.IDs.kRightTopFlywheel, Constants.IDs.kRightBottomFlywheel,
+		// 	Constants.Turret.RightTurret.kRightTurretOffset, 
+		// 	Constants.Turret.RightTurret.kMaxRotationClockwiseDegrees, 
+		// 	Constants.Turret.RightTurret.kMaxRotationCounterClockwiseDegrees,
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+		// 	() -> swerve.getYaw().getDegrees());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -82,45 +82,45 @@ public class RobotContainer {
 				() -> true));
 
 
-		(new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
-			new AlignToHeading(
-				swerve, 
-				() -> nonInvSquare(-driverLeft.getY()),
-				() -> nonInvSquare(-driverLeft.getX()),
-				() -> driverLeft.getTrigger(),
-				0));
+		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		0));
 
-		(new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
-			new AlignToHeading(
-				swerve, 
-				() -> nonInvSquare(-driverLeft.getY()),
-				() -> nonInvSquare(-driverLeft.getX()),
-				() -> driverLeft.getTrigger(),
-				-90));
+		// (new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		-90));
 
-		(new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
-			new AlignToHeading(
-				swerve, 
-				() -> nonInvSquare(-driverLeft.getY()),
-				() -> nonInvSquare(-driverLeft.getX()),
-				() -> driverLeft.getTrigger(),
-				90));
+		// (new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		90));
 
-		(new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
-			new AlignToHeading(
-				swerve, 
-				() -> nonInvSquare(-driverLeft.getY()),
-				() -> nonInvSquare(-driverLeft.getX()),
-				() -> driverLeft.getTrigger(),
-				180));
+		// (new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		180));
 
 
-		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-			() -> driverRight.getTrigger(),
-			() -> operatorController.getRightTriggerAxis() > 0.5,
-			() -> leftTurret.isAbleToShoot(),
-			() -> rightTurret.isAbleToShoot(),
-			() -> driverLeft.getTrigger()));
+		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+		// 	() -> driverRight.getTrigger(),
+		// 	() -> operatorController.getRightTriggerAxis() > 0.5,
+		// 	() -> leftTurret.isAbleToShoot(),
+		// 	() -> rightTurret.isAbleToShoot(),
+		// 	() -> driverLeft.getTrigger()));
 	}
 
 	private void addAutonomousRoutines() {
@@ -137,13 +137,13 @@ public class RobotContainer {
     }
 
 	public void robotPeriodic() {
-		vortex.updatePositionEstimate();
+		// vortex.updatePositionEstimate();
 	}
 
 	public void zeroMechanisms() {
-		leftTurret.zeroPosition();
-		leftTurret.zeroPosition();
-		hopper.zeroPosition();
+		// leftTurret.zeroPosition();
+		// leftTurret.zeroPosition();
+		// hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

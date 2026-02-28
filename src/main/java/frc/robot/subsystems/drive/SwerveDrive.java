@@ -369,6 +369,8 @@ public class SwerveDrive extends SubsystemBase {
 		SmartDashboard.putNumber("yaw", getYaw().getDegrees());
 		SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);
 
+		SmartDashboard.putNumber("FLS", getModuleStates()[1].angle.getRotations());
+
 		ThinNT.putNumber("x-velocity", getChassisSpeeds().vxMetersPerSecond);
 		ThinNT.putNumber("y-velocity", getChassisSpeeds().vyMetersPerSecond);
 		ThinNT.putNumber("yaw-velocity", pigeon.getAngularVelocityZWorld());
