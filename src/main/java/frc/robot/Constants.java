@@ -155,35 +155,38 @@ public final class Constants {
 
 	public static class IDs {
 		// Swerve Drive
-		public static final int kFrontRightDrive = 11;
-		public static final int kFrontRightSteer = 9;
-		public static final int kFrontRightEncoder = 3;
 
-		public static final int kFrontLeftDrive = 10;
-		public static final int kFrontLeftSteer = 6;
-		public static final int kFrontLeftEncoder = 1;
+		public static final int kFrontLeftDrive = 1;
+		public static final int kFrontLeftSteer = 2;
+		public static final int kFrontLeftEncoder = 9;
+
+		public static final int kFrontRightDrive = 3;
+		public static final int kFrontRightSteer = 4;
+		public static final int kFrontRightEncoder = 10;
 		
-		public static final int kBackRightDrive = 8;
-		public static final int kBackRightSteer = 5;
-		public static final int kBackRightEncoder = 4;
+		public static final int kBackLeftDrive = 5;
+		public static final int kBackLeftSteer = 6;
+		public static final int kBackLeftEncoder = 11;
 		
-		public static final int kBackLeftDrive = 12;
-		public static final int kBackLeftSteer = 7;
-		public static final int kBackLeftEncoder = 2;
+		public static final int kBackRightDrive = 7;
+		public static final int kBackRightSteer = 8;
+		public static final int kBackRightEncoder = 12;
 
 		// Shooters
-		public static final int kLeftBottomFlywheel = 0;
-		public static final int kLeftTopFlywheel = 0;
-		public static final int kLeftRotationMotor = 0;
+		public static final int kLeftBottomFlywheel = 14;
+		public static final int kLeftTopFlywheel = 13;
+		public static final int kLeftRotationMotor = 15;
 		
-		public static final int kRightBottomFlywheel = 0;
-		public static final int kRightTopFlywheel = 0;
-		public static final int kRightRotationMotor = 0;
+		public static final int kRightBottomFlywheel = 17;
+		public static final int kRightTopFlywheel = 16;
+		public static final int kRightRotationMotor = 18;
 		
 		// Hopper
-        public static final int kIntakeExtension = 0;
-        public static final int kIntakeRotation = 0;
-        public static final int kIndexerRotation = 0;
+        public static final int kIntakeExtension = 20;
+        public static final int kIntakeRotation = 19;
+        public static final int kIndexerRotation = 21;
+        public static final int kLeftKicker = 22;
+        public static final int kRightKicker = 23;
 	}
 
 	public static class PathGeneration {
