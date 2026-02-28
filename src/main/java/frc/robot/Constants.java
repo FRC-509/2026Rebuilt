@@ -18,6 +18,7 @@ import frc.robot.util.math.Conversions;
 
 public final class Constants {
 	public static final String kRio = "rio";
+	public static final String kCanivore = "509CANIvore";
 
 	public static class Operator {
 		public static final double kStickDeadband = 0.1;
@@ -237,30 +238,30 @@ public final class Constants {
 		}
 
 		public static class Turret {
-            public static final double kRotationP = 0;
-            public static final double kRotationI = 0;
-            public static final double kRotationD = 0;
+            public static final double kRotationP = 0.95;
+            public static final double kRotationI = 0.12;
+            public static final double kRotationD = 0.03;
 
-            public static final double kFlywheelP = 0;
-            public static final double kFlywheelI = 0;
+            public static final double kFlywheelP = 0.045;
+            public static final double kFlywheelI = 0.2;
             public static final double kFlywheelD = 0;
 		}
 
 		public static class Hopper {
-            public static final double kExtensionP = 0;
+            public static final double kExtensionP = 0.08;
             public static final double kExtensionI = 0;
             public static final double kExtensionD = 0;
 
-			public static final double kIntakeP = 0;
+			public static final double kIntakeP = 0; // TODO: redo
             public static final double kIntakeI = 0;
             public static final double kIntakeD = 0;
 			
-			public static final double kIndexerP = 0;
-            public static final double kIndexerI = 0;
+			public static final double kIndexerP = 0.01;
+            public static final double kIndexerI = 0.5;
             public static final double kIndexerD = 0;
 
-            public static final double kIndexerRollersP = 0;
-            public static final double kIndexerRollersI = 0;
+            public static final double kIndexerRollersP = 0.01;
+            public static final double kIndexerRollersI = 0.5;
             public static final double kIndexerRollersD = 0;
 		}
 	}
@@ -269,24 +270,23 @@ public final class Constants {
 		public static final double kSwerveModuleSupply = 35.0d;
 		// SwerveStator ?
 
-        public static final double kTurretRotationSupply = 0;
-        public static final double kTurretRotationStator = 0;
+        public static final double kTurretRotationSupply = 70;
+        public static final double kTurretRotationStator = 120;
 
-		public static final double kTurretFlywheelSupply = 0;
-        public static final double kTurretFlywheelStator = 0;
+		public static final double kTurretFlywheelSupply = 70;
+        public static final double kTurretFlywheelStator = 120;
 
-		public static final double kIntakeExtensionSupply = 0;
-        public static final double kIntakeExtensionStator = 0;
+		public static final double kIntakeExtensionSupply = 70;
+        public static final double kIntakeExtensionStator = 120;
 
-		public static final double kIntakeSupply = 0;
-        public static final double kIntakeStator = 0;
+		public static final double kIntakeSupply = 70;
+        public static final double kIntakeStator = 120;
 
-        public static final double kIndexerSupply = 0;
-        public static final double kIndexerStator = 0;
+        public static final double kIndexerSupply = 70;
+        public static final double kIndexerStator = 120;
 
-        public static final double kIndexerRollersSupply = 0;
-
-        public static final double kIndexerRollersStator = 0;
+        public static final double kIndexerRollersSupply = 70;
+        public static final double kIndexerRollersStator = 120;
 	}
 
 	public static class Field {

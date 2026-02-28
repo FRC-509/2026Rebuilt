@@ -367,15 +367,13 @@ public class SwerveDrive extends SubsystemBase {
 		field2d.setRobotPose(getEstimatedPose());
 
 		SmartDashboard.putNumber("yaw", getYaw().getDegrees());
-		SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);
+		// SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);
 
-		SmartDashboard.putNumber("FLS", getModuleStates()[1].angle.getRotations());
-
-		ThinNT.putNumber("x-velocity", getChassisSpeeds().vxMetersPerSecond);
-		ThinNT.putNumber("y-velocity", getChassisSpeeds().vyMetersPerSecond);
-		ThinNT.putNumber("yaw-velocity", pigeon.getAngularVelocityZWorld());
-		ThinNT.putNumber("target-heading", targetHeading);
-		SmartDashboard.putNumberArray("Estimated Pose", new double[]{getEstimatedPose().getX(),getEstimatedPose().getY()});
+		// ThinNT.putNumber("x-velocity", getChassisSpeeds().vxMetersPerSecond);
+		// ThinNT.putNumber("y-velocity", getChassisSpeeds().vyMetersPerSecond);
+		// ThinNT.putNumber("yaw-velocity", pigeon.getAngularVelocityZWorld());
+		// ThinNT.putNumber("target-heading", targetHeading);
+		// SmartDashboard.putNumberArray("Estimated Pose", new double[]{getEstimatedPose().getX(),getEstimatedPose().getY()});
 
 		moduleStatePublisher.set(getModuleStates());
 		odometryPublisher.set(getRawOdometeryPose());

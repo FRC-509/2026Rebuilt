@@ -39,7 +39,7 @@ public class RobotContainer {
 	private final SwerveDrive swerve;
 	// private final Turret leftTurret;
 	// private final Turret rightTurret;
-	// private final Hopper hopper;
+	private final Hopper hopper;
 
 	// private final Vortex vortex;
 
@@ -47,7 +47,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
-		// this.hopper = new Hopper();
+		this.hopper = new Hopper();
 		// this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
 		// this.leftTurret = new Turret(
@@ -109,12 +109,13 @@ public class RobotContainer {
 		// 		180));
 
 
-		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-		// 	() -> driverRight.getTrigger(),
-		// 	() -> operatorController.getRightTriggerAxis() > 0.5,
-		// 	() -> leftTurret.isAbleToShoot(),
-		// 	() -> rightTurret.isAbleToShoot(),
-		// 	() -> driverLeft.getTrigger()));
+		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+			() -> driverRight.getTrigger(),
+			() -> operatorController.a().getAsBoolean(),
+			() -> operatorController.getLeftTriggerAxis() > 0.7,//leftTurret.isAbleToShoot(),
+			() -> operatorController.getRightTriggerAxis() > 0.7, //rightTurret.isAbleToShoot(),
+			() -> driverLeft.getTrigger()));
+
 	}
 
 	private void addAutonomousRoutines() {
