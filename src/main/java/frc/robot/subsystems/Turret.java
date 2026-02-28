@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.Chassis.TurretConfiguration;
 import frc.robot.util.Translation2dSupplier;
 
 public class Turret extends SubsystemBase {
@@ -46,17 +47,12 @@ public class Turret extends SubsystemBase {
     private double zeroedRotationOffset;
 
     public Turret(
-            int rotationMotorId,
-            int topFlywheelMotorId,
-            int bottomFlywheelMotorId,
-            Translation3d offsetTranslation,
-            double maxRotationClockwise,
-            double maxRotationCounterclockwise,
+            TurretConfiguration turretConfiguration,
             Translation2dSupplier positionEstimate,
             DoubleSupplier robotYawDegreesSupplier) {
-        this.kRotationMotor = new TalonFX(rotationMotorId);
-        this.kTopFlywheelMotor = new TalonFX(topFlywheelMotorId);
-        this.kBottomFlywheelMotor = new TalonFX(bottomFlywheelMotorId);
+        this.kRotationMotor = new TalonFX(turretConfiguration.rotationMotorId());
+        this.kTopFlywheelMotor = new TalonFX(turretConfiguration.topFlywheelMotorId());
+        this.kBottomFlywheelMotor = new TalonFX(turretConfiguration.bottomFlywheelMotorId());
 
         // Rotation Motor Config
         TalonFXConfiguration rotationMotorConfig = new TalonFXConfiguration();
@@ -100,9 +96,9 @@ public class Turret extends SubsystemBase {
         this.kBottomFlywheelMotor.getConfigurator().apply(flywheelMotorConfig);
 
         this.positionEstimate = positionEstimate;
-        this.offsetTranslation = offsetTranslation;
-        this.maxRotationClockwise = maxRotationClockwise;
-        this.maxRotationCounterclockwise = maxRotationCounterclockwise;
+        this.offsetTranslation = turretConfiguration.offsetTranslation();
+        this.maxRotationClockwise = turretConfiguration.maxRotationClockwise();
+        this.maxRotationCounterclockwise = turretConfiguration.maxRotationCounterclockwise();
         this.robotYawRadiansSupplier = robotYawDegreesSupplier;
 
         this.aimTarget = AimTarget.HOPPER;

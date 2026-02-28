@@ -51,19 +51,13 @@ public class RobotContainer {
 		// this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
 		// this.leftTurret = new Turret(
-		// 	Constants.IDs.kLeftRotationMotor, Constants.IDs.kLeftTopFlywheel, Constants.IDs.kLeftBottomFlywheel,
-		// 	Constants.Turret.LeftTurret.kLeftTurretOffset, 
-		// 	Constants.Turret.LeftTurret.kMaxRotationClockwiseDegrees, 
-		// 	Constants.Turret.LeftTurret.kMaxRotationCounterClockwiseDegrees,
+		// 	Constants.Turret.kLeftTurretConfiguration,
 		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
 		// 	() -> swerve.getYaw().getDegrees());
 			
 			
 		// this.rightTurret = new Turret(
-		// 	Constants.IDs.kRightRotationMotor, Constants.IDs.kRightTopFlywheel, Constants.IDs.kRightBottomFlywheel,
-		// 	Constants.Turret.RightTurret.kRightTurretOffset, 
-		// 	Constants.Turret.RightTurret.kMaxRotationClockwiseDegrees, 
-		// 	Constants.Turret.RightTurret.kMaxRotationCounterClockwiseDegrees,
+		// 	Constants.Turret.kRightTurretConfiguration,
 		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
 		// 	() -> swerve.getYaw().getDegrees());
 

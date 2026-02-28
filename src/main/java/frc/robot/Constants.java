@@ -13,6 +13,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.Chassis.TurretConfiguration;
 import frc.robot.util.math.Conversions;
 
 public final class Constants {
@@ -91,6 +92,14 @@ public final class Constants {
 			IDs.kBackRightDrive,
 			-9.57996);
 
+		public static record TurretConfiguration(
+			int rotationMotorId,
+            int topFlywheelMotorId,
+            int bottomFlywheelMotorId,
+            Translation3d offsetTranslation,
+            double maxRotationClockwise,
+            double maxRotationCounterclockwise) {}
+
 		public static final double kRobotWidth = Units.inchesToMeters(26);
 		public static final double kBumperWidth = Units.inchesToMeters(3.5);
         public static final double kSafePathingTolerance = 0; // TODO: set me pretty please
@@ -102,6 +111,23 @@ public final class Constants {
 	}
 
 	public static class Turret {
+
+		public static final TurretConfiguration kLeftTurretConfiguration = new TurretConfiguration(
+			Constants.IDs.kLeftRotationMotor, 
+			Constants.IDs.kLeftTopFlywheel, 
+			Constants.IDs.kLeftBottomFlywheel,
+			new Translation3d(),
+			0, 
+			0);
+
+		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
+			Constants.IDs.kRightRotationMotor, 
+			Constants.IDs.kRightTopFlywheel, 
+			Constants.IDs.kRightBottomFlywheel,
+			new Translation3d(),
+			0,
+			0);
+
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 0.0d;
 		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
@@ -124,17 +150,6 @@ public final class Constants {
         public static final double kEfficiency = 0;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
-        public static class LeftTurret {
-            public static final Translation3d kLeftTurretOffset = new Translation3d();
-            public static final double kMaxRotationClockwiseDegrees = 0;
-			public static final double kMaxRotationCounterClockwiseDegrees = 0;
-		}
-		
-        public static class RightTurret {
-            public static final Translation3d kRightTurretOffset = new Translation3d();
-            public static final double kMaxRotationClockwiseDegrees = 0;
-			public static final double kMaxRotationCounterClockwiseDegrees = 0;
-		}
 	}
 
 	public static class Hopper { // TODO: find me
