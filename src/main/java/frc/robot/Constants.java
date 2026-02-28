@@ -159,7 +159,7 @@ public final class Constants {
 		public static final double kIndexerRollersVelocity = 0.0;
 		public static final double kIndexingVelocity = 0.0;
 		
-		public static final double kIntakeExtension = 0.0;
+		public static final double kIntakeExtension = 10.5;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 

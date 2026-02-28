@@ -168,16 +168,14 @@ public class Hopper extends SubsystemBase {
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances
-            if (kIntakeExtension.getVelocity().getValueAsDouble() == 0 && kIntakeExtension.getAppliedControl().getClass().equals(voltageOut.getClass())) {
+            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 46) {
                 kIntakeExtension.setControl(voltageOut.withOutput(0));
                 zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
                 hasZeroedPosition = true;
-            } else kIntakeExtension.setControl(voltageOut.withOutput(1)); // TODO: change zeroing voltage
+            } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
 
             if (!hasZeroedPosition) return;
         }
-
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
@@ -197,6 +195,7 @@ public class Hopper extends SubsystemBase {
         SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble());
         SmartDashboard.putNumber("IntakeStartingOffset", zeroedRotationOffset);
         SmartDashboard.putBoolean("HasZeroed", hasZeroedPosition);
+        
     }
 
     public double getIntakeExtensionMeters() {
