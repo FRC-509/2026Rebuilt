@@ -154,12 +154,12 @@ public final class Constants {
 	}
 
 	public static class Hopper { // TODO: find me
-        public static final double kIntakingVelocity = 0.0;
+        public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
-		public static final double kIndexerRollersVelocity = 0.0;
-		public static final double kIndexingVelocity = 0.0;
+		public static final double kIndexerRollersVelocity = 10;
+		public static final double kIndexingVelocity = 10;
 		
-		public static final double kIntakeExtension = 10.5;
+		public static final double kIntakeExtension = 10;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
@@ -248,9 +248,9 @@ public final class Constants {
 		}
 
 		public static class Hopper {
-            public static final double kExtensionP = 0.08;
-            public static final double kExtensionI = 0;
-            public static final double kExtensionD = 0;
+            public static final double kExtensionP = 0.14;
+            public static final double kExtensionI = 0.07;
+            public static final double kExtensionD = 0.01;
 
 			public static final double kIntakeP = 0; // TODO: redo
             public static final double kIntakeI = 0;

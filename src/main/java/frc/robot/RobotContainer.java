@@ -133,12 +133,14 @@ public class RobotContainer {
 
 	public void robotPeriodic() {
 		// vortex.updatePositionEstimate();
+
+		hopper.logZero();
 	}
 
 	public void zeroMechanisms() {
 		// leftTurret.zeroPosition();
 		// leftTurret.zeroPosition();
-		// hopper.zeroPosition();
+		hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

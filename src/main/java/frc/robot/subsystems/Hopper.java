@@ -57,6 +57,22 @@ public class Hopper extends SubsystemBase {
         }
     }
 
+    public String hopperStateString(HopperState state) {
+        switch (state) {
+            case PASSIVE:
+                return "Passive";
+            case INDEXING:
+                return "Indexing";
+            case INTAKING:
+                return "Intaking";
+            case INTAKING_AND_INDEXING:
+                return "Intaking and Indexing";
+        
+            default:
+                return "None somehow";
+        }
+    }
+
     public enum IndexerState {
         PASSIVE(false, false),
         LEFT(true,false),
@@ -179,8 +195,8 @@ public class Hopper extends SubsystemBase {
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? Constants.Hopper.kIntakeExtension - zeroedRotationOffset : 0 - zeroedRotationOffset));
-            // if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.85));
+                // if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
         if (!indexerState.equals(indexerState)) { // only change instruction on state change, not every 20ms
@@ -191,11 +207,8 @@ public class Hopper extends SubsystemBase {
                 kRightIndexerRotation.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
         }
 
-
-        SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble());
-        SmartDashboard.putNumber("IntakeStartingOffset", zeroedRotationOffset);
-        SmartDashboard.putBoolean("HasZeroed", hasZeroedPosition);
-        
+        SmartDashboard.putNumber("IntakePosition", -kIntakeExtension.getPosition().getValueAsDouble() + zeroedRotationOffset);
+        SmartDashboard.putString("HopperState", hopperStateString(hopperState));
     }
 
     public double getIntakeExtensionMeters() {
@@ -204,5 +217,9 @@ public class Hopper extends SubsystemBase {
 
     public void zeroPosition() {
         this.hasZeroedPosition = false;
+    }
+
+    public void logZero() {
+        SmartDashboard.putBoolean("HasZeroed", hasZeroedPosition);
     }
 }
