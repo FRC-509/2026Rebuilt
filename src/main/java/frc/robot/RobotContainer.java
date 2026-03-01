@@ -37,7 +37,7 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	// private final Turret leftTurret;
+	private final Turret leftTurret;
 	// private final Turret rightTurret;
 	private final Hopper hopper;
 
@@ -50,10 +50,10 @@ public class RobotContainer {
 		this.hopper = new Hopper();
 		// this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
-		// this.leftTurret = new Turret(
-		// 	Constants.Turret.kLeftTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-		// 	() -> swerve.getYaw().getDegrees());
+		this.leftTurret = new Turret(
+			Constants.Turret.kLeftTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			() -> swerve.getYaw().getDegrees());
 			
 			
 		// this.rightTurret = new Turret(
@@ -138,7 +138,7 @@ public class RobotContainer {
 	}
 
 	public void zeroMechanisms() {
-		// leftTurret.zeroPosition();
+		leftTurret.zeroPosition();
 		// leftTurret.zeroPosition();
 		hopper.zeroPosition();
 	}
