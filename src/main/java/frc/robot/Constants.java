@@ -94,12 +94,14 @@ public final class Constants {
 			-9.57996);
 
 		public static record TurretConfiguration(
+			String side,
 			int rotationMotorId,
             int topFlywheelMotorId,
             int bottomFlywheelMotorId,
             Translation3d offsetTranslation,
             double maxRotationClockwise,
-            double maxRotationCounterclockwise) {}
+            double maxRotationCounterclockwise,
+			boolean zeroesCounterClockwise) {}
 
 		public static final double kRobotWidth = Units.inchesToMeters(26);
 		public static final double kBumperWidth = Units.inchesToMeters(3.5);
@@ -114,20 +116,24 @@ public final class Constants {
 	public static class Turret {
 
 		public static final TurretConfiguration kLeftTurretConfiguration = new TurretConfiguration(
+			"Left",
 			Constants.IDs.kLeftRotationMotor, 
 			Constants.IDs.kLeftTopFlywheel, 
 			Constants.IDs.kLeftBottomFlywheel,
 			new Translation3d(),
 			-51.3,
-			93);
+			93,
+			true);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
+			"Right",
 			Constants.IDs.kRightRotationMotor, 
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(),
-			0,
-			0);
+			-93,
+			51.3,
+			false);
 
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d;
@@ -156,8 +162,8 @@ public final class Constants {
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
-		public static final double kIndexerRollersVelocity = 10;
-		public static final double kIndexingVelocity = 10;
+		public static final double kIndexerRollersVelocity = 30;
+		public static final double kIndexingVelocity = 30;
 		
 		public static final double kIntakeExtension = 10;
         public static final double kIntakeExtensionToMetersConversion = 0;
@@ -242,9 +248,9 @@ public final class Constants {
             public static final double kRotationI = 0.12;
             public static final double kRotationD = 0.03;
 
-            public static final double kFlywheelP = 0.045;
-            public static final double kFlywheelI = 0.2;
-            public static final double kFlywheelD = 0;
+            public static final double kFlywheelP = 2.3;
+            public static final double kFlywheelI = 0.12;
+            public static final double kFlywheelD = 0.075;
 		}
 
 		public static class Hopper {

@@ -33,6 +33,9 @@ public class Turret extends SubsystemBase {
     private final Translation3d offsetTranslation;
     private final double maxRotationClockwise;
     private final double maxRotationCounterclockwise;
+    private final boolean zeroesCounterClockwise;
+    private final double zeroedRotationMaximumAdded;
+    private final String side;
 
     private final Translation2dSupplier positionEstimate;
     private final DoubleSupplier robotYawRadiansSupplier;
@@ -79,7 +82,7 @@ public class Turret extends SubsystemBase {
         // Flywheel motor config
         TalonFXConfiguration flywheelMotorConfig = new TalonFXConfiguration();
 		flywheelMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		flywheelMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+		flywheelMotorConfig.MotorOutput.Inverted = turretConfiguration.zeroesCounterClockwise() ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
 		flywheelMotorConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		flywheelMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
 		flywheelMotorConfig.Feedback.SensorToMechanismRatio = Constants.Turret.kFlywheelMotorToMechanismRatio;
@@ -111,6 +114,9 @@ public class Turret extends SubsystemBase {
 
         this.hasZeroedPosition = false;
         this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
+        this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
+        this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
+        this.side = turretConfiguration.side();
     }
  
     public enum AimTarget {
@@ -140,12 +146,12 @@ public class Turret extends SubsystemBase {
     }
 
     private void setRotationDegrees(double degrees) {
-        rotationToTarget = (degrees - maxRotationCounterclockwise) / 360 + zeroedRotationOffset; // TODO: change to actual conversion
+        rotationToTarget = (degrees - zeroedRotationMaximumAdded) / 360 + zeroedRotationOffset; // TODO: change to actual conversion
         kRotationMotor.setControl(kPositionDutyCycle.withPosition(rotationToTarget));
     }
 
     private double getRotationDegrees() {
-        return (kRotationMotor.getPosition().getValueAsDouble() - zeroedRotationOffset) * 360 + maxRotationCounterclockwise;
+        return (kRotationMotor.getPosition().getValueAsDouble() - zeroedRotationOffset) * 360 + zeroedRotationMaximumAdded;
     }
 
     public void setAimTarget(AimTarget aimTarget) {
@@ -281,15 +287,13 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // TODO: replace with non hard stop version, complient with design change
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            // TODO: double check this method works and isn't cancelled immediately, also add needed tolerances
-            if (kRotationMotor.getTorqueCurrent().getValueAsDouble() > 24.3) {
+            if (Math.abs(kRotationMotor.getTorqueCurrent().getValueAsDouble()) > 24.1) {
                 kRotationMotor.setControl(kVoltageOut.withOutput(0));
                 zeroedRotationOffset = kRotationMotor.getPosition().getValueAsDouble();
                 hasZeroedPosition = true;
-            } else kRotationMotor.setControl(kVoltageOut.withOutput(1)); // TODO: change zeroing voltage
+            } else kRotationMotor.setControl(kVoltageOut.withOutput(zeroesCounterClockwise ? 1 : -1));
 
             if (!hasZeroedPosition) return;
         }
@@ -307,9 +311,14 @@ public class Turret extends SubsystemBase {
         //     kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
         //     kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
         // }
-        SmartDashboard.putNumber("TurretPosition", getRotationDegrees());
-        SmartDashboard.putNumber("TurretZeroOffset", zeroedRotationOffset * 360);
-        SmartDashboard.putNumber("TurretReal", kRotationMotor.getPosition().getValueAsDouble());
+
+        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(35, 0d, 100d)));
+        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(35, 0d, 100d)));
+        setRotationDegrees(0);
+        
+        SmartDashboard.putNumber(side+"TurretPosition", getRotationDegrees());
+        SmartDashboard.putNumber(side+"TurretZeroOffset", zeroedRotationOffset * 360);
+        SmartDashboard.putNumber(side+"TurretReal", kRotationMotor.getPosition().getValueAsDouble());
     }
 
     public void zeroPosition() {

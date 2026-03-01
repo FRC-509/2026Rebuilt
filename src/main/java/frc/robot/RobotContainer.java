@@ -38,7 +38,7 @@ public class RobotContainer {
 	
 	private final SwerveDrive swerve;
 	private final Turret leftTurret;
-	// private final Turret rightTurret;
+	private final Turret rightTurret;
 	private final Hopper hopper;
 
 	// private final Vortex vortex;
@@ -56,10 +56,10 @@ public class RobotContainer {
 			() -> swerve.getYaw().getDegrees());
 			
 			
-		// this.rightTurret = new Turret(
-		// 	Constants.Turret.kRightTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-		// 	() -> swerve.getYaw().getDegrees());
+		this.rightTurret = new Turret(
+			Constants.Turret.kRightTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			() -> swerve.getYaw().getDegrees());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -126,7 +126,7 @@ public class RobotContainer {
 			SmartDashboard.putData("Reset Swerve", Commands.runOnce(swerve::resetSimState, swerve));
 		}
 	}
-	
+
     public Command getAutonomousCommand() {
       	return Commands.print("No autonomous command configured");
     }
@@ -139,7 +139,7 @@ public class RobotContainer {
 
 	public void zeroMechanisms() {
 		leftTurret.zeroPosition();
-		// leftTurret.zeroPosition();
+		rightTurret.zeroPosition();
 		hopper.zeroPosition();
 	}
 
