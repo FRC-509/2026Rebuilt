@@ -78,6 +78,10 @@ public class SwerveDrive extends SubsystemBase {
 	private StructPublisher<Pose2d> odometryPublisher;
 	private StructPublisher<Pose2d> poseEstimatePublisher;
 
+	private final NetworkTable swerveDriveTable = NetowrkTableInstance.getDefault().getTable("SwerveDrive");
+
+	private final NetworkTableEntry headingEntry = swerveDriveTable.getEntry("Heading");
+
 	public SwerveDrive(PigeonWrapper pigeon) {
 		this.manualRotationTimer = new Timer();
 		manualRotationTimer.start();
@@ -361,6 +365,9 @@ public class SwerveDrive extends SubsystemBase {
 
 	@Override
 	public void periodic() {
+		//elastic network table updates
+		headingEntry.setDouble(getYaw());
+
 		odometry.update(getYaw(), getModulePositions());
 		poseEstimator.update(getYaw(), getModulePositions());
 
