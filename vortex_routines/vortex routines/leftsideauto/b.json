@@ -1,0 +1,21 @@
+{
+    "points": [
+        {
+            "id": 1,
+            "x": 9.2435,
+            "y": 1.7781,
+            "rotation": 0
+        },
+        {
+            "id": 2,
+            "x": 12.9484,
+            "y": 3.6124,
+            "rotation": 30.8
+        }
+    ],
+    "events": [],
+    "ties": {
+        "start": "leftsideauto/a.json",
+        "end": "leftsideauto/d.json"
+    }
+}

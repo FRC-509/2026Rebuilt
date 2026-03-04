@@ -12,12 +12,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.path_generation.FollowPath;
+import frc.robot.path_generation.PathPoint;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.drive.SwerveDrive;
-import frc.robot.vortex.FollowPath;
-import frc.robot.vortex.PathPoint;
 
 public class FollowVortexRoutine extends ParallelCommandGroup {
     
@@ -27,6 +27,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     }
 
     private class StormChaserPoint {
+        @SuppressWarnings("unused")
         public int id;
         public double x;
         public double y;
@@ -42,6 +43,11 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     private class StormChaserPath {
         public ArrayList<StormChaserPoint> points;
         public ArrayList<Event> events;
+        @SuppressWarnings("unused")
+        public class Ties {
+            public String start;
+            public String end;
+        }
 
         private StormChaserPath(){}
         
@@ -125,7 +131,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     }
 
 
-    private ParallelCommandGroup endAuto() {
+    public ParallelCommandGroup endAuto() {
         return new ParallelCommandGroup(
 			Commands.runOnce(() -> swerve.stopModules(), swerve),
 			new HopperDefaultCommand(

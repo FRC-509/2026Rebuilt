@@ -1,10 +1,16 @@
 package frc.robot.subsystems;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.function.DoubleSupplier;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -14,7 +20,7 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 
-public class Vortex {
+        public class Vortex {
 
     private SwerveDrivePoseEstimator poseEstimator;
     private SwerveDrive swerveDrive;
@@ -102,5 +108,127 @@ public class Vortex {
 
         return poseEstimator.update(swerveDrive.getYaw(), swerveDrive.getModulePositions()).getTranslation();
     }
+
+
+
+
+    public class UdpVisionRelay {
+        public static class Tag {
+            public int id;
+            public double x;
+            public double y;
+            public double z;
+            public double floor_z_error;
+        }
+
+        public static class Obj {
+            public String class_name;
+            public double confidence;
+            public double[] bbox;
+            public double x;
+            public double y;
+            public double z;
+        }
+
+        public static class RobotPose {
+            public double x;
+            public double y;
+            public int tags_used;
+            public double floor_z_error_avg;
+        }
+
+        public static class Snapshot {
+            public int camera_index;
+            public double fps;
+            public Tag[] apriltags;
+            public Obj[] objects;
+            public RobotPose robot_pose;
+        }
+
+        private final int port;
+        private final ObjectMapper mapper = new ObjectMapper();
+
+        private volatile boolean running = false;
+        private Thread worker;
+        private DatagramSocket socket;
+
+        public UdpVisionRelay(int port) {
+          this.port = port;
+        }
+
+        public void start() {
+            if (running) return;
+            running = true;
+
+            worker = new Thread(() -> {
+              NetworkTable base = NetworkTableInstance.getDefault().getTable("Vortex").getSubTable("Vision");
+            
+              try {
+                socket = new DatagramSocket(port);
+                System.out.println("UDP relay listening on " + port);
+
+                byte[] buf = new byte[65535];
+                while (running) {
+                    DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                    socket.receive(packet);
+
+                    String raw = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
+                    Snapshot s = mapper.readValue(raw, Snapshot.class);
+
+                    NetworkTable cam = base.getSubTable("Camera" + s.camera_index);
+                    cam.getEntry("fps").setDouble(s.fps);
+
+                    int tagCount = (s.apriltags == null) ? 0 : s.apriltags.length;
+                    int objCount = (s.objects == null) ? 0 : s.objects.length;
+                    cam.getEntry("apriltag_count").setDouble(tagCount);
+                    cam.getEntry("object_count").setDouble(objCount);
+
+                    boolean hasPose = s.robot_pose != null;
+                    cam.getEntry("has_pose").setBoolean(hasPose);
+                    if (hasPose) {
+                        cam.getEntry("robot_x").setDouble(s.robot_pose.x);
+                        cam.getEntry("robot_y").setDouble(s.robot_pose.y);
+                        cam.getEntry("tags_used").setDouble(s.robot_pose.tags_used);
+                        cam.getEntry("floor_err_avg").setDouble(s.robot_pose.floor_z_error_avg);
+                }
+
+                if (tagCount > 0) {
+                    Tag t = s.apriltags[0];
+                    cam.getEntry("tag0_id").setDouble(t.id);
+                    cam.getEntry("tag0_x").setDouble(t.x);
+                    cam.getEntry("tag0_y").setDouble(t.y);
+                    cam.getEntry("tag0_z").setDouble(t.z);
+                    cam.getEntry("tag0_floor_err").setDouble(t.floor_z_error);
+                }
+
+                if (objCount > 0) {
+                    Obj o = s.objects[0];
+                    cam.getEntry("obj0_confidence").setDouble(o.confidence);
+                    cam.getEntry("obj0_x").setDouble(o.x);
+                    cam.getEntry("obj0_y").setDouble(o.y);
+                    cam.getEntry("obj0_z").setDouble(o.z);
+                }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (socket != null && !socket.isClosed()) {
+                socket.close();
+                }
+            }
+            }, "UdpVisionRelay");
+
+            worker.setDaemon(true);
+            worker.start();
+        }
+
+        public void stop() {
+            running = false;
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        }
+    }
+
 
 }
