@@ -247,10 +247,18 @@ public final class Constants {
             public static final double kRotationP = 0.95;
             public static final double kRotationI = 0.12;
             public static final double kRotationD = 0.03;
+			
+			public static final double kRotationS = 0.0;
+			public static final double kRotationV = 0.0;
+			public static final double kRotationA = 0.0;
 
             public static final double kFlywheelP = 2.3;
             public static final double kFlywheelI = 0.12;
             public static final double kFlywheelD = 0.075;
+
+			public static final double kFlyWheelS = 0.0;
+			public static final double kFlyWheelV = 0.0;
+			public static final double kFlyWheelA = 0.0;
 		}
 
 		public static class Hopper {

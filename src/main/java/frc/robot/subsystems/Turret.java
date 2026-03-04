@@ -80,6 +80,10 @@ public class Turret extends SubsystemBase {
 		rotationMotorConfig.Slot0.kI = Constants.PIDConstants.Turret.kRotationI;
 		rotationMotorConfig.Slot0.kD = Constants.PIDConstants.Turret.kRotationD;
 
+        rotationMotorConfig.Slot0.kS = Constants.PIDConstants.Turret.kRotationS;
+        rotationMotorConfig.Slot0.kV = Constants.PIDConstants.Turret.kRotationV;    
+        rotationMotorConfig.Slot0.kA = Constants.PIDConstants.Turret.kRotationA;
+
 
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kTurretRotationSupply; 
@@ -100,6 +104,10 @@ public class Turret extends SubsystemBase {
 		flywheelMotorConfig.Slot0.kP = Constants.PIDConstants.Turret.kFlywheelP;
 		flywheelMotorConfig.Slot0.kI = Constants.PIDConstants.Turret.kFlywheelI;
 		flywheelMotorConfig.Slot0.kD = Constants.PIDConstants.Turret.kFlywheelD;
+
+        flywheelMotorConfig.Slot0.kS = Constants.PIDConstants.Turret.kFlyWheelS;
+        flywheelMotorConfig.Slot0.kV = Constants.PIDConstants.Turret.kFlyWheelV;
+        flywheelMotorConfig.Slot0.kA = Constants.PIDConstants.Turret.kFlyWheelA;
 
 		flywheelMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 		flywheelMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kTurretFlywheelSupply; 
