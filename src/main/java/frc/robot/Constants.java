@@ -13,10 +13,12 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Constants.Chassis.TurretConfiguration;
 import frc.robot.util.math.Conversions;
 
 public final class Constants {
 	public static final String kRio = "rio";
+	public static final String kCanivore = "509CANIvore";
 
 	public static class Operator {
 		public static final double kStickDeadband = 0.1;
@@ -32,10 +34,10 @@ public final class Constants {
 		public static final double kOffsetToSwerveModule = 0.395;
 		public static final double kKrakenFreeSpeedRPM = 6000.0d;
 		public static final double kKrakenFreeSpeedRPS = kKrakenFreeSpeedRPM / 60.0d;
-		public static final double kMaxSpeed = Conversions.falconToMPS(kKrakenFreeSpeedRPS, N5.kWheelCircumference,
-			N5.kDriveGearRatio); // test
+		public static final double kMaxSpeed = Conversions.falconToMPS(kKrakenFreeSpeedRPS, M5n.kWheelCircumference,
+			M5n.kDriveGearRatio); // test
 		
-		public static class N5 { // R2 config
+		public static class M5n { // R2 config
 			public static final double kWheelRadius = Units.inchesToMeters(2.0);
 			public static final double kWheelCircumference = 2 * kWheelRadius * Math.PI; // 0.3192 meters
 			public static final double kDriveGearRatio = 6.03 / 1;
@@ -68,28 +70,38 @@ public final class Constants {
 			IDs.kFrontRightEncoder,
 			IDs.kFrontRightSteer,
 			IDs.kFrontRightDrive,
-			118.587891);
+			98.70156);
 
 		public static final SwerveModuleConfiguration kFrontLeft = new SwerveModuleConfiguration(
 			1,
 			IDs.kFrontLeftEncoder,
 			IDs.kFrontLeftSteer,
 			IDs.kFrontLeftDrive,
-			153.337891);
+			153.45344);
 
 		public static final SwerveModuleConfiguration kBackLeft = new SwerveModuleConfiguration(
 			2,
 			IDs.kBackLeftEncoder,
 			IDs.kBackLeftSteer,
 			IDs.kBackLeftDrive,
-			104.066406+1);
+			-17.05068);
 
 		public static final SwerveModuleConfiguration kBackRight = new SwerveModuleConfiguration(
 			3,
 			IDs.kBackRightEncoder,
 			IDs.kBackRightSteer,
 			IDs.kBackRightDrive,
-			140.425782);
+			-9.57996);
+
+		public static record TurretConfiguration(
+			String side,
+			int rotationMotorId,
+            int topFlywheelMotorId,
+            int bottomFlywheelMotorId,
+            Translation3d offsetTranslation,
+            double maxRotationClockwise,
+            double maxRotationCounterclockwise,
+			boolean zeroesCounterClockwise) {}
 
 		public static final double kRobotWidth = Units.inchesToMeters(26);
 		public static final double kBumperWidth = Units.inchesToMeters(3.5);
@@ -102,8 +114,29 @@ public final class Constants {
 	}
 
 	public static class Turret {
+
+		public static final TurretConfiguration kLeftTurretConfiguration = new TurretConfiguration(
+			"Left",
+			Constants.IDs.kLeftRotationMotor, 
+			Constants.IDs.kLeftTopFlywheel, 
+			Constants.IDs.kLeftBottomFlywheel,
+			new Translation3d(),
+			-51.3,
+			93,
+			true);
+
+		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
+			"Right",
+			Constants.IDs.kRightRotationMotor, 
+			Constants.IDs.kRightTopFlywheel, 
+			Constants.IDs.kRightBottomFlywheel,
+			new Translation3d(),
+			-93,
+			51.3,
+			false);
+
 		// TODO: find me
-		public static final double kRotationMotorToMechanismRatio = 0.0d;
+		public static final double kRotationMotorToMechanismRatio = 148/12d;
 		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
 		public static final double kRotationToTurretDegrees = 0;
 
@@ -124,26 +157,15 @@ public final class Constants {
         public static final double kEfficiency = 0;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
-        public static class LeftTurret {
-            public static final Translation3d kLeftTurretOffset = new Translation3d();
-            public static final double kMaxRotationClockwiseDegrees = 0;
-			public static final double kMaxRotationCounterClockwiseDegrees = 0;
-		}
-		
-        public static class RightTurret {
-            public static final Translation3d kRightTurretOffset = new Translation3d();
-            public static final double kMaxRotationClockwiseDegrees = 0;
-			public static final double kMaxRotationCounterClockwiseDegrees = 0;
-		}
 	}
 
 	public static class Hopper { // TODO: find me
-        public static final double kIntakingVelocity = 0.0;
+        public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
-		public static final double kIndexerRollersVelocity = 0.0;
-		public static final double kIndexingVelocity = 0.0;
+		public static final double kIndexerRollersVelocity = 30;
+		public static final double kIndexingVelocity = 30;
 		
-		public static final double kIntakeExtension = 0.0;
+		public static final double kIntakeExtension = 10;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
@@ -155,35 +177,37 @@ public final class Constants {
 
 	public static class IDs {
 		// Swerve Drive
-		public static final int kFrontRightDrive = 11;
-		public static final int kFrontRightSteer = 9;
-		public static final int kFrontRightEncoder = 3;
+		public static final int kFrontLeftDrive = 1;
+		public static final int kFrontLeftSteer = 2;
+		public static final int kFrontLeftEncoder = 9;
 
-		public static final int kFrontLeftDrive = 10;
-		public static final int kFrontLeftSteer = 6;
-		public static final int kFrontLeftEncoder = 1;
+		public static final int kFrontRightDrive = 3;
+		public static final int kFrontRightSteer = 4;
+		public static final int kFrontRightEncoder = 10;
 		
-		public static final int kBackRightDrive = 8;
-		public static final int kBackRightSteer = 5;
-		public static final int kBackRightEncoder = 4;
+		public static final int kBackLeftDrive = 5;
+		public static final int kBackLeftSteer = 6;
+		public static final int kBackLeftEncoder = 11;
 		
-		public static final int kBackLeftDrive = 12;
-		public static final int kBackLeftSteer = 7;
-		public static final int kBackLeftEncoder = 2;
+		public static final int kBackRightDrive = 7;
+		public static final int kBackRightSteer = 8;
+		public static final int kBackRightEncoder = 12;
 
 		// Shooters
-		public static final int kLeftBottomFlywheel = 0;
-		public static final int kLeftTopFlywheel = 0;
-		public static final int kLeftRotationMotor = 0;
+		public static final int kLeftBottomFlywheel = 14;
+		public static final int kLeftTopFlywheel = 13;
+		public static final int kLeftRotationMotor = 15;
 		
-		public static final int kRightBottomFlywheel = 0;
-		public static final int kRightTopFlywheel = 0;
-		public static final int kRightRotationMotor = 0;
+		public static final int kRightBottomFlywheel = 17;
+		public static final int kRightTopFlywheel = 16;
+		public static final int kRightRotationMotor = 18;
 		
 		// Hopper
-        public static final int kIntakeExtension = 0;
-        public static final int kIntakeRotation = 0;
-        public static final int kIndexerRotation = 0;
+        public static final int kIntakeExtension = 20;
+        public static final int kIntakeRotation = 19;
+        public static final int kIndexerRotation = 21;
+        public static final int kLeftKicker = 22;
+        public static final int kRightKicker = 23;
 	}
 
 	public static class PathGeneration {
@@ -220,30 +244,30 @@ public final class Constants {
 		}
 
 		public static class Turret {
-            public static final double kRotationP = 0;
-            public static final double kRotationI = 0;
-            public static final double kRotationD = 0;
+            public static final double kRotationP = 0.95;
+            public static final double kRotationI = 0.12;
+            public static final double kRotationD = 0.03;
 
-            public static final double kFlywheelP = 0;
-            public static final double kFlywheelI = 0;
-            public static final double kFlywheelD = 0;
+            public static final double kFlywheelP = 2.3;
+            public static final double kFlywheelI = 0.12;
+            public static final double kFlywheelD = 0.075;
 		}
 
 		public static class Hopper {
-            public static final double kExtensionP = 0;
-            public static final double kExtensionI = 0;
-            public static final double kExtensionD = 0;
+            public static final double kExtensionP = 0.14;
+            public static final double kExtensionI = 0.07;
+            public static final double kExtensionD = 0.01;
 
-			public static final double kIntakeP = 0;
+			public static final double kIntakeP = 0; // TODO: redo
             public static final double kIntakeI = 0;
             public static final double kIntakeD = 0;
 			
-			public static final double kIndexerP = 0;
-            public static final double kIndexerI = 0;
+			public static final double kIndexerP = 0.01;
+            public static final double kIndexerI = 0.5;
             public static final double kIndexerD = 0;
 
-            public static final double kIndexerRollersP = 0;
-            public static final double kIndexerRollersI = 0;
+            public static final double kIndexerRollersP = 0.01;
+            public static final double kIndexerRollersI = 0.5;
             public static final double kIndexerRollersD = 0;
 		}
 	}
@@ -252,24 +276,23 @@ public final class Constants {
 		public static final double kSwerveModuleSupply = 35.0d;
 		// SwerveStator ?
 
-        public static final double kTurretRotationSupply = 0;
-        public static final double kTurretRotationStator = 0;
+        public static final double kTurretRotationSupply = 70;
+        public static final double kTurretRotationStator = 120;
 
-		public static final double kTurretFlywheelSupply = 0;
-        public static final double kTurretFlywheelStator = 0;
+		public static final double kTurretFlywheelSupply = 70;
+        public static final double kTurretFlywheelStator = 120;
 
-		public static final double kIntakeExtensionSupply = 0;
-        public static final double kIntakeExtensionStator = 0;
+		public static final double kIntakeExtensionSupply = 70;
+        public static final double kIntakeExtensionStator = 120;
 
-		public static final double kIntakeSupply = 0;
-        public static final double kIntakeStator = 0;
+		public static final double kIntakeSupply = 70;
+        public static final double kIntakeStator = 120;
 
-        public static final double kIndexerSupply = 0;
-        public static final double kIndexerStator = 0;
+        public static final double kIndexerSupply = 70;
+        public static final double kIndexerStator = 120;
 
-        public static final double kIndexerRollersSupply = 0;
-
-        public static final double kIndexerRollersStator = 0;
+        public static final double kIndexerRollersSupply = 70;
+        public static final double kIndexerRollersStator = 120;
 	}
 
 	public static class Field {

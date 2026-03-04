@@ -50,12 +50,12 @@ public class SwerveModule {
 		// Angle Motor Config
 		TalonFXConfiguration steerMotorConfig = new TalonFXConfiguration();
 		steerMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		steerMotorConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+		steerMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 		steerMotorConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		steerMotorConfig.ClosedLoopGeneral.ContinuousWrap = true;
 		steerMotorConfig.Feedback.FeedbackRemoteSensorID = configs.steerEncoderId();
 		steerMotorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANcoder;
-		steerMotorConfig.Feedback.RotorToSensorRatio = Constants.Chassis.N5.kAngleGearRatio;
+		// steerMotorConfig.Feedback.RotorToSensorRatio = Constants.Chassis.M5n.kAngleGearRatio;
 		// The absolute encoder and mechanism are one-to-one, as the absolute
 		// encoder is on the output shaft. However, the internal encoder and the
 		// absoltue encoder do have a ratio equal to the steer gear ratio.
@@ -114,12 +114,12 @@ public class SwerveModule {
 
 		// Accounts for coupling; rotation of the angle motor causing the actual drive
 		// wheel to rotate slightly.
-		double drivePosition = driveRot - steerRot * Constants.Chassis.N5.kCouplingRatio;
+		double drivePosition = driveRot - steerRot * Constants.Chassis.M5n.kCouplingRatio;
 		return new SwerveModulePosition(
 				Conversions.falconToMeters(
 						drivePosition,
-						Constants.Chassis.N5.kWheelCircumference,
-						Constants.Chassis.N5.kDriveGearRatio),
+						Constants.Chassis.M5n.kWheelCircumference,
+						Constants.Chassis.M5n.kDriveGearRatio),
 				Rotation2d.fromRotations(steerRot));
 	}
 
@@ -130,8 +130,8 @@ public class SwerveModule {
 		return new SwerveModuleState(
 				Conversions.falconToMPS(
 						driveMotor.getVelocity().getValueAsDouble(),
-						Constants.Chassis.N5.kWheelCircumference,
-						Constants.Chassis.N5.kDriveGearRatio),
+						Constants.Chassis.M5n.kWheelCircumference,
+						Constants.Chassis.M5n.kDriveGearRatio),
 				getAngle());
 	}
 
@@ -164,13 +164,13 @@ public class SwerveModule {
 		// Constants.MK4I.kCouplingRatio;
 
 		double targetVelocity = Conversions.MPSToFalcon(desiredState.speedMetersPerSecond,
-				Constants.Chassis.N5.kWheelCircumference, Constants.Chassis.N5.kDriveGearRatio) * cosineScalar;
+				Constants.Chassis.M5n.kWheelCircumference, Constants.Chassis.M5n.kDriveGearRatio) * cosineScalar;
 
 		if (closedLoop) {
 			driveMotor.setControl(closedLoopDriveRequest.withVelocity(targetVelocity));
 		} else {
-			double voltage = Conversions.falconToMPS(targetVelocity, Constants.Chassis.N5.kWheelCircumference,
-			Constants.Chassis.N5.kDriveGearRatio) / Constants.Chassis.kMaxSpeed * 12.0;
+			double voltage = Conversions.falconToMPS(targetVelocity, Constants.Chassis.M5n.kWheelCircumference,
+			Constants.Chassis.M5n.kDriveGearRatio) / Constants.Chassis.kMaxSpeed * 12.0;
 			driveMotor.setControl(openLoopDriveRequest.withOutput(voltage));
 		}
 	}
@@ -180,7 +180,7 @@ public class SwerveModule {
 	}
 
 	public void simPeriodic() {
-		double error = (lastSet.angle.getRotations() - simulated.angle.getRotations()) / Constants.Chassis.N5.kAngleGearRatio;
+		double error = (lastSet.angle.getRotations() - simulated.angle.getRotations()) / Constants.Chassis.M5n.kAngleGearRatio;
 		double rotationsPerSecond = Constants.Chassis.kKrakenFreeSpeedRPS * error * Constants.PIDConstants.Drive.kSteerAngleP / 12.0;
 
 		simulated.angle = Rotation2d.fromRotations(simulated.angle.getRotations() + rotationsPerSecond * 0.02);
