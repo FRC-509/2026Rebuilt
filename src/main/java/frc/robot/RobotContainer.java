@@ -21,6 +21,7 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
+import frc.robot.util.controllers.ThrustmasterJoystick.StickButton;
 
 public class RobotContainer {
 	
@@ -71,6 +72,10 @@ public class RobotContainer {
 				() -> driverRight.getTrigger(),
 				() -> true));
 
+		driverLeft.isPressedBind(StickButton.Left, Commands.runOnce(() -> {
+			pigeon.setYaw(0);
+			swerve.setTargetHeading(0);
+		}, swerve));
 
 		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
 		// 	new AlignToHeading(
