@@ -53,9 +53,9 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
         
         public static StormChaserPath pathFromFile(String filePath) {
             try {
-                return new ObjectMapper().readValue(new File(filePath), StormChaserPath.class);
+                return new ObjectMapper().readValue(new File("vortex_routines/"+filePath+".json"), StormChaserPath.class);
             } catch (IOException exception) {
-                DriverStation.reportError("Unhandled IO Exception when loading '"+filePath+"'.", exception.getStackTrace());
+                DriverStation.reportError("Unhandled IO Exception when loading '"+filePath+".json'", exception.getStackTrace());
                 return null;
             }
         }
