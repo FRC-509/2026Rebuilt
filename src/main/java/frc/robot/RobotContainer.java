@@ -114,8 +114,7 @@ public class RobotContainer {
 			() -> driverRight.getTrigger(),
 			() -> driverLeft.getTrigger(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7, //rightTurret.isAbleToShoot(),
-			() -> false));
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
 
 	}
 
