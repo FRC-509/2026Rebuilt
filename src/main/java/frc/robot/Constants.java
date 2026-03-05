@@ -157,6 +157,8 @@ public final class Constants {
         public static final double kEfficiency = 0;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
+        public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
+
 	}
 
 	public static class Hopper { // TODO: find me
