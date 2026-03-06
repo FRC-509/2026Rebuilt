@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -18,6 +19,7 @@ import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
+import frc.robot.subsystems.Vortex;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
@@ -35,15 +37,14 @@ public class RobotContainer {
 	private final Turret leftTurret;
 	private final Turret rightTurret;
 	private final Hopper hopper;
-
-	// private final Vortex vortex;
+	private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
 		this.hopper = new Hopper();
-		// this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
+		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
@@ -132,7 +133,8 @@ public class RobotContainer {
     }
 
 	public void robotPeriodic() {
-		// vortex.updatePositionEstimate();
+		vortex.postVortexToNT();
+		vortex.updatePositionEstimate();
 
 		hopper.logZero();
 	}

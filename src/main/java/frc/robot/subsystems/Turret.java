@@ -125,7 +125,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(4.54+1,3.97,1.88), 0),
+        HUB(new Translation3d(4.54+2.5,3.97+0.6,1.88), 0),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -238,13 +238,10 @@ public class Turret extends SubsystemBase {
         double denom = (dist * Math.tan(theta)) - targetTurretRelative.getZ();
         if (!(denom > 0 && Math.abs(cosT) > 0.001)) return 0d;
 
-        double exitVelocity = MathUtil.clamp(
-            Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom)),
-            0.0d,
-            Constants.Turret.kMaxExitVelocity); // divide by efficiency?
+        double exitVelocity = Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom));
         
         double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
-        return angularVelocityRadPerSec / 2 / Math.PI;
+        return MathUtil.clamp(angularVelocityRadPerSec / 2 / Math.PI, 0, 100);
     }
 
     private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect
@@ -259,9 +256,7 @@ public class Turret extends SubsystemBase {
         double denom = (dist * Math.tan(theta)) - targetZ;
         if (!(denom > 0 && Math.abs(cosT) > 0.001)) return new double[] {0, 0};
 
-        double exitVelocity = MathUtil.clamp(
-            Math.sqrt((gEff * dist * dist) / (2 * cosT * cosT * denom)),
-            0.0d, Constants.Turret.kMaxExitVelocity);
+        double exitVelocity = Math.sqrt((gEff * dist * dist) / (2 * cosT * cosT * denom));
 
         // v_exit = (Vb + Vt)/2, Spin_surface = (Vb - Vt)/2, therefore: Vb = V_exit + Spin_surface
         double surfaceSpeedDiff = Constants.Turret.kTargetSpinRadSec * Constants.Field.kFuelRadiusMeters;
@@ -269,7 +264,10 @@ public class Turret extends SubsystemBase {
         double vTop = (exitVelocity - surfaceSpeedDiff) / Constants.Turret.kEfficiency;
 
         double circ = 2 * Math.PI * Constants.Turret.kFlywheelRadiusMeters;
-        return new double[] { vBottom / circ, vTop / circ };
+        return new double[] { 
+            MathUtil.clamp(vBottom / circ, 0, 100), 
+            MathUtil.clamp(vTop / circ, 0, 100) 
+        };
     }
 
     private double[] calculateSpeedsManualMagnus() {
@@ -319,22 +317,26 @@ public class Turret extends SubsystemBase {
         if (!overrideAimTarget) aimTarget = getTargetFromPosition(); // override needed?
         logAimTarget();
         double angleToTarget = getRotationToTarget(aimTarget);
-        this.canAim = !aimTarget.equals(AimTarget.NONE) && angleToTarget <= maxRotationClockwise && angleToTarget >= maxRotationCounterclockwise; // check if desired angle is within bounds // TODO: double check which direction is positive or negative
+        double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
+        double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
+        this.canAim = !aimTarget.equals(AimTarget.NONE) && angleToTarget >= minRotationBound && angleToTarget <= maxRotationBound;
         // setRotationDegrees(canAim ? angleToTarget : 0);
         setRotationDegrees(angleToTarget);
         SmartDashboard.putNumber(side+"Turret AngleToTarget",angleToTarget);
         SmartDashboard.putNumber(side+"Turret RotationToTargetLeft", angleToTarget - getRotationDegrees());
         SmartDashboard.putBoolean(side+"Turret CanAim", canAim);
         // decide flywheel speed every 0.02s (ie always) for target
-        if (canAim) {
-            double[] flywheelSpeeds = calculateSpeedsManualMagnus();
+        // if (true){//canAim) {
+        double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};//calculateSpeedsManualMagnus();
             // kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
             // kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
-            SmartDashboard.putNumberArray(side+"flyweel speeds", flywheelSpeeds);
-        }
+        SmartDashboard.putNumber(side+"Turret Bottom flyweel speeds", flywheelSpeeds[0]);
+        SmartDashboard.putNumber(side+"Turret Top flyweel speeds", flywheelSpeeds[1]);
 
-        // kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(35, 0d, 100d)));
-        // kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(35, 0d, 100d)));
+        // }
+
+        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeeds[0]));
+        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeeds[1]));
         // setRotationDegrees(0);
         
         SmartDashboard.putNumber(side+"TurretPosition", getRotationDegrees());

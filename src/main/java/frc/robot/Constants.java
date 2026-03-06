@@ -145,16 +145,12 @@ public final class Constants {
 
         public static final double kTurretHeightFromGround = 0;
         public static final double kTurretAngleDegrees = 17;
-		public static final double kMaxExitVelocity = 0;
 
-		public static final double kFlywheelRadiusMeters = 0;
-		public static final double kFlywheelMass = 0;
-        public static final double kFlywheelMOI = 0.5 * kFlywheelMass * kFlywheelRadiusMeters * kFlywheelRadiusMeters;
+		public static final double kFlywheelRadiusMeters = Units.inchesToMeters(3/2);
+        public static final double kAverageFuelMass = 0.216;
+        public static final double kTargetSpinRadSec = 0.3;
 
-        public static final double kAverageFuelMass = 0;
-        public static final double kTargetSpinRadSec = 0;
-
-        public static final double kEfficiency = 0;
+        public static final double kEfficiency = 0.2673;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
