@@ -38,6 +38,7 @@ public class Turret extends SubsystemBase {
     private final String side;
 
     private final Translation2dSupplier positionEstimate;
+    private final Translation2dSupplier robotVelocitySupplier;
     private final DoubleSupplier robotYawRadiansSupplier;
 
     private AimTarget aimTarget;
@@ -53,6 +54,7 @@ public class Turret extends SubsystemBase {
     public Turret(
             TurretConfiguration turretConfiguration,
             Translation2dSupplier positionEstimate,
+            Translation2dSupplier robotVelocitySupplier,
             DoubleSupplier robotYawDegreesSupplier) {
         this.kRotationMotor = new TalonFX(turretConfiguration.rotationMotorId(), Constants.kCanivore);
         this.kTopFlywheelMotor = new TalonFX(turretConfiguration.topFlywheelMotorId(), Constants.kCanivore);
@@ -100,6 +102,7 @@ public class Turret extends SubsystemBase {
         this.kBottomFlywheelMotor.getConfigurator().apply(flywheelMotorConfig);
 
         this.positionEstimate = positionEstimate;
+        this.robotVelocitySupplier = robotVelocitySupplier;
         this.offsetTranslation = turretConfiguration.offsetTranslation();
         this.maxRotationClockwise = turretConfiguration.maxRotationClockwise();
         this.maxRotationCounterclockwise = turretConfiguration.maxRotationCounterclockwise();
@@ -136,10 +139,10 @@ public class Turret extends SubsystemBase {
             this.aimBehindMeters = aimBehindMeters;
         }
 
-        public Translation3d aimAccountedTarget(double swerveYawRadians) { // aim slightly behind target for accuracy
+        public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
             return new Translation3d(
-                position.getX() + aimBehindMeters * Math.cos(swerveYawRadians),
-                position.getY() + aimBehindMeters * -Math.sin(swerveYawRadians),
+                position.getX() + aimBehindMeters * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
+                position.getY() + aimBehindMeters * -Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
                 position.getZ()
             );
         }
@@ -205,10 +208,14 @@ public class Turret extends SubsystemBase {
         return AimTarget.HOPPER;
     }
 
-    private double calculateFlywheelSpeeds() {
+    private Translation3d getTargetTurretRelative() {
         Translation2d turretGlobal = getTurretGlobalPosition();
-        Translation3d targetTurretRelative = aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble()).minus(new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
+        return aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble(), robotVelocitySupplier.getAsTranslation2d()).minus(
+            new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
+    }
 
+    private double calculateFlywheelSpeeds() {
+        Translation3d targetTurretRelative = getTargetTurretRelative();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
         double cosT = Math.cos(theta);
         
@@ -226,10 +233,7 @@ public class Turret extends SubsystemBase {
     }
 
     private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect
-        Translation2d turretGlobal = getTurretGlobalPosition();
-        Translation3d targetTurretRelative = aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble()).minus(
-            new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
-
+        Translation3d targetTurretRelative = getTargetTurretRelative();
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
         double targetZ = targetTurretRelative.getZ();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
@@ -254,10 +258,7 @@ public class Turret extends SubsystemBase {
     }
 
     private double[] calculateSpeedsManualMagnus() {
-        Translation2d turretGlobal = getTurretGlobalPosition();
-        Translation3d targetTurretRelative = aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble()).minus(
-            new Translation3d(turretGlobal.getX(), turretGlobal.getY(), Constants.Turret.kTurretHeightFromGround));
-
+        Translation3d targetTurretRelative = getTargetTurretRelative();
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
         double targetZ = targetTurretRelative.getZ();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);

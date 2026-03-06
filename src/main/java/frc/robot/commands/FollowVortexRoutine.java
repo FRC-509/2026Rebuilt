@@ -53,9 +53,9 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
         
         public static StormChaserPath pathFromFile(String filePath) {
             try {
-                return new ObjectMapper().readValue(new File(filePath), StormChaserPath.class);
+                return new ObjectMapper().readValue(new File("vortex_routines/"+filePath+".json"), StormChaserPath.class);
             } catch (IOException exception) {
-                DriverStation.reportError("Unhandled IO Exception when loading '"+filePath+"'.", exception.getStackTrace());
+                DriverStation.reportError("Unhandled IO Exception when loading '"+filePath+".json'", exception.getStackTrace());
                 return null;
             }
         }
@@ -95,14 +95,12 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
                 true,
                 false,
                 false,
-                false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
             case "index":
                 return new HopperDefaultCommand(hopper,
                 false,
                 true,
-                false,
                 false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
@@ -111,12 +109,10 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
                 true,
                 true,
                 false,
-                false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
             case "passive":
                 return new HopperDefaultCommand(hopper,
-                false,
                 false,
                 false,
                 false,
@@ -137,7 +133,6 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
 			new HopperDefaultCommand(
                 hopper, 
                 false, 
-                false,
                 false, 
                 false,
                 () -> false, 

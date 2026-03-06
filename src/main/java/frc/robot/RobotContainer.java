@@ -5,8 +5,6 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -15,18 +13,15 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
-import frc.robot.commands.AlignToHeading;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
-import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.drive.SwerveDrive;
-import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
+import frc.robot.util.controllers.ThrustmasterJoystick.StickButton;
 
 public class RobotContainer {
 	
@@ -53,12 +48,14 @@ public class RobotContainer {
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
 			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
 			() -> swerve.getYaw().getDegrees());
 			
 			
 		this.rightTurret = new Turret(
 			Constants.Turret.kRightTurretConfiguration,
 			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
 			() -> swerve.getYaw().getDegrees());
 
 		configureBindings();
@@ -75,6 +72,10 @@ public class RobotContainer {
 				() -> driverRight.getTrigger(),
 				() -> true));
 
+		driverLeft.isPressedBind(StickButton.Left, Commands.runOnce(() -> {
+			pigeon.setYaw(0);
+			swerve.setTargetHeading(0);
+		}, swerve));
 
 		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
 		// 	new AlignToHeading(
@@ -109,12 +110,11 @@ public class RobotContainer {
 		// 		180));
 
 
-		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-		// 	() -> driverRight.getTrigger(),
-		// 	() -> driverLeft.getTrigger(),
-		// 	() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-		// 	() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7, //rightTurret.isAbleToShoot(),
-		// 	() -> false));
+		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+			() -> driverRight.getTrigger(),
+			() -> driverLeft.getTrigger(),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
 
 	}
 
