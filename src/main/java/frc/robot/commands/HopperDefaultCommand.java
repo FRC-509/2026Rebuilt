@@ -18,7 +18,7 @@ public class HopperDefaultCommand extends Command {
     private BooleanSupplier outtakingSupplier;
 
     public HopperDefaultCommand(
-            Hopper hopper, 
+            Hopper hopper,
             BooleanSupplier intakeSupplier, 
             BooleanSupplier indexingSupplier,
             BooleanSupplier leftIndexingSupplier,

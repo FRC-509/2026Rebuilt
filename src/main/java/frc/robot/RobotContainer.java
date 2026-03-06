@@ -109,12 +109,12 @@ public class RobotContainer {
 		// 		180));
 
 
-		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-			() -> driverRight.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7, //rightTurret.isAbleToShoot(),
-			() -> false));
+		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+		// 	() -> driverRight.getTrigger(),
+		// 	() -> driverLeft.getTrigger(),
+		// 	() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
+		// 	() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7, //rightTurret.isAbleToShoot(),
+		// 	() -> false));
 
 	}
 

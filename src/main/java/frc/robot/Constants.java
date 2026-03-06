@@ -163,7 +163,7 @@ public final class Constants {
         public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
 		public static final double kIndexerRollersVelocity = 30;
-		public static final double kIndexingVelocity = 30;
+		public static final double kIndexingVelocity = 50;
 		
 		public static final double kIntakeExtension = 10;
         public static final double kIntakeExtensionToMetersConversion = 0;
@@ -279,8 +279,8 @@ public final class Constants {
         public static final double kTurretRotationSupply = 70;
         public static final double kTurretRotationStator = 120;
 
-		public static final double kTurretFlywheelSupply = 70;
-        public static final double kTurretFlywheelStator = 120;
+		public static final double kTurretFlywheelSupply = 40;
+        public static final double kTurretFlywheelStator = 40;
 
 		public static final double kIntakeExtensionSupply = 70;
         public static final double kIntakeExtensionStator = 120;
