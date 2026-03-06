@@ -47,16 +47,16 @@ public class RobotContainer {
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
 			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-			() -> swerve.getYaw().getDegrees());
+			() -> swerve.getYaw().getRadians());
 			
 			
 		this.rightTurret = new Turret(
 			Constants.Turret.kRightTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(1,1); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
 			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-			() -> swerve.getYaw().getDegrees());
+			() -> swerve.getYaw().getRadians());
 
 		configureBindings();
 		addAutonomousRoutines();

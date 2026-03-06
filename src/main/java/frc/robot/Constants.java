@@ -120,9 +120,9 @@ public final class Constants {
 			Constants.IDs.kLeftRotationMotor, 
 			Constants.IDs.kLeftTopFlywheel, 
 			Constants.IDs.kLeftBottomFlywheel,
-			new Translation3d(),
+			new Translation3d(0.14,0.14,0.48),
 			-51.3,
-			93,
+			93+18.896485+0.539,
 			true);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
@@ -130,13 +130,13 @@ public final class Constants {
 			Constants.IDs.kRightRotationMotor, 
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
-			new Translation3d(),
-			-93,
+			new Translation3d(0.14,-0.14,0.48),
+			-93-18.896485-0.539,
 			51.3,
 			false);
 
 		// TODO: find me
-		public static final double kRotationMotorToMechanismRatio = 148/12d;
+		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
 		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
 		public static final double kRotationToTurretDegrees = 0;
 
@@ -246,9 +246,9 @@ public final class Constants {
 		}
 
 		public static class Turret {
-            public static final double kRotationP = 0.95;
-            public static final double kRotationI = 0.12;
-            public static final double kRotationD = 0.03;
+            public static final double kRotationP = 2.9;
+            public static final double kRotationI = 0;
+            public static final double kRotationD = 0;
 
             public static final double kFlywheelP = 2.3;
             public static final double kFlywheelI = 0.12;
