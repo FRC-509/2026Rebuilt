@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.DoubleSupplier;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,11 +22,12 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 
-        public class Vortex {
+public class Vortex {
 
     private SwerveDrivePoseEstimator poseEstimator;
     private SwerveDrive swerveDrive;
     private DoubleSupplier intakeExtension;
+    private final UdpVisionRelay udpVisionRelay = new UdpVisionRelay();
 
     public Vortex(SwerveDrive swerve, Pose2d initialPose, DoubleSupplier intakeExtension) {
         this.poseEstimator = new SwerveDrivePoseEstimator(
@@ -37,7 +40,6 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
         this.intakeExtension = intakeExtension;
 
         poseEstimator.addVisionMeasurement(initialPose, Timer.getFPGATimestamp());
-        poseEstimator.addVisionMeasurement(initialPose, 0, null);
 
         
         LimelightHelpers.setCameraPose_RobotSpace( //TODO: get real values
@@ -49,6 +51,7 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
             -10, 
             -180);
         LimelightHelpers.setPipelineIndex(Constants.Vortex.kLimelightName, 0);
+        udpVisionRelay.start();
     }
 
     public Translation2d getEstimatedGlobalPosition() {
@@ -91,7 +94,9 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
    
 
         // if our angular velocity is greater than 360 degrees per second or theres no tags, ignore vision updates
-        if(!(Math.abs(swerveDrive.getAngularVelocity()) > 360 // TODO: tune w threshold
+        if(!(mt2 == null
+                || mt2.pose == null
+                || Math.abs(swerveDrive.getAngularVelocity()) > 360 // TODO: tune w threshold
                 || mt2.tagCount == 0 
                 || LimelightHelpers.getCurrentPipelineIndex(Constants.Vortex.kLimelightName) != 0)) {
 
@@ -109,10 +114,16 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
         return poseEstimator.update(swerveDrive.getYaw(), swerveDrive.getModulePositions()).getTranslation();
     }
 
+    public void postVortexToNT() {
+        udpVisionRelay.start();
+    }
+
 
 
 
     public class UdpVisionRelay {
+        public static final int DEFAULT_PORT = 5091;
+
         public static class Tag {
             public int id;
             public double x;
@@ -147,13 +158,19 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 
         private final int port;
         private final ObjectMapper mapper = new ObjectMapper();
+        private final Map<Integer, Integer> lastTagCountByCamera = new HashMap<>();
+        private final Map<Integer, Integer> lastObjectCountByCamera = new HashMap<>();
 
         private volatile boolean running = false;
         private Thread worker;
         private DatagramSocket socket;
 
+        public UdpVisionRelay() {
+            this(DEFAULT_PORT);
+        }
+
         public UdpVisionRelay(int port) {
-          this.port = port;
+          this.port = DEFAULT_PORT;
         }
 
         public void start() {
@@ -162,6 +179,9 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 
             worker = new Thread(() -> {
               NetworkTable base = NetworkTableInstance.getDefault().getTable("Vortex").getSubTable("Vision");
+              double parseErrorCount = 0;
+              base.getEntry("relay_running").setBoolean(true);
+              base.getEntry("relay_port").setDouble(port);
             
               try {
                 socket = new DatagramSocket(port);
@@ -173,45 +193,118 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
                     socket.receive(packet);
 
                     String raw = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
-                    Snapshot s = mapper.readValue(raw, Snapshot.class);
+                    base.getEntry("last_packet_seconds").setDouble(Timer.getFPGATimestamp());
+                    base.getEntry("last_packet_bytes").setDouble(packet.getLength());
+
+                    Snapshot s;
+                    try {
+                        s = mapper.readValue(raw, Snapshot.class);
+                    } catch (Exception parseEx) {
+                        parseErrorCount += 1;
+                        base.getEntry("parse_error_count").setDouble(parseErrorCount);
+                        base.getEntry("last_parse_error").setString(parseEx.getMessage());
+                        continue;
+                    }
 
                     NetworkTable cam = base.getSubTable("Camera" + s.camera_index);
+                    NetworkTable directCam = NetworkTableInstance.getDefault().getTable(cameraTableName(s.camera_index));
+                    cam.getEntry("raw_json").setString(raw);
+                    cam.getEntry("camera_index").setDouble(s.camera_index);
                     cam.getEntry("fps").setDouble(s.fps);
+                    directCam.getEntry("raw_json").setString(raw);
+                    directCam.getEntry("camera_index").setDouble(s.camera_index);
+                    directCam.getEntry("fps").setDouble(s.fps);
 
                     int tagCount = (s.apriltags == null) ? 0 : s.apriltags.length;
                     int objCount = (s.objects == null) ? 0 : s.objects.length;
                     cam.getEntry("apriltag_count").setDouble(tagCount);
                     cam.getEntry("object_count").setDouble(objCount);
+                    directCam.getEntry("apriltag_count").setDouble(tagCount);
+                    directCam.getEntry("object_count").setDouble(objCount);
 
+                    NetworkTable pose = cam.getSubTable("robot_pose");
+                    NetworkTable directPose = directCam.getSubTable("robot_pose");
                     boolean hasPose = s.robot_pose != null;
                     cam.getEntry("has_pose").setBoolean(hasPose);
+                    pose.getEntry("has_pose").setBoolean(hasPose);
+                    directCam.getEntry("has_pose").setBoolean(hasPose);
+                    directPose.getEntry("has_pose").setBoolean(hasPose);
                     if (hasPose) {
-                        cam.getEntry("robot_x").setDouble(s.robot_pose.x);
-                        cam.getEntry("robot_y").setDouble(s.robot_pose.y);
-                        cam.getEntry("tags_used").setDouble(s.robot_pose.tags_used);
-                        cam.getEntry("floor_err_avg").setDouble(s.robot_pose.floor_z_error_avg);
-                }
+                        pose.getEntry("x").setDouble(s.robot_pose.x);
+                        pose.getEntry("y").setDouble(s.robot_pose.y);
+                        pose.getEntry("tags_used").setDouble(s.robot_pose.tags_used);
+                        pose.getEntry("floor_z_error_avg").setDouble(s.robot_pose.floor_z_error_avg);
+                        directPose.getEntry("x").setDouble(s.robot_pose.x);
+                        directPose.getEntry("y").setDouble(s.robot_pose.y);
+                        directPose.getEntry("tags_used").setDouble(s.robot_pose.tags_used);
+                        directPose.getEntry("floor_z_error_avg").setDouble(s.robot_pose.floor_z_error_avg);
+                        directCam.getEntry("Position").setDoubleArray(new double[] {s.robot_pose.x, s.robot_pose.y});
+                    }
 
-                if (tagCount > 0) {
-                    Tag t = s.apriltags[0];
-                    cam.getEntry("tag0_id").setDouble(t.id);
-                    cam.getEntry("tag0_x").setDouble(t.x);
-                    cam.getEntry("tag0_y").setDouble(t.y);
-                    cam.getEntry("tag0_z").setDouble(t.z);
-                    cam.getEntry("tag0_floor_err").setDouble(t.floor_z_error);
-                }
+                    NetworkTable apriltags = cam.getSubTable("apriltags");
+                    NetworkTable directApriltags = directCam.getSubTable("apriltags");
+                    apriltags.getEntry("count").setDouble(tagCount);
+                    directApriltags.getEntry("count").setDouble(tagCount);
+                    for (int i = 0; i < tagCount; i++) {
+                        Tag t = s.apriltags[i];
+                        NetworkTable tag = apriltags.getSubTable("tag" + i);
+                        NetworkTable directTag = directApriltags.getSubTable("tag" + i);
+                        tag.getEntry("present").setBoolean(true);
+                        tag.getEntry("id").setDouble(t.id);
+                        tag.getEntry("x").setDouble(t.x);
+                        tag.getEntry("y").setDouble(t.y);
+                        tag.getEntry("z").setDouble(t.z);
+                        tag.getEntry("floor_z_error").setDouble(t.floor_z_error);
+                        directTag.getEntry("present").setBoolean(true);
+                        directTag.getEntry("id").setDouble(t.id);
+                        directTag.getEntry("x").setDouble(t.x);
+                        directTag.getEntry("y").setDouble(t.y);
+                        directTag.getEntry("z").setDouble(t.z);
+                        directTag.getEntry("floor_z_error").setDouble(t.floor_z_error);
+                    }
+                    int previousTagCount = lastTagCountByCamera.getOrDefault(s.camera_index, 0);
+                    for (int i = tagCount; i < previousTagCount; i++) {
+                        apriltags.getSubTable("tag" + i).getEntry("present").setBoolean(false);
+                        directApriltags.getSubTable("tag" + i).getEntry("present").setBoolean(false);
+                    }
+                    lastTagCountByCamera.put(s.camera_index, tagCount);
 
-                if (objCount > 0) {
-                    Obj o = s.objects[0];
-                    cam.getEntry("obj0_confidence").setDouble(o.confidence);
-                    cam.getEntry("obj0_x").setDouble(o.x);
-                    cam.getEntry("obj0_y").setDouble(o.y);
-                    cam.getEntry("obj0_z").setDouble(o.z);
-                }
+                    NetworkTable objects = cam.getSubTable("objects");
+                    NetworkTable directObjects = directCam.getSubTable("objects");
+                    objects.getEntry("count").setDouble(objCount);
+                    directObjects.getEntry("count").setDouble(objCount);
+                    for (int i = 0; i < objCount; i++) {
+                        Obj o = s.objects[i];
+                        NetworkTable obj = objects.getSubTable("obj" + i);
+                        NetworkTable directObj = directObjects.getSubTable("obj" + i);
+                        obj.getEntry("present").setBoolean(true);
+                        obj.getEntry("class_name").setString(o.class_name == null ? "" : o.class_name);
+                        obj.getEntry("confidence").setDouble(o.confidence);
+                        obj.getEntry("bbox").setDoubleArray(o.bbox == null ? new double[0] : o.bbox);
+                        obj.getEntry("x").setDouble(o.x);
+                        obj.getEntry("y").setDouble(o.y);
+                        obj.getEntry("z").setDouble(o.z);
+                        directObj.getEntry("present").setBoolean(true);
+                        directObj.getEntry("class_name").setString(o.class_name == null ? "" : o.class_name);
+                        directObj.getEntry("confidence").setDouble(o.confidence);
+                        directObj.getEntry("bbox").setDoubleArray(o.bbox == null ? new double[0] : o.bbox);
+                        directObj.getEntry("x").setDouble(o.x);
+                        directObj.getEntry("y").setDouble(o.y);
+                        directObj.getEntry("z").setDouble(o.z);
+                    }
+                    int previousObjectCount = lastObjectCountByCamera.getOrDefault(s.camera_index, 0);
+                    for (int i = objCount; i < previousObjectCount; i++) {
+                        objects.getSubTable("obj" + i).getEntry("present").setBoolean(false);
+                        directObjects.getSubTable("obj" + i).getEntry("present").setBoolean(false);
+                    }
+                    lastObjectCountByCamera.put(s.camera_index, objCount);
                 }
             } catch (Exception e) {
+                base.getEntry("relay_running").setBoolean(false);
+                base.getEntry("last_relay_error").setString(e.getMessage() == null ? e.toString() : e.getMessage());
                 e.printStackTrace();
             } finally {
+                base.getEntry("relay_running").setBoolean(false);
                 if (socket != null && !socket.isClosed()) {
                 socket.close();
                 }
@@ -227,6 +320,12 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
             if (socket != null && !socket.isClosed()) {
                 socket.close();
             }
+        }
+
+        private String cameraTableName(int cameraIndex) {
+            if (cameraIndex == 0) return "VortexFront";
+            if (cameraIndex == 1) return "VortexBack";
+            return "VortexCamera" + cameraIndex;
         }
     }
 

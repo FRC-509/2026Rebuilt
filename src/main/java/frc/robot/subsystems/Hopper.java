@@ -17,11 +17,11 @@ public class Hopper extends SubsystemBase {
     private final TalonFX kIntakeExtension = new TalonFX(Constants.IDs.kIntakeExtension, Constants.kCanivore);
     private PositionDutyCycle extensionDutyCycle = new PositionDutyCycle(0.0d);
     
-    // private final TalonFX kIntakeRotation = new TalonFX(Constants.IDs.kIntakeRotation, Constants.kRio);
-    // private VelocityDutyCycle intakeDutyCycle = new VelocityDutyCycle(0.0d);
+    private final TalonFX kIntakeRotation = new TalonFX(Constants.IDs.kIntakeRotation, Constants.kCanivore);
+    private VelocityDutyCycle intakeDutyCycle = new VelocityDutyCycle(0.0d);
     
-    private final TalonFX kIndexerRollers = new TalonFX(Constants.IDs.kIndexerRotation, Constants.kCanivore);
-    private VelocityDutyCycle indexerRollersDutyCycle = new VelocityDutyCycle(0.0d);
+    // private final TalonFX kIndexerRollers = new TalonFX(Constants.IDs.kIndexerRotation, Constants.kCanivore);
+    // private VelocityDutyCycle indexerRollersDutyCycle = new VelocityDutyCycle(0.0d);
 
     private final TalonFX kLeftIndexerRotation = new TalonFX(Constants.IDs.kLeftKicker, Constants.kCanivore);
     private VelocityDutyCycle leftIndexerDutyCycle = new VelocityDutyCycle(0.0d);
@@ -124,40 +124,40 @@ public class Hopper extends SubsystemBase {
         kIntakeExtension.getConfigurator().apply(extensionConfig);
 
 
-        // TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
-		// intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		// intakeConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-		// intakeConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
-		// intakeConfig.ClosedLoopGeneral.ContinuousWrap = false;
+        TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
+		intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+		intakeConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+		intakeConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
+		intakeConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
-		// intakeConfig.Slot0.kP = Constants.PIDConstants.Hopper.kIntakeP;
-		// intakeConfig.Slot0.kI = Constants.PIDConstants.Hopper.kIntakeI;
-		// intakeConfig.Slot0.kD = Constants.PIDConstants.Hopper.kIntakeD;
+		intakeConfig.Slot0.kP = Constants.PIDConstants.Hopper.kIntakeP;
+		intakeConfig.Slot0.kI = Constants.PIDConstants.Hopper.kIntakeI;
+		intakeConfig.Slot0.kD = Constants.PIDConstants.Hopper.kIntakeD;
 
-		// intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-		// intakeConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kIntakeSupply; 
-        // intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        // intakeConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIntakeStator;
+		intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+		intakeConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kIntakeSupply; 
+        intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        intakeConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIntakeStator;
 
-        // kIntakeRotation.getConfigurator().apply(intakeConfig);
+        kIntakeRotation.getConfigurator().apply(intakeConfig);
 
 
-        TalonFXConfiguration indexerRollerConfig = new TalonFXConfiguration();
-		indexerRollerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-		indexerRollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
-		indexerRollerConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
-		indexerRollerConfig.ClosedLoopGeneral.ContinuousWrap = false;
+        // TalonFXConfiguration indexerRollerConfig = new TalonFXConfiguration();
+		// indexerRollerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+		// indexerRollerConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+		// indexerRollerConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
+		// indexerRollerConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
-		indexerRollerConfig.Slot0.kP = Constants.PIDConstants.Hopper.kIndexerRollersP;
-		indexerRollerConfig.Slot0.kI = Constants.PIDConstants.Hopper.kIndexerRollersI;
-		indexerRollerConfig.Slot0.kD = Constants.PIDConstants.Hopper.kIndexerRollersD;
+		// indexerRollerConfig.Slot0.kP = Constants.PIDConstants.Hopper.kIndexerRollersP;
+		// indexerRollerConfig.Slot0.kI = Constants.PIDConstants.Hopper.kIndexerRollersI;
+		// indexerRollerConfig.Slot0.kD = Constants.PIDConstants.Hopper.kIndexerRollersD;
 
-		indexerRollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-		indexerRollerConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kIndexerRollersSupply; 
-        indexerRollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-        indexerRollerConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIndexerRollersStator;
+		// indexerRollerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+		// indexerRollerConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kIndexerRollersSupply; 
+        // indexerRollerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        // indexerRollerConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIndexerRollersStator;
 
-        kIndexerRollers.getConfigurator().apply(indexerRollerConfig);
+        // kIndexerRollers.getConfigurator().apply(indexerRollerConfig);
 
         TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
 		indexerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -210,14 +210,16 @@ public class Hopper extends SubsystemBase {
             if (!hasZeroedPosition) return;
         }
 
+        kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             // if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
             //     kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.));
-                // if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+            if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
         if (!indexerState.equals(previousIndexerState)) { // only change instruction on state change, not every 20ms
-            kIndexerRollers.setControl(indexerRollersDutyCycle.withVelocity(!indexerState.equals(IndexerState.PASSIVE) ? Constants.Hopper.kIndexerRollersVelocity : 0));
+            // kIndexerRollers.setControl(indexerRollersDutyCycle.withVelocity(!indexerState.equals(IndexerState.PASSIVE) ? Constants.Hopper.kIndexerRollersVelocity : 0));
             if (indexerState.leftTurret != previousIndexerState.leftTurret)
                 kLeftIndexerRotation.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity : 0));
             if (indexerState.rightTurret != previousIndexerState.rightTurret) 
