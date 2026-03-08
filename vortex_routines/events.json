@@ -1,7 +1,6 @@
 [
-    "intake",
-    "intake_and_index",
-    "index",
-    "passive",
-    "climbL1"
+    "Intake",
+    "Shoot",
+    "Stop",
+    "Balance"
 ]
