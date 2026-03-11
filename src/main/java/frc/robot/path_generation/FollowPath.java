@@ -31,18 +31,22 @@ public class FollowPath extends Command {
     private double decelerationStartT;
 
     public FollowPath(ArrayList<PathPoint> path, double exitVelocity, double maxVelocity, SwerveDrive swerve) {
-        this.path = path;
+        this.path = path != null ? path : new ArrayList<>();
         this.swerve = swerve;
         this.isFinished = false;
         this.elapsedTimer = new Timer();
         this.targetVelocity = MathUtil.clamp(exitVelocity, 0.0, Constants.Chassis.kMaxSpeed);
+        this.maxVelocity = MathUtil.clamp(maxVelocity, 0.0, Constants.Chassis.kMaxSpeed);
+        this.maxVelocity = Math.max(this.maxVelocity, this.targetVelocity);
         
         this.pathLength = 0;
-        PVector prev = path.get(0), next;
-        for (int i = 1; i <= Constants.PathGeneration.kLengthApproximationSegments; i++) {
-            next = catmullRomSpline(i / Constants.PathGeneration.kLengthApproximationSegments);
-            this.pathLength += prev.distanceTo(next);
-            prev = next;
+        if (!this.path.isEmpty()) {
+            PVector prev = catmullRomSpline(0), next;
+            for (int i = 1; i <= Constants.PathGeneration.kLengthApproximationSegments; i++) {
+                next = catmullRomSpline(i / (double) Constants.PathGeneration.kLengthApproximationSegments);
+                this.pathLength += prev.distanceTo(next);
+                prev = next;
+            }
         }
 
         addRequirements(swerve);
@@ -50,9 +54,21 @@ public class FollowPath extends Command {
 
     @Override
     public void initialize() {
+        isFinished = false;
+        pathProgress = 0.0;
+        elapsedTimer.restart();
+        lastUpdateTimestamp = 0.0;
         this.initialVelocity = getCurrentVelocityMagnitude();
-        this.acclerationEndT = 1 - (Math.pow(maxVelocity - initialVelocity, 2) / Constants.Chassis.kMaxAcceleration / pathLength);
-        this.acclerationEndT = (Math.pow(maxVelocity, 2) / Constants.Chassis.kMaxDecceleration) / pathLength;
+
+        double accelDistance = Math.max(0.0, (maxVelocity * maxVelocity - initialVelocity * initialVelocity)
+            / (2 * Constants.Chassis.kMaxAcceleration));
+        acclerationEndT = MathUtil.clamp(accelDistance / pathLength, 0.0, 1.0);
+    
+       
+        double decelDistance = Math.max(0.0, (maxVelocity * maxVelocity - targetVelocity * targetVelocity)
+            / (2 * Constants.Chassis.kMaxDecceleration));
+        decelerationStartT = 1.0 - MathUtil.clamp(decelDistance / pathLength, 0.0, 1.0);
+        
     }
 
     @Override
@@ -66,10 +82,10 @@ public class FollowPath extends Command {
         }
 
         // calculate latency
-        if (pathProgress != 0.0d) { // no latency on first pass
-            pathProgress += elapsedTimer.get() - lastUpdateTimestamp;
-            lastUpdateTimestamp = elapsedTimer.get();
-        }
+        double now = elapsedTimer.get();
+        double loopDtSeconds = now - lastUpdateTimestamp;
+        lastUpdateTimestamp = now;
+        if (loopDtSeconds <= 0.0d) loopDtSeconds = 0.02;
 
         // get velocity
         usableVelocity = getCurrentVelocityMagnitude();
@@ -96,6 +112,7 @@ public class FollowPath extends Command {
             0d,
             true, 
             false);
+        pathProgress = MathUtil.clamp(pathProgress + dt, 0.0d, 1.0d);
         swerve.setTargetHeading(getNextPoint(pathProgress).rotationTarget);
     }
 
@@ -116,6 +133,7 @@ public class FollowPath extends Command {
 
     // returns the x and y coordinates for a point on a catmull rom spline at progress t 0-1
     public PVector catmullRomSpline(double t) {
+        t = MathUtil.clamp(t, 0.0d, 1.0d);
         if (path.size() < 4) {
             if (path.isEmpty()) return PVector.kOrigin;
             else return path.get(0);
@@ -137,8 +155,9 @@ public class FollowPath extends Command {
     }
 
     public PathPoint getNextPoint(double t) {
+        t = MathUtil.clamp(t, 0.0d, 1.0d);
         if (path.size() < 4) {
-            if (path.isEmpty()) return (PathPoint) PVector.kOrigin;
+            if (path.isEmpty()) return new PathPoint(PVector.kOrigin);
             else return path.get(0);
         }
 

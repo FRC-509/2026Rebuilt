@@ -19,8 +19,8 @@ public class PVector {
 
     public PVector scalar(double scalar) {
         return new PVector(
-            this.x *= scalar,
-            this.y *= scalar
+            this.x * scalar,
+            this.y * scalar
         );
     }
 
@@ -43,7 +43,7 @@ public class PVector {
 
     public PVector norm() {
         double norm = this.distanceTo(kOrigin);
-        return norm < kEps ? new PVector(x / norm, y / norm) : kOrigin;
+        return norm > kEps ? new PVector(x / norm, y / norm) : kOrigin;
     }
 
     public double dot(PVector other) {

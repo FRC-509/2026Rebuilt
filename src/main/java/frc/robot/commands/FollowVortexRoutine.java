@@ -69,7 +69,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
     public FollowVortexRoutine(String name, double exitVelocity, double maxVelocity, Vortex vortex, SwerveDrive swerve, Hopper hopper, Turret leftTurret, Turret rightTurret) {
         StormChaserPath pathFile = StormChaserPath.pathFromFile(name);
         ArrayList<PathPoint> pathPoints = new ArrayList<PathPoint>(pathFile.points.size());
-        for (int i = 0; i < pathPoints.size(); i++) pathPoints.add(pathFile.points.get(i).toPathPoint());
+        for (int i = 0; i < pathFile.points.size(); i++) pathPoints.add(pathFile.points.get(i).toPathPoint());
 
         FollowPath path = new FollowPath(pathPoints, exitVelocity, maxVelocity, swerve);
         
