@@ -22,6 +22,7 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.subsystems.Vortex;
 import frc.robot.util.JetsonUdpRelay;
 import frc.robot.util.PigeonWrapper;
+import frc.robot.util.ThinNT;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
 import frc.robot.util.controllers.ThrustmasterJoystick.StickButton;
@@ -35,32 +36,33 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	private final Turret leftTurret;
-	private final Turret rightTurret;
-	private final Hopper hopper;
+	// private final Turret leftTurret;
+	// private final Turret rightTurret;
+	// private final Hopper hopper;
 	private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
-	private JetsonUdpRelay jetsonUdpRelay;
+	private JetsonUdpRelay frontJetson;
+	private JetsonUdpRelay backJetson;
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
-		this.hopper = new Hopper();
-		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
+		// this.hopper = new Hopper();
+		this.vortex = new Vortex(swerve, frontJetson, backJetson, new Pose2d(), () -> 0.0);
 
-		this.leftTurret = new Turret(
-			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-			() -> swerve.getYaw().getRadians());
+		// this.leftTurret = new Turret(
+		// 	Constants.Turret.kLeftTurretConfiguration,
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+		// 	() -> swerve.getYaw().getRadians());
 			
 			
-		this.rightTurret = new Turret(
-			Constants.Turret.kRightTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-			() -> swerve.getYaw().getRadians());
+		// this.rightTurret = new Turret(
+		// 	Constants.Turret.kRightTurretConfiguration,
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+		// 	() -> swerve.getYaw().getRadians());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -81,44 +83,44 @@ public class RobotContainer {
 			swerve.setTargetHeading(0);
 		}, swerve));
 
-		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
-		// 	new AlignToHeading(
-		// 		swerve, 
-		// 		() -> nonInvSquare(-driverLeft.getY()),
-		// 		() -> nonInvSquare(-driverLeft.getX()),
-		// 		() -> driverLeft.getTrigger(),
-		// 		0));
+		// // (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
+		// // 	new AlignToHeading(
+		// // 		swerve, 
+		// // 		() -> nonInvSquare(-driverLeft.getY()),
+		// // 		() -> nonInvSquare(-driverLeft.getX()),
+		// // 		() -> driverLeft.getTrigger(),
+		// // 		0));
 
-		// (new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
-		// 	new AlignToHeading(
-		// 		swerve, 
-		// 		() -> nonInvSquare(-driverLeft.getY()),
-		// 		() -> nonInvSquare(-driverLeft.getX()),
-		// 		() -> driverLeft.getTrigger(),
-		// 		-90));
+		// // (new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
+		// // 	new AlignToHeading(
+		// // 		swerve, 
+		// // 		() -> nonInvSquare(-driverLeft.getY()),
+		// // 		() -> nonInvSquare(-driverLeft.getX()),
+		// // 		() -> driverLeft.getTrigger(),
+		// // 		-90));
 
-		// (new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
-		// 	new AlignToHeading(
-		// 		swerve, 
-		// 		() -> nonInvSquare(-driverLeft.getY()),
-		// 		() -> nonInvSquare(-driverLeft.getX()),
-		// 		() -> driverLeft.getTrigger(),
-		// 		90));
+		// // (new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
+		// // 	new AlignToHeading(
+		// // 		swerve, 
+		// // 		() -> nonInvSquare(-driverLeft.getY()),
+		// // 		() -> nonInvSquare(-driverLeft.getX()),
+		// // 		() -> driverLeft.getTrigger(),
+		// // 		90));
 
-		// (new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
-		// 	new AlignToHeading(
-		// 		swerve, 
-		// 		() -> nonInvSquare(-driverLeft.getY()),
-		// 		() -> nonInvSquare(-driverLeft.getX()),
-		// 		() -> driverLeft.getTrigger(),
-		// 		180));
+		// // (new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
+		// // 	new AlignToHeading(
+		// // 		swerve, 
+		// // 		() -> nonInvSquare(-driverLeft.getY()),
+		// // 		() -> nonInvSquare(-driverLeft.getX()),
+		// // 		() -> driverLeft.getTrigger(),
+		// // 		180));
 
 
-		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-			() -> driverRight.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
+		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+		// 	() -> driverRight.getTrigger(),
+		// 	() -> driverLeft.getTrigger(),
+		// 	() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
+		// 	() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
 
 	}
 
@@ -137,25 +139,32 @@ public class RobotContainer {
 
 	public void robotInit() {
 		try {
-    		jetsonUdpRelay = new JetsonUdpRelay();
+    		frontJetson = new JetsonUdpRelay("FrontJetson",5091);
+    		backJetson = new JetsonUdpRelay("BackJetson",5092);
   		} catch (Exception e) {
     		throw new RuntimeException("Failed to start Jetson UDP relay", e);
   		}
 	}
 
 	public void robotPeriodic() {
-		vortex.postVortexToNT();
 		vortex.updatePositionEstimate();
 
-		hopper.logZero();
+		// hopper.logZero();
 
-		jetsonUdpRelay.poll();
+		frontJetson.poll();
+		backJetson.poll();
+		ThinNT.putNumber("Hello", 0);
+	}
+
+	public void close() {
+		if (frontJetson != null) frontJetson.close();
+		if (backJetson != null) backJetson.close();
 	}
 
 	public void zeroMechanisms() {
-		leftTurret.zeroPosition();
-		rightTurret.zeroPosition();
-		hopper.zeroPosition();
+		// leftTurret.zeroPosition();
+		// rightTurret.zeroPosition();
+		// hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

@@ -25,9 +25,9 @@ public final class JetsonUdpRelay {
 
 	private final Receiver jetson1;
 
-	public JetsonUdpRelay() throws IOException {
+	public JetsonUdpRelay(String name, int port) throws IOException {
 		NetworkTableInstance nt = NetworkTableInstance.getDefault();
-		jetson1 = new Receiver(5091, nt.getTable("/Vortex/Jetson1"));
+		jetson1 = new Receiver(port, nt.getTable("/Vortex/" + name));
 	}
 
 	public void poll() {
