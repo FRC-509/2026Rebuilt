@@ -20,6 +20,7 @@ import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.subsystems.Vortex;
+import frc.robot.util.JetsonUdpRelay;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
@@ -40,6 +41,8 @@ public class RobotContainer {
 	private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
+
+	private JetsonUdpRelay jetsonUdpRelay;
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
@@ -132,11 +135,21 @@ public class RobotContainer {
       	return Commands.print("No autonomous command configured");
     }
 
+	public void robotInit() {
+		try {
+    		jetsonUdpRelay = new JetsonUdpRelay();
+  		} catch (Exception e) {
+    		throw new RuntimeException("Failed to start Jetson UDP relay", e);
+  		}
+	}
+
 	public void robotPeriodic() {
 		vortex.postVortexToNT();
 		vortex.updatePositionEstimate();
 
 		hopper.logZero();
+
+		jetsonUdpRelay.poll();
 	}
 
 	public void zeroMechanisms() {
