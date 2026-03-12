@@ -13,7 +13,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
+import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
@@ -33,8 +35,8 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	// private final Turret leftTurret;
-	// private final Turret rightTurret;
+	private final Turret leftTurret;
+	private final Turret rightTurret;
 	private final Hopper hopper;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
@@ -43,18 +45,18 @@ public class RobotContainer {
 		this.swerve = new SwerveDrive(pigeon);
 		this.hopper = new Hopper();
 
-		// this.leftTurret = new Turret(
-		// 	Constants.Turret.kLeftTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-		// 	() -> swerve.getYaw().getRadians());
+		this.leftTurret = new Turret(
+			Constants.Turret.kLeftTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+			() -> swerve.getYaw().getRadians());
 			
 			
-		// this.rightTurret = new Turret(
-		// 	Constants.Turret.kRightTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-		// 	() -> swerve.getYaw().getRadians());
+		this.rightTurret = new Turret(
+			Constants.Turret.kRightTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+			() -> swerve.getYaw().getRadians());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -113,6 +115,44 @@ public class RobotContainer {
 			() -> driverLeft.getTrigger(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
 			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
+
+
+		// force feed override
+		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
+		
+		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
+		
+		(new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
 
 	}
 
