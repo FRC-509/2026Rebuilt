@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -177,23 +178,24 @@ public class Hopper extends SubsystemBase {
     
     @Override
     public void periodic() {
+        double start = Timer.getFPGATimestamp();
         // zeroing functionality to move until you hit minimum hardstop
-        if (!hasZeroedPosition) {
-            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
-                kIntakeExtension.setControl(voltageOut.withOutput(0));
-                zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
-                hasZeroedPosition = true;
-            } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
-            hasZeroedPosition = true;
+        // if (!hasZeroedPosition) {
+        //     if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
+        //         kIntakeExtension.setControl(voltageOut.withOutput(0));
+        //         zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
+        //         hasZeroedPosition = true;
+        //     } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
+        //     hasZeroedPosition = true;
 
-            if (!hasZeroedPosition) return;
-        }
+        //     if (!hasZeroedPosition) return;
+        // }
 
         kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.1));
+                // kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.1));
             if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
@@ -207,6 +209,7 @@ public class Hopper extends SubsystemBase {
         SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset);
         SmartDashboard.putString("HopperState", hopperStateString(hopperState));
         SmartDashboard.putString("IndexerState", indexerStateString(indexerState));
+        SmartDashboard.putNumber("Timing/HopperPeriodicMs", (Timer.getFPGATimestamp() - start) * 1000.0);
     }
 
     public double getIntakeExtensionMeters() {

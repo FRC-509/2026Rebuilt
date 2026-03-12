@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
@@ -18,6 +19,7 @@ import frc.robot.util.LimelightHelpers.PoseEstimate;
 
 public class Vortex {
     private static final String JETSON_TABLE = "/Vortex/Jetson1";
+    private static final double JETSON_STALE_SECONDS = 0.5;
 
     private final SwerveDrive swerveDrive;
     private final DoubleSupplier intakeExtension;
@@ -144,7 +146,9 @@ public class Vortex {
     }
 
     private boolean hasFreshJetsonPose() {
-        return !jetsonTable.getEntry("stale").getBoolean(true)
+        double lastPacketTimestamp = jetsonTable.getEntry("last_packet_timestamp").getDouble(Double.NaN);
+        return !Double.isNaN(lastPacketTimestamp)
+            && (Timer.getFPGATimestamp() - lastPacketTimestamp) <= JETSON_STALE_SECONDS
             && jetsonTable.getEntry("robot/has_pose").getBoolean(false);
     }
 

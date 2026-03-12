@@ -121,8 +121,8 @@ public final class Constants {
 			Constants.IDs.kLeftTopFlywheel, 
 			Constants.IDs.kLeftBottomFlywheel,
 			new Translation3d(0.14,0.14,0.48),
-			-51.3,
-			93+18.896485+0.539,
+			-88,
+			106.88,
 			true);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
@@ -131,8 +131,8 @@ public final class Constants {
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(0.14,-0.14,0.48),
-			-93-18.896485-0.539,
-			51.3,
+			-86.3,
+			86.3,
 			false);
 
 		// TODO: find me

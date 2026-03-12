@@ -4,7 +4,9 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
@@ -19,8 +21,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
+    double start = Timer.getFPGATimestamp();
     CommandScheduler.getInstance().run();
+    double afterScheduler = Timer.getFPGATimestamp();
     m_robotContainer.robotPeriodic();
+    double end = Timer.getFPGATimestamp();
+
+    SmartDashboard.putNumber("Timing/RobotPeriodicTotalMs", (end - start) * 1000.0);
+    SmartDashboard.putNumber("Timing/CommandSchedulerMs", (afterScheduler - start) * 1000.0);
+    SmartDashboard.putNumber("Timing/ContainerPeriodicMs", (end - afterScheduler) * 1000.0);
   }
 
   @Override
