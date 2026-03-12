@@ -18,6 +18,7 @@ import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
+import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
@@ -35,6 +36,7 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
+	private final GameManager gameManager;
 	private final Turret leftTurret;
 	private final Turret rightTurret;
 	private final Hopper hopper;
@@ -43,6 +45,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
+		this.gameManager = new GameManager();
 		this.hopper = new Hopper();
 
 		this.leftTurret = new Turret(
@@ -154,6 +157,9 @@ public class RobotContainer {
 				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
 			}, leftTurret, rightTurret));
 
+		operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
+		operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
+
 	}
 
 	private void addAutonomousRoutines() {
@@ -165,8 +171,12 @@ public class RobotContainer {
 		}
 	}
 
-    public Command getAutonomousCommand() {
+	public Command getAutonomousCommand() {
       	return Commands.print("No autonomous command configured");
+	}
+
+	public GameManager getGameManager() {
+		return gameManager;
 	}
 
 	public void robotInit() {
