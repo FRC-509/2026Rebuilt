@@ -1,6 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -18,13 +17,13 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import frc.robot.Constants;
 import frc.robot.util.LoggablePID;
@@ -54,9 +53,8 @@ public class SwerveDrive extends SubsystemBase {
 
 	public SwerveModule[] swerveModules;
 	public SwerveDriveOdometry odometry;
-	public SwerveDrivePoseEstimator poseEstimator;
-	public Field2d field2d;
 	private PigeonWrapper pigeon;
+	private Supplier<Pose2d> estimatedPoseSupplier = Pose2d::new;
 
 	private Interpolator headingInterplator;
 
@@ -95,15 +93,10 @@ public class SwerveDrive extends SubsystemBase {
 				new SwerveModule(Constants.Chassis.kBackRight),
 		};
 		
-		field2d = new Field2d();
-
 		odometry = new SwerveDriveOdometry(kinematics, getYaw(), getModulePositions());
-		poseEstimator = new SwerveDrivePoseEstimator(kinematics, getYaw(), getModulePositions(), new Pose2d());
-		// poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(.7, .7, 99999));
+		estimatedPoseSupplier = odometry::getPoseMeters;
 	
-		// PathPlannerLogging.setLogActivePathCallback((poses) ->
-		// field2d.getObject("path").setPoses(poses));
-		Shuffleboard.getTab("Robot Field Position").add(field2d);
+		Shuffleboard.getTab("Robot Field Position");
 
 		headingPassive.setIntegratorRange(-180, 180);
 		headingAggressive.setIntegratorRange(-180, 180);
@@ -299,12 +292,15 @@ public class SwerveDrive extends SubsystemBase {
 	}
 
 	public Pose2d getEstimatedPose() {
-		return poseEstimator.getEstimatedPosition();
+		return estimatedPoseSupplier.get();
 	}
 
 	public void resetOdometry(Pose2d pose) {
 		odometry.resetPosition(getYaw(), getModulePositions(), pose);
-		poseEstimator.resetPosition(getYaw(), getModulePositions(), pose);
+	}
+
+	public void setEstimatedPoseSupplier(Supplier<Pose2d> estimatedPoseSupplier) {
+		this.estimatedPoseSupplier = estimatedPoseSupplier;
 	}
 
 	public SwerveModule[] getModules() {
@@ -338,10 +334,6 @@ public class SwerveDrive extends SubsystemBase {
 		return pigeon.getAngularVelocityZWorld();
 	}
 
-	public Field2d getField(){
-		return field2d;
-	}
-
 	public void resetSimState() {
 		simHeading = 0.0d;
 		targetHeading = 0.0d;
@@ -362,9 +354,6 @@ public class SwerveDrive extends SubsystemBase {
 	@Override
 	public void periodic() {
 		odometry.update(getYaw(), getModulePositions());
-		poseEstimator.update(getYaw(), getModulePositions());
-
-		field2d.setRobotPose(getEstimatedPose());
 
 		SmartDashboard.putNumber("yaw", getYaw().getDegrees());
 		// SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);

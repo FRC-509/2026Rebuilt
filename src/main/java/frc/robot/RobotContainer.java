@@ -38,7 +38,7 @@ public class RobotContainer {
 	private final SwerveDrive swerve;
 	// private final Turret leftTurret;
 	// private final Turret rightTurret;
-	// private final Hopper hopper;
+	private final Hopper hopper;
 	private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
@@ -48,7 +48,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
-		// this.hopper = new Hopper();
+		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, frontJetson, backJetson, new Pose2d(), () -> 0.0);
 
 		// this.leftTurret = new Turret(
@@ -83,44 +83,44 @@ public class RobotContainer {
 			swerve.setTargetHeading(0);
 		}, swerve));
 
-		// // (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
-		// // 	new AlignToHeading(
-		// // 		swerve, 
-		// // 		() -> nonInvSquare(-driverLeft.getY()),
-		// // 		() -> nonInvSquare(-driverLeft.getX()),
-		// // 		() -> driverLeft.getTrigger(),
-		// // 		0));
+		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		0));
 
-		// // (new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
-		// // 	new AlignToHeading(
-		// // 		swerve, 
-		// // 		() -> nonInvSquare(-driverLeft.getY()),
-		// // 		() -> nonInvSquare(-driverLeft.getX()),
-		// // 		() -> driverLeft.getTrigger(),
-		// // 		-90));
+		// (new Trigger(() -> driverRight.getPOV(0) == 90)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		-90));
 
-		// // (new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
-		// // 	new AlignToHeading(
-		// // 		swerve, 
-		// // 		() -> nonInvSquare(-driverLeft.getY()),
-		// // 		() -> nonInvSquare(-driverLeft.getX()),
-		// // 		() -> driverLeft.getTrigger(),
-		// // 		90));
+		// (new Trigger(() -> driverRight.getPOV(0) == 270)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		90));
 
-		// // (new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
-		// // 	new AlignToHeading(
-		// // 		swerve, 
-		// // 		() -> nonInvSquare(-driverLeft.getY()),
-		// // 		() -> nonInvSquare(-driverLeft.getX()),
-		// // 		() -> driverLeft.getTrigger(),
-		// // 		180));
+		// (new Trigger(() -> driverRight.getPOV(0) == 180)).onTrue(
+		// 	new AlignToHeading(
+		// 		swerve, 
+		// 		() -> nonInvSquare(-driverLeft.getY()),
+		// 		() -> nonInvSquare(-driverLeft.getX()),
+		// 		() -> driverLeft.getTrigger(),
+		// 		180));
 
 
-		// hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-		// 	() -> driverRight.getTrigger(),
-		// 	() -> driverLeft.getTrigger(),
-		// 	() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-		// 	() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
+		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
+			() -> driverRight.getTrigger(),
+			() -> driverLeft.getTrigger(),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
 
 	}
 
@@ -164,7 +164,7 @@ public class RobotContainer {
 	public void zeroMechanisms() {
 		// leftTurret.zeroPosition();
 		// rightTurret.zeroPosition();
-		// hopper.zeroPosition();
+		hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

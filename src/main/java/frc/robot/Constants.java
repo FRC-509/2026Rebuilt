@@ -163,7 +163,7 @@ public final class Constants {
 		public static final double kIndexerRollersVelocity = 30;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 10;
+		public static final double kIntakeExtension = 15.85;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
@@ -203,7 +203,6 @@ public final class Constants {
 		// Hopper
         public static final int kIntakeExtension = 20;
         public static final int kIntakeRotation = 19;
-        public static final int kIndexerRotation = 21;
         public static final int kLeftKicker = 22;
         public static final int kRightKicker = 23;
 	}
@@ -252,21 +251,17 @@ public final class Constants {
 		}
 
 		public static class Hopper {
-            public static final double kExtensionP = 0.14;
-            public static final double kExtensionI = 0.07;
-            public static final double kExtensionD = 0.01;
+            public static final double kExtensionP = 0.095;
+            public static final double kExtensionI = 0.075;
+            public static final double kExtensionD = 0.0;
 
-			public static final double kIntakeP = 0; // TODO: redo
-            public static final double kIntakeI = 0;
+			public static final double kIntakeP = 0.02; // TODO: redo
+            public static final double kIntakeI = 0.1;
             public static final double kIntakeD = 0;
 			
-			public static final double kIndexerP = 0.01;
-            public static final double kIndexerI = 0.5;
+			public static final double kIndexerP = 1;
+            public static final double kIndexerI = 0;
             public static final double kIndexerD = 0;
-
-            public static final double kIndexerRollersP = 0.01;
-            public static final double kIndexerRollersI = 0.5;
-            public static final double kIndexerRollersD = 0;
 		}
 	}
 

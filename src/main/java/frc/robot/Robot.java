@@ -77,4 +77,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testExit() {}
+
+  @Override
+  public void close() {
+    m_robotContainer.close();
+    super.close();
+  }
 }

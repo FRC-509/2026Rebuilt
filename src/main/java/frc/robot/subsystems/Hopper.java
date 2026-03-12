@@ -123,7 +123,7 @@ public class Hopper extends SubsystemBase {
 
         TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
 		intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		intakeConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+		intakeConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 		intakeConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		intakeConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
@@ -179,7 +179,7 @@ public class Hopper extends SubsystemBase {
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 46) {
+            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
                 kIntakeExtension.setControl(voltageOut.withOutput(0));
                 zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
                 hasZeroedPosition = true;
@@ -193,7 +193,7 @@ public class Hopper extends SubsystemBase {
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.));
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.1));
             if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
@@ -204,7 +204,7 @@ public class Hopper extends SubsystemBase {
                 kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
         }
 
-        SmartDashboard.putNumber("IntakePosition", -kIntakeExtension.getPosition().getValueAsDouble() + zeroedRotationOffset);
+        SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset);
         SmartDashboard.putString("HopperState", hopperStateString(hopperState));
         SmartDashboard.putString("IndexerState", indexerStateString(indexerState));
     }
