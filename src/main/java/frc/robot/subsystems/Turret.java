@@ -127,7 +127,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
     NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(4.90,3.97,1.88), 0),
+        HUB(new Translation3d(4.9,Constants.Field.kFieldWidth/2,1.88), 0),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -175,7 +175,10 @@ public class Turret extends SubsystemBase {
 
     public double getRotationToTarget(AimTarget targetPosition) {
         Translation2d targetTurretRelative = targetPosition.position.toTranslation2d().minus(getTurretAlliancePosition());
-        double angle = MathUtil.angleModulus(Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - robotYawRadiansSupplier.getAsDouble());
+        double angle = MathUtil.angleModulus(
+            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX())
+                - robotYawRadiansSupplier.getAsDouble()
+                + Math.PI);
         return Math.toDegrees(angle);
     }
 

@@ -178,7 +178,7 @@ public class Hopper extends SubsystemBase {
     }
 
     private double getExtensionSetpoint(boolean extended) {
-        return zeroedRotationOffset + (extended ? Constants.Hopper.kIntakeExtension : 0.2d);
+        return zeroedRotationOffset + (extended ? Constants.Hopper.kIntakeExtension : 0.5);
     }
     
     @Override

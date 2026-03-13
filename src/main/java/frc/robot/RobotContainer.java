@@ -39,8 +39,8 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	// private final Turret leftTurret;
-	// private final Turret rightTurret;
+	private final Turret leftTurret;
+	private final Turret rightTurret;
 	private final Hopper hopper;
 	private final Vortex vortex;
 	private GameManager gameManager;
@@ -53,23 +53,27 @@ public class RobotContainer {
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
 
-		// this.leftTurret = new Turret(
-		// 	Constants.Turret.kLeftTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() {
-		// 		public Translation2d getAsTranslation2d() {
-		// 			ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
-		// 			return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-		// 		}
-		// 	},
-		// 	() -> swerve.getYaw().getRadians());
+		this.leftTurret = new Turret(
+			Constants.Turret.kLeftTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() {
+				public Translation2d getAsTranslation2d() {
+					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+				}
+			},
+			() -> swerve.getYaw().getRadians());
 			
 			
-		// this.rightTurret = new Turret(
-		// 	Constants.Turret.kRightTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-		// 	() -> swerve.getYaw().getRadians());
+		this.rightTurret = new Turret(
+			Constants.Turret.kRightTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() {
+				public Translation2d getAsTranslation2d() {
+					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+				}
+			},			() -> swerve.getYaw().getRadians());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -125,9 +129,9 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,() -> false, () -> false));
-			// () -> leftTurret.isAbleToShoot(),
-			// () -> rightTurret.isAbleToShoot()));
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
+			() -> leftTurret.isAbleToShoot(),
+			() -> rightTurret.isAbleToShoot()));
 
 
 		// force feed override

@@ -2,31 +2,31 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.JetsonUdpRelay;
+import frc.robot.util.JetsonUdpRelay.RelayState;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
 
 public class Vortex {
-    private static final double JETSON_STALE_SECONDS = 0.5;
-
     private static final String FRONT_JETSON_TABLE_NAME = "VortexFront";
     private static final String BACK_JETSON_TABLE_NAME = "VortexBack";
     private static final String VORTEX_TABLE_NAME = "Vortex";
 
-    private final NetworkTable frontJetsonTable;
-    private final NetworkTable backJetsonTable;
     private final NetworkTable vortexTable;
 
     private final JetsonUdpRelay frontJetson;
@@ -58,8 +58,6 @@ public class Vortex {
 
         this.frontJetson = frontJetsonRelay;
         this.backJetson = backJetsonRelay;
-        this.frontJetsonTable = NetworkTableInstance.getDefault().getTable("/Vortex/" + FRONT_JETSON_TABLE_NAME);
-        this.backJetsonTable = NetworkTableInstance.getDefault().getTable("/Vortex/" + BACK_JETSON_TABLE_NAME);
         this.vortexTable = NetworkTableInstance.getDefault().getTable(VORTEX_TABLE_NAME);
 
         this.poseEstimator = new SwerveDrivePoseEstimator(
@@ -109,11 +107,11 @@ public class Vortex {
     }
 
     public boolean hasFrontJetsonPose() {
-        return hasFreshJetsonPose(frontJetsonTable);
+        return frontJetson != null && frontJetson.hasPose();
     }
 
     public boolean hasBackJetsonPose() {
-        return hasFreshJetsonPose(backJetsonTable);
+        return backJetson != null && backJetson.hasPose();
     }
 
     public boolean hasLimelightPose() {
@@ -121,42 +119,50 @@ public class Vortex {
     }
 
     public double getLastFrontJetsonMeasurementTimestamp() {
-        return lastFrontJetsonMeasurementTimestamp;
+        return frontJetson == null ? Double.NaN : frontJetson.getLastPacketTimestamp();
     }
 
     public double getLastBackJetsonMeasurementTimestamp() {
-        return lastBackJetsonMeasurementTimestamp;
+        return backJetson == null ? Double.NaN : backJetson.getLastPacketTimestamp();
     }
 
     public double getLastLimelightMeasurementTimestamp() {
         return lastLimelightMeasurementTimestamp;
     }
 
+    public RelayState getFrontJetsonState() {
+        return frontJetson == null ? JetsonUdpRelay.RelayState.empty() : frontJetson.getState();
+    }
+
+    public RelayState getBackJetsonState() {
+        return backJetson == null ? JetsonUdpRelay.RelayState.empty() : backJetson.getState();
+    }
+
     public Translation2d updatePositionEstimate() {
         poseEstimator.update(swerveDrive.getYaw(), swerveDrive.getModulePositions());
 
-        lastFrontJetsonMeasurementTimestamp = applyJetsonMeasurement(frontJetsonTable, lastFrontJetsonMeasurementTimestamp);
-        lastBackJetsonMeasurementTimestamp = applyJetsonMeasurement(backJetsonTable, lastBackJetsonMeasurementTimestamp);
+        lastFrontJetsonMeasurementTimestamp = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
+        lastBackJetsonMeasurementTimestamp = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
         applyFrontLimelightMeasurement();
         postVortexToNT();
 
         return getEstimatedGlobalPosition();
     }
 
-    private double applyJetsonMeasurement(NetworkTable jetsonTable, double lastMeasurementTimestamp) {
-        if (!hasFreshJetsonPose(jetsonTable)) {
+    private double applyJetsonMeasurement(JetsonUdpRelay jetsonRelay, double lastMeasurementTimestamp) {
+        if (jetsonRelay == null || !jetsonRelay.hasPose()) {
             return lastMeasurementTimestamp;
         }
 
-        double measurementTimestamp = jetsonTable.getEntry("last_packet_timestamp").getDouble(Double.NaN);
+        double measurementTimestamp = jetsonRelay.getLastPacketTimestamp();
         if (Double.isNaN(measurementTimestamp) || measurementTimestamp <= lastMeasurementTimestamp) {
             return lastMeasurementTimestamp;
         }
 
         poseEstimator.addVisionMeasurement(
-            getJetsonPose(jetsonTable),
+            getJetsonPose(jetsonRelay),
             measurementTimestamp,
-            Constants.Vortex.kVortexMeasurementStdDevs);
+            getJetsonMeasurementStdDevs(jetsonRelay));
         return measurementTimestamp;
     }
 
@@ -189,30 +195,36 @@ public class Vortex {
         lastLimelightMeasurementTimestamp = poseEstimate.timestampSeconds;
     }
 
-    private boolean hasFreshJetsonPose(NetworkTable jetsonTable) {
-        double lastPacketTimestamp = jetsonTable.getEntry("last_packet_timestamp").getDouble(Double.NaN);
-        return !Double.isNaN(lastPacketTimestamp)
-            && (Timer.getFPGATimestamp() - lastPacketTimestamp) <= JETSON_STALE_SECONDS
-            && jetsonTable.getEntry("robot/has_pose").getBoolean(false);
+    private Pose2d getJetsonPose(JetsonUdpRelay jetsonRelay) {
+        return new Pose2d(
+            jetsonRelay.getRobotX(),
+            jetsonRelay.getRobotY(),
+            swerveDrive.getYaw());
     }
 
-    private Pose2d getJetsonPose(NetworkTable jetsonTable) {
-        return new Pose2d(
-            jetsonTable.getEntry("robot/x").getDouble(0.0),
-            jetsonTable.getEntry("robot/y").getDouble(0.0),
-            swerveDrive.getYaw());
+    private Matrix<N3, N1> getJetsonMeasurementStdDevs(JetsonUdpRelay jetsonRelay) {
+        Matrix<N3, N1> baseStdDevs = Constants.Vortex.kJetsonBaseMeasurementStdDevs;
+        double floorErrorMeters = Math.abs(jetsonRelay.getFloorZErrorAvg());
+        double excessFloorError = Math.max(0.0, floorErrorMeters - Constants.Vortex.kJetsonFloorErrorTrustThresholdMeters);
+        double multiplier = 1.0 + (excessFloorError * Constants.Vortex.kJetsonFloorErrorStdDevScale);
+        multiplier = Math.min(multiplier, Constants.Vortex.kJetsonMaxStdDevMultiplier);
+
+        return VecBuilder.fill(
+            baseStdDevs.get(0, 0) * multiplier,
+            baseStdDevs.get(1, 0) * multiplier,
+            baseStdDevs.get(2, 0) * multiplier);
     }
 
     public Translation2d getLatestJetsonPose() {
         Translation2d sum = Translation2d.kZero;
         int measurementCount = 0;
 
-        if (hasFreshJetsonPose(frontJetsonTable)) {
-            sum = sum.plus(getJetsonPose(frontJetsonTable).getTranslation());
+        if (hasFrontJetsonPose()) {
+            sum = sum.plus(getJetsonPose(frontJetson).getTranslation());
             measurementCount++;
         }
-        if (hasFreshJetsonPose(backJetsonTable)) {
-            sum = sum.plus(getJetsonPose(backJetsonTable).getTranslation());
+        if (hasBackJetsonPose()) {
+            sum = sum.plus(getJetsonPose(backJetson).getTranslation());
             measurementCount++;
         }
 
@@ -247,11 +259,11 @@ public class Vortex {
         vortexTable.getEntry("HasLimelightPose").setBoolean(hasLimelightPose());
 
         field2d.setRobotPose(estimatedPose);
-        field2d.getObject("front_jetson_pose").setPose(getJetsonPose(frontJetsonTable));
-        field2d.getObject("back_jetson_pose").setPose(getJetsonPose(backJetsonTable));
-
-        if (!Double.isNaN(lastLimelightMeasurementTimestamp)) {
-            vortexTable.getEntry("LastLimelightTimestamp").setDouble(lastLimelightMeasurementTimestamp);
+        if (frontJetson != null) {
+            field2d.getObject("front_jetson_pose").setPose(getJetsonPose(frontJetson));
+        }
+        if (backJetson != null) {
+            field2d.getObject("back_jetson_pose").setPose(getJetsonPose(backJetson));
         }
     }
 

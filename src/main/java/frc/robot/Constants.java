@@ -160,21 +160,24 @@ public final class Constants {
         public static final double kOuttakingVelocity = 0.0;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 14.21;
+		public static final double kIntakeExtension = 16.15;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
 	public static class Vortex {
-        public static final String kFrontLimelightName = "intake";
+        public static final String kFrontLimelightName = "limelight-front";
         public static final Vector<N3> kLimelightMeasurementStdDevs = VecBuilder.fill(.7, .7, 99999);
-		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.9, 0.9, 0.9); // TODO: find n3 confidence
+		public static final Matrix<N3, N1> kJetsonBaseMeasurementStdDevs = VecBuilder.fill(.9, 0.9, 0.9); // TODO: find n3 confidence
+        public static final double kJetsonFloorErrorTrustThresholdMeters = 0.02;
+        public static final double kJetsonFloorErrorStdDevScale = 2.4;
+        public static final double kJetsonMaxStdDevMultiplier = 2.0;
         
-		public static final double kFrontLimelightForwardMeters = 0.0;
-        public static final double kFrontLimelightSideMeters = 0.0;
-        public static final double kFrontLimelightUpMeters = 0.0;
+		public static final double kFrontLimelightForwardMeters = 0.4;
+        public static final double kFrontLimelightSideMeters = 0.02;
+        public static final double kFrontLimelightUpMeters = 0.26;
         public static final double kFrontLimelightRollDegrees = 0.0;
-        public static final double kFrontLimelightPitchDegrees = -10.0;
-        public static final double kFrontLimelightYawDegrees = -180.0;
+        public static final double kFrontLimelightPitchDegrees = -17.0;
+        public static final double kFrontLimelightYawDegrees = 0;
 	}
 
 	public static class IDs {

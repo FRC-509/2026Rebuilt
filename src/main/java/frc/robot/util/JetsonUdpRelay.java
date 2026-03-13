@@ -2,12 +2,6 @@ package frc.robot.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.wpi.first.networktables.BooleanPublisher;
-import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.IntegerPublisher;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj.Timer;
 
 import java.io.IOException;
@@ -21,249 +15,429 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class JetsonUdpRelay {
-	private static final ObjectMapper MAPPER = new ObjectMapper();
-	private static final int MAX_PACKET_BYTES = 65535;
-	private static final int MAX_CAMERAS = 2;
-	private static final double STALE_PACKET_SECONDS = 0.5;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final int MAX_PACKET_BYTES = 65535;
+    private static final int MAX_CAMERAS = 2;
+    private static final double STALE_PACKET_SECONDS = 0.5;
 
-	private final Receiver jetson1;
+    public record CameraState(
+        int schemaVersion,
+        double fps,
+        int cameraIndex,
+        boolean hasPose,
+        double robotX,
+        double robotY,
+        int tagsUsed,
+        double floorZErrorAvg,
+        String apriltagsJson,
+        String objectsJson,
+        int packetCount
+    ) {
+        public static final CameraState EMPTY = new CameraState(0, 0.0, -1, false, 0.0, 0.0, 0, 0.0, "[]", "[]", 0);
+    }
 
-	public JetsonUdpRelay(String name, int port) throws IOException {
-		NetworkTableInstance nt = NetworkTableInstance.getDefault();
-		jetson1 = new Receiver(port, nt.getTable("/Vortex/" + name));
-	}
+    public record RelayState(
+        String rawJson,
+        String sourceIp,
+        int sourcePort,
+        int packetCount,
+        int parseErrorCount,
+        int ioErrorCount,
+        double lastPacketTimestamp,
+        boolean relayRunning,
+        boolean hasPose,
+        double robotX,
+        double robotY,
+        int tagsUsed,
+        double floorZErrorAvg,
+        CameraState[] cameras
+    ) {
+        public static RelayState empty() {
+            return new RelayState("", "", 0, 0, 0, 0, Double.NaN, false, false, 0.0, 0.0, 0, 0.0,
+                new CameraState[] {CameraState.EMPTY, CameraState.EMPTY});
+        }
+    }
 
-	public void poll() {
-		// Receive/parsing runs on the worker thread.
-	}
+    private final Receiver receiver;
 
-	public void close() {
-		jetson1.close();
-	}
+    public JetsonUdpRelay(String name, int port) throws IOException {
+        receiver = new Receiver(name, port);
+    }
 
-	private static final class Receiver {
-		private final DatagramChannel channel;
-		private final NetworkTable jetsonTable;
-		private final Thread worker;
+    public void poll() {
+        // Receive/parsing runs on the worker thread.
+    }
 
-		private final StringPublisher rawJsonPub;
-		private final StringPublisher sourceIpPub;
-		private final IntegerPublisher sourcePortPub;
-		private final IntegerPublisher packetCountPub;
-		private final IntegerPublisher parseErrorCountPub;
-		private final IntegerPublisher ioErrorCountPub;
-		private final DoublePublisher lastPacketTimestampPub;
-		private final DoublePublisher packetAgePub;
-		private final BooleanPublisher stalePub;
-		private final BooleanPublisher relayRunningPub;
-		private final BooleanPublisher hasPosePub;
-		private final DoublePublisher robotXPub;
-		private final DoublePublisher robotYPub;
-		private final IntegerPublisher tagsUsedPub;
-		private final DoublePublisher floorErrPub;
+    public void close() {
+        receiver.close();
+    }
 
-		private final CameraPublishers[] cameraPublishers = new CameraPublishers[MAX_CAMERAS];
-		private final Map<Integer, Integer> sourceIndexToSlot = new HashMap<>();
+    public RelayState getState() {
+        return copyState(receiver.getState());
+    }
 
-		private volatile boolean running = true;
-		private volatile int packetCount = 0;
-		private volatile int parseErrorCount = 0;
-		private volatile int ioErrorCount = 0;
-		private int nextSlot = 0;
-		private volatile double lastPacketTimestamp = Double.NaN;
+    public boolean isRunning() {
+        return getState().relayRunning();
+    }
 
-		Receiver(int port, NetworkTable table) throws IOException {
-			this.jetsonTable = table;
-			this.channel = DatagramChannel.open();
-			this.channel.configureBlocking(true);
-			this.channel.bind(new InetSocketAddress(port));
+    public boolean isStale() {
+        RelayState state = getState();
+        return Double.isNaN(state.lastPacketTimestamp())
+            || (Timer.getFPGATimestamp() - state.lastPacketTimestamp()) > STALE_PACKET_SECONDS;
+    }
 
-			rawJsonPub = table.getStringTopic("raw_json").publish();
-			sourceIpPub = table.getStringTopic("source_ip").publish();
-			sourcePortPub = table.getIntegerTopic("source_port").publish();
-			packetCountPub = table.getIntegerTopic("packet_count").publish();
-			parseErrorCountPub = table.getIntegerTopic("parse_error_count").publish();
-			ioErrorCountPub = table.getIntegerTopic("io_error_count").publish();
-			lastPacketTimestampPub = table.getDoubleTopic("last_packet_timestamp").publish();
-			packetAgePub = table.getDoubleTopic("packet_age_seconds").publish();
-			stalePub = table.getBooleanTopic("stale").publish();
-			relayRunningPub = table.getBooleanTopic("relay_running").publish();
-			hasPosePub = table.getBooleanTopic("robot/has_pose").publish();
-			robotXPub = table.getDoubleTopic("robot/x").publish();
-			robotYPub = table.getDoubleTopic("robot/y").publish();
-			tagsUsedPub = table.getIntegerTopic("robot/tags_used").publish();
-			floorErrPub = table.getDoubleTopic("robot/floor_z_error_avg").publish();
+    public double getPacketAgeSeconds() {
+        RelayState state = getState();
+        if (Double.isNaN(state.lastPacketTimestamp())) {
+            return Double.NaN;
+        }
+        return Timer.getFPGATimestamp() - state.lastPacketTimestamp();
+    }
 
-			for (int slot = 0; slot < MAX_CAMERAS; slot++) {
-				cameraPublishers[slot] = new CameraPublishers(table.getSubTable("camera" + slot));
-			}
+    public boolean hasPose() {
+        if (isStale()) {
+            return false;
+        }
 
-			relayRunningPub.set(true);
-			stalePub.set(true);
+        for (CameraState camera : getState().cameras()) {
+            if (camera.hasPose()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-			worker = new Thread(this::run, "JetsonUdpRelay-" + port);
-			worker.setDaemon(true);
-			worker.start();
-		}
+    public double getRobotX() {
+        return averageCameraValue(CameraState::robotX, getState());
+    }
 
-		void close() {
-			running = false;
-			relayRunningPub.set(false);
+    public double getRobotY() {
+        return averageCameraValue(CameraState::robotY, getState());
+    }
 
-			try {
-				channel.close();
-			} catch (IOException ignored) {
-			}
+    public int getTagsUsed() {
+        RelayState state = getState();
+        int maxTagsUsed = 0;
+        for (CameraState camera : state.cameras()) {
+            if (camera.hasPose()) {
+                maxTagsUsed = Math.max(maxTagsUsed, camera.tagsUsed());
+            }
+        }
+        return maxTagsUsed;
+    }
 
-			try {
-				worker.join(100);
-			} catch (InterruptedException interrupted) {
-				Thread.currentThread().interrupt();
-			}
-		}
+    public double getFloorZErrorAvg() {
+        return averageCameraValue(CameraState::floorZErrorAvg, getState());
+    }
 
-		private void run() {
-			ByteBuffer buffer = ByteBuffer.allocateDirect(MAX_PACKET_BYTES);
+    public double getLastPacketTimestamp() {
+        return getState().lastPacketTimestamp();
+    }
 
-			while (running) {
-				try {
-					buffer.clear();
-					SocketAddress remote = channel.receive(buffer);
-					if (remote == null) {
-						continue;
-					}
+    public CameraState getCameraState(int slot) {
+        CameraState[] cameras = getState().cameras();
+        if (slot < 0 || slot >= cameras.length) {
+            return CameraState.EMPTY;
+        }
+        return cameras[slot];
+    }
 
-					buffer.flip();
-					String json = StandardCharsets.UTF_8.decode(buffer).toString();
-					packetCount++;
-					packetCountPub.set(packetCount);
-					rawJsonPub.set(json);
+    private static RelayState copyState(RelayState state) {
+        CameraState[] cameras = new CameraState[state.cameras().length];
+        System.arraycopy(state.cameras(), 0, cameras, 0, state.cameras().length);
+        return new RelayState(
+            state.rawJson(),
+            state.sourceIp(),
+            state.sourcePort(),
+            state.packetCount(),
+            state.parseErrorCount(),
+            state.ioErrorCount(),
+            state.lastPacketTimestamp(),
+            state.relayRunning(),
+            state.hasPose(),
+            state.robotX(),
+            state.robotY(),
+            state.tagsUsed(),
+            state.floorZErrorAvg(),
+            cameras);
+    }
 
-					lastPacketTimestamp = Timer.getFPGATimestamp();
-					lastPacketTimestampPub.set(lastPacketTimestamp);
-					packetAgePub.set(0.0);
-					stalePub.set(false);
+    private static double averageCameraValue(CameraValueExtractor extractor, RelayState state) {
+        double sum = 0.0;
+        int count = 0;
+        for (CameraState camera : state.cameras()) {
+            if (camera.hasPose()) {
+                sum += extractor.extract(camera);
+                count++;
+            }
+        }
 
-					if (remote instanceof InetSocketAddress addr) {
-						sourceIpPub.set(addr.getAddress().getHostAddress());
-						sourcePortPub.set(addr.getPort());
-					}
+        if (count == 0) {
+            return 0.0;
+        }
+        return sum / count;
+    }
 
-					try {
-						JsonNode root = MAPPER.readTree(json);
-						int sourceCameraIndex = root.path("camera_index").asInt(-1);
-						if (sourceCameraIndex < 0) {
-							parseErrorCount++;
-							parseErrorCountPub.set(parseErrorCount);
-							continue;
-						}
+    @FunctionalInterface
+    private interface CameraValueExtractor {
+        double extract(CameraState cameraState);
+    }
 
-						Integer slot = sourceIndexToSlot.get(sourceCameraIndex);
-						if (slot == null) {
-							if (nextSlot >= MAX_CAMERAS) {
-								continue;
-							}
-							slot = nextSlot++;
-							sourceIndexToSlot.put(sourceCameraIndex, slot);
-						}
+    private static final class Receiver {
+        private final DatagramChannel channel;
+        private final Thread worker;
+        private final Map<Integer, Integer> sourceIndexToSlot = new HashMap<>();
 
-						CameraPublishers pubs = cameraPublishers[slot];
+        private volatile boolean running = true;
+        private volatile RelayState state = RelayState.empty();
+        private int nextSlot = 0;
 
-						pubs.schemaVersionPub.set(root.path("schema_version").asInt(0));
-						pubs.cameraIndexPub.set(sourceCameraIndex);
-						pubs.fpsPub.set(root.path("fps").asDouble(0.0));
+        Receiver(String name, int port) throws IOException {
+            this.channel = DatagramChannel.open();
+            this.channel.configureBlocking(true);
+            this.channel.bind(new InetSocketAddress(port));
 
-						JsonNode apriltags = root.path("apriltags");
-						JsonNode objects = root.path("objects");
-						pubs.apriltagsJsonPub.set((apriltags.isMissingNode() || apriltags.isNull()) ? "[]" : apriltags.toString());
-						pubs.objectsJsonPub.set((objects.isMissingNode() || objects.isNull()) ? "[]" : objects.toString());
+            RelayState initialState = RelayState.empty();
+            state = new RelayState(
+                initialState.rawJson(),
+                initialState.sourceIp(),
+                initialState.sourcePort(),
+                initialState.packetCount(),
+                initialState.parseErrorCount(),
+                initialState.ioErrorCount(),
+                initialState.lastPacketTimestamp(),
+                true,
+                initialState.hasPose(),
+                initialState.robotX(),
+                initialState.robotY(),
+                initialState.tagsUsed(),
+                initialState.floorZErrorAvg(),
+                initialState.cameras());
 
-						JsonNode robotPose = root.path("robot_pose");
-						boolean hasPose = !robotPose.isMissingNode() && !robotPose.isNull();
-						pubs.hasPosePub.set(hasPose);
-						hasPosePub.set(hasPose);
+            worker = new Thread(this::run, "JetsonUdpRelay-" + name + "-" + port);
+            worker.setDaemon(true);
+            worker.start();
+        }
 
-						if (hasPose) {
-							double robotX = robotPose.path("x").asDouble(0.0);
-							double robotY = robotPose.path("y").asDouble(0.0);
-							int tagsUsed = robotPose.path("tags_used").asInt(0);
-							double floorErr = robotPose.path("floor_z_error_avg").asDouble(0.0);
+        RelayState getState() {
+            return state;
+        }
 
-							pubs.robotXPub.set(robotX);
-							pubs.robotYPub.set(robotY);
-							pubs.tagsUsedPub.set(tagsUsed);
-							pubs.floorErrPub.set(floorErr);
+        void close() {
+            running = false;
+            RelayState current = state;
+            state = new RelayState(
+                current.rawJson(),
+                current.sourceIp(),
+                current.sourcePort(),
+                current.packetCount(),
+                current.parseErrorCount(),
+                current.ioErrorCount(),
+                current.lastPacketTimestamp(),
+                false,
+                current.hasPose(),
+                current.robotX(),
+                current.robotY(),
+                current.tagsUsed(),
+                current.floorZErrorAvg(),
+                current.cameras());
 
-							robotXPub.set(robotX);
-							robotYPub.set(robotY);
-							tagsUsedPub.set(tagsUsed);
-							floorErrPub.set(floorErr);
-						} else {
-							clearPose(pubs);
-						}
+            try {
+                channel.close();
+            } catch (IOException ignored) {
+            }
 
-						pubs.packetCount++;
-						pubs.packetCountPub.set(pubs.packetCount);
-					} catch (Exception parseErr) {
-						parseErrorCount++;
-						parseErrorCountPub.set(parseErrorCount);
-					}
-				} catch (AsynchronousCloseException closed) {
-					break;
-				} catch (IOException ioErr) {
-					if (!running) {
-						break;
-					}
-					ioErrorCount++;
-					ioErrorCountPub.set(ioErrorCount);
-				}
-			}
+            try {
+                worker.join(100);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
 
-			relayRunningPub.set(false);
-		}
+        private void run() {
+            ByteBuffer buffer = ByteBuffer.allocateDirect(MAX_PACKET_BYTES);
 
-		private void clearPose(CameraPublishers pubs) {
-			pubs.hasPosePub.set(false);
-			pubs.robotXPub.set(0.0);
-			pubs.robotYPub.set(0.0);
-			pubs.tagsUsedPub.set(0);
-			pubs.floorErrPub.set(0.0);
+            while (running) {
+                try {
+                    buffer.clear();
+                    SocketAddress remote = channel.receive(buffer);
+                    if (remote == null) {
+                        continue;
+                    }
 
-			hasPosePub.set(false);
-			robotXPub.set(0.0);
-			robotYPub.set(0.0);
-			tagsUsedPub.set(0);
-			floorErrPub.set(0.0);
-		}
-	}
+                    buffer.flip();
+                    String json = StandardCharsets.UTF_8.decode(buffer).toString();
+                    double packetTimestamp = Timer.getFPGATimestamp();
 
-	private static final class CameraPublishers {
-		final IntegerPublisher schemaVersionPub;
-		final DoublePublisher fpsPub;
-		final IntegerPublisher cameraIndexPub;
-		final BooleanPublisher hasPosePub;
-		final DoublePublisher robotXPub;
-		final DoublePublisher robotYPub;
-		final IntegerPublisher tagsUsedPub;
-		final DoublePublisher floorErrPub;
-		final StringPublisher apriltagsJsonPub;
-		final StringPublisher objectsJsonPub;
-		final IntegerPublisher packetCountPub;
+                    RelayState current = state;
+                    CameraState[] cameras = copyCameras(current.cameras());
+                    String sourceIp = current.sourceIp();
+                    int sourcePort = current.sourcePort();
+                    if (remote instanceof InetSocketAddress addr) {
+                        sourceIp = addr.getAddress().getHostAddress();
+                        sourcePort = addr.getPort();
+                    }
 
-		int packetCount = 0;
+                    state = new RelayState(
+                        json,
+                        sourceIp,
+                        sourcePort,
+                        current.packetCount() + 1,
+                        current.parseErrorCount(),
+                        current.ioErrorCount(),
+                        packetTimestamp,
+                        true,
+                        current.hasPose(),
+                        current.robotX(),
+                        current.robotY(),
+                        current.tagsUsed(),
+                        current.floorZErrorAvg(),
+                        cameras);
 
-		CameraPublishers(NetworkTable table) {
-			schemaVersionPub = table.getIntegerTopic("schema_version").publish();
-			fpsPub = table.getDoubleTopic("fps").publish();
-			cameraIndexPub = table.getIntegerTopic("camera_index").publish();
-			hasPosePub = table.getBooleanTopic("robot/has_pose").publish();
-			robotXPub = table.getDoubleTopic("robot/x").publish();
-			robotYPub = table.getDoubleTopic("robot/y").publish();
-			tagsUsedPub = table.getIntegerTopic("robot/tags_used").publish();
-			floorErrPub = table.getDoubleTopic("robot/floor_z_error_avg").publish();
-			apriltagsJsonPub = table.getStringTopic("apriltags_json").publish();
-			objectsJsonPub = table.getStringTopic("objects_json").publish();
-			packetCountPub = table.getIntegerTopic("packet_count").publish();
-		}
-	}
+                    try {
+                        JsonNode root = MAPPER.readTree(json);
+                        int sourceCameraIndex = root.path("camera_index").asInt(-1);
+                        if (sourceCameraIndex < 0) {
+                            bumpParseError();
+                            continue;
+                        }
+
+                        Integer slot = sourceIndexToSlot.get(sourceCameraIndex);
+                        if (slot == null) {
+                            if (nextSlot >= MAX_CAMERAS) {
+                                continue;
+                            }
+                            slot = nextSlot++;
+                            sourceIndexToSlot.put(sourceCameraIndex, slot);
+                        }
+
+                        CameraState previousCamera = cameras[slot];
+                        JsonNode apriltags = root.path("apriltags");
+                        JsonNode objects = root.path("objects");
+                        JsonNode robotPose = root.path("robot_pose");
+                        boolean hasPose = !robotPose.isMissingNode() && !robotPose.isNull();
+
+                        CameraState updatedCamera = new CameraState(
+                            root.path("schema_version").asInt(0),
+                            root.path("fps").asDouble(0.0),
+                            sourceCameraIndex,
+                            hasPose,
+                            hasPose ? robotPose.path("x").asDouble(0.0) : 0.0,
+                            hasPose ? robotPose.path("y").asDouble(0.0) : 0.0,
+                            hasPose ? robotPose.path("tags_used").asInt(0) : 0,
+                            hasPose ? robotPose.path("floor_z_error_avg").asDouble(0.0) : 0.0,
+                            (apriltags.isMissingNode() || apriltags.isNull()) ? "[]" : apriltags.toString(),
+                            (objects.isMissingNode() || objects.isNull()) ? "[]" : objects.toString(),
+                            previousCamera.packetCount() + 1);
+                        cameras[slot] = updatedCamera;
+
+                        RelayState latest = state;
+                        boolean aggregateHasPose = false;
+                        double robotXSum = 0.0;
+                        double robotYSum = 0.0;
+                        double floorErrorSum = 0.0;
+                        int poseCameraCount = 0;
+                        int maxTagsUsed = 0;
+                        for (CameraState camera : cameras) {
+                            if (!camera.hasPose()) {
+                                continue;
+                            }
+                            aggregateHasPose = true;
+                            robotXSum += camera.robotX();
+                            robotYSum += camera.robotY();
+                            floorErrorSum += camera.floorZErrorAvg();
+                            maxTagsUsed = Math.max(maxTagsUsed, camera.tagsUsed());
+                            poseCameraCount++;
+                        }
+
+                        state = new RelayState(
+                            latest.rawJson(),
+                            latest.sourceIp(),
+                            latest.sourcePort(),
+                            latest.packetCount(),
+                            latest.parseErrorCount(),
+                            latest.ioErrorCount(),
+                            latest.lastPacketTimestamp(),
+                            true,
+                            aggregateHasPose,
+                            poseCameraCount == 0 ? 0.0 : robotXSum / poseCameraCount,
+                            poseCameraCount == 0 ? 0.0 : robotYSum / poseCameraCount,
+                            maxTagsUsed,
+                            poseCameraCount == 0 ? 0.0 : floorErrorSum / poseCameraCount,
+                            copyCameras(cameras));
+                    } catch (Exception parseErr) {
+                        bumpParseError();
+                    }
+                } catch (AsynchronousCloseException closed) {
+                    break;
+                } catch (IOException ioErr) {
+                    if (!running) {
+                        break;
+                    }
+                    bumpIoError();
+                }
+            }
+
+            RelayState current = state;
+            state = new RelayState(
+                current.rawJson(),
+                current.sourceIp(),
+                current.sourcePort(),
+                current.packetCount(),
+                current.parseErrorCount(),
+                current.ioErrorCount(),
+                current.lastPacketTimestamp(),
+                false,
+                current.hasPose(),
+                current.robotX(),
+                current.robotY(),
+                current.tagsUsed(),
+                current.floorZErrorAvg(),
+                current.cameras());
+        }
+
+        private void bumpParseError() {
+            RelayState current = state;
+            state = new RelayState(
+                current.rawJson(),
+                current.sourceIp(),
+                current.sourcePort(),
+                current.packetCount(),
+                current.parseErrorCount() + 1,
+                current.ioErrorCount(),
+                current.lastPacketTimestamp(),
+                current.relayRunning(),
+                current.hasPose(),
+                current.robotX(),
+                current.robotY(),
+                current.tagsUsed(),
+                current.floorZErrorAvg(),
+                current.cameras());
+        }
+
+        private void bumpIoError() {
+            RelayState current = state;
+            state = new RelayState(
+                current.rawJson(),
+                current.sourceIp(),
+                current.sourcePort(),
+                current.packetCount(),
+                current.parseErrorCount(),
+                current.ioErrorCount() + 1,
+                current.lastPacketTimestamp(),
+                current.relayRunning(),
+                current.hasPose(),
+                current.robotX(),
+                current.robotY(),
+                current.tagsUsed(),
+                current.floorZErrorAvg(),
+                current.cameras());
+        }
+
+        private static CameraState[] copyCameras(CameraState[] original) {
+            CameraState[] copy = new CameraState[original.length];
+            System.arraycopy(original, 0, copy, 0, original.length);
+            return copy;
+        }
+    }
 }
