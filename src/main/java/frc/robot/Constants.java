@@ -160,7 +160,7 @@ public final class Constants {
         public static final double kOuttakingVelocity = 0.0;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 15.85;
+		public static final double kIntakeExtension = 14.21;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
@@ -259,7 +259,7 @@ public final class Constants {
             public static final double kExtensionI = 0.1;
             public static final double kExtensionD = 0.0;
 
-			public static final double kIntakeP = 0.02; // TODO: redo
+			public static final double kIntakeP = 0.02;
             public static final double kIntakeI = 0.1;
             public static final double kIntakeD = 0;
 			

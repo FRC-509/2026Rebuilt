@@ -176,17 +176,22 @@ public class Hopper extends SubsystemBase {
         this.previousIndexerState = this.indexerState;
         this.indexerState = newIndexerState;
     }
+
+    private double getExtensionSetpoint(boolean extended) {
+        return zeroedRotationOffset + (extended ? Constants.Hopper.kIntakeExtension : 0.2d);
+    }
     
     @Override
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
             if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
-                kIntakeExtension.setControl(voltageOut.withOutput(0));
                 zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(zeroedRotationOffset));
                 hasZeroedPosition = true;
-            } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
-            hasZeroedPosition = true;
+            } else {
+                kIntakeExtension.setControl(voltageOut.withOutput(-2));
+            }
 
             if (!hasZeroedPosition) return;
         }
@@ -195,8 +200,9 @@ public class Hopper extends SubsystemBase {
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.3));
-            if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(getExtensionSetpoint(hopperState.hopperIsExtended)));
+            if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) 
+            kIntakeRotation.setControl(hopperState.indexingVelocity != 0.0 ? intakeDutyCycle.withVelocity(hopperState.intakingVelocity) : voltageOut.withOutput(0));
         }
 
         if (!indexerState.equals(previousIndexerState)) { // only change instruction on state change, not every 20ms
@@ -208,7 +214,7 @@ public class Hopper extends SubsystemBase {
     }
 
     public double getIntakeExtensionMeters() {
-        return kIntakeExtension.getPosition().getValueAsDouble() * Constants.Hopper.kIntakeExtensionToMetersConversion;
+        return (kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset) * Constants.Hopper.kIntakeExtensionToMetersConversion;
     }
 
     public void zeroPosition() {

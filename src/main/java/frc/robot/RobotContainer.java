@@ -15,7 +15,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
+import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
@@ -37,7 +39,7 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	private final Turret leftTurret;
+	// private final Turret leftTurret;
 	// private final Turret rightTurret;
 	private final Hopper hopper;
 	private final Vortex vortex;
@@ -51,16 +53,16 @@ public class RobotContainer {
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
 
-		this.leftTurret = new Turret(
-			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() {
-				public Translation2d getAsTranslation2d() {
-					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
-					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-				}
-			},
-			() -> swerve.getYaw().getRadians());
+		// this.leftTurret = new Turret(
+		// 	Constants.Turret.kLeftTurretConfiguration,
+		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+		// 	new Translation2dSupplier() {
+		// 		public Translation2d getAsTranslation2d() {
+		// 			ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+		// 			return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+		// 		}
+		// 	},
+		// 	() -> swerve.getYaw().getRadians());
 			
 			
 		// this.rightTurret = new Turret(
@@ -123,9 +125,9 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,() -> false, () -> false));
+			// () -> leftTurret.isAbleToShoot(),
+			// () -> rightTurret.isAbleToShoot()));
 
 
 		// force feed override
@@ -183,13 +185,6 @@ public class RobotContainer {
       	return Commands.print("No autonomous command configured");
 	}
 
-	public GameManager getGameManager() {
-		return gameManager;
-	}
-
-	public void robotInit() {
-	}
-
 	public void robotPeriodic() {
 		vortex.pollJetsons();		
 	}
@@ -199,7 +194,7 @@ public class RobotContainer {
 	}
 
 	public void zeroMechanisms() {
-		leftTurret.zeroPosition();
+		// leftTurret.zeroPosition();
 		// rightTurret.zeroPosition();
 		hopper.zeroPosition();
 	}

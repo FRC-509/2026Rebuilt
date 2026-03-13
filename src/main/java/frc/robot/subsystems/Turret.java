@@ -14,7 +14,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Chassis.TurretConfiguration;
@@ -149,20 +148,6 @@ public class Turret extends SubsystemBase {
                 position.getZ()
             );
         }
-    }
-
-    private void logAimTarget() {
-        String target = "";
-        switch (aimTarget) {
-            case HUB:
-                target = "Hub";
-                break;
-        
-            default:
-                target = "Not Hub";
-                break;
-        }
-        SmartDashboard.putString(side+"Turret Aim Target", target);
     }
 
     private void setRotationDegrees(double degrees) {
@@ -318,7 +303,6 @@ public class Turret extends SubsystemBase {
 
 
         if (!overrideAimTarget) aimTarget = getTargetFromPosition();
-        logAimTarget();
 
         double angleToTarget = getRotationToTarget(aimTarget);
         double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
@@ -333,20 +317,6 @@ public class Turret extends SubsystemBase {
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, 100d);
         kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
         kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));
-        SmartDashboard.putNumber(side+"Turret Bottom flyweel speeds", flywheelSpeeds[0]);
-        SmartDashboard.putNumber(side+"Turret Top flyweel speeds", flywheelSpeeds[1]);
-        SmartDashboard.putNumber(side+"Turret AngleToTarget", angleToTarget);
-        SmartDashboard.putNumber(side+"Turret CommandedRotation", commandedRotation);
-        SmartDashboard.putNumber(side+"Turret RotationError", targetRotationDegrees - getRotationDegrees());
-        SmartDashboard.putBoolean(side+"Turret CanAim", canAim);
-        SmartDashboard.putNumber(side+"Turret TargetX", aimTarget.position.getX());
-        SmartDashboard.putNumber(side+"Turret TargetY", aimTarget.position.getY());
-        Translation2d turretPosition = getTurretAlliancePosition();
-        SmartDashboard.putNumber(side+"Turret AllianceX", turretPosition.getX());
-        SmartDashboard.putNumber(side+"Turret AllianceY", turretPosition.getY());
-        SmartDashboard.putNumber(side+"TurretPosition", getRotationDegrees());
-        SmartDashboard.putNumber(side+"TurretZeroOffset", zeroedRotationOffset * 360);
-        SmartDashboard.putNumber(side+"TurretReal", kRotationMotor.getPosition().getValueAsDouble());
     }
 
     public void zeroPosition() {

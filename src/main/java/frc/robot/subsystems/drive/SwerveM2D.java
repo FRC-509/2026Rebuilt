@@ -4,7 +4,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SwerveM2D {
 	private Mechanism2d layout;
@@ -36,7 +35,6 @@ public class SwerveM2D {
 		backRightRoot = layout.getRoot("root4", 4.5, 1.5);
 		backRight = backRightRoot.append(new MechanismLigament2d("motor4", 1, 0));
 
-		SmartDashboard.putData("Swerve Drive State", layout);
 	}
 
 	public void update(SwerveModuleState[] states) {
@@ -51,7 +49,5 @@ public class SwerveM2D {
 
 		backRight.setAngle(states[3].angle.getDegrees() + 90.0d);
 		backRight.setLength(states[3].speedMetersPerSecond);
-
-		SmartDashboard.putData("Swerve Drive State", layout);
 	}
 }

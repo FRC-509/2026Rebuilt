@@ -34,7 +34,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    m_robotContainer.robotInit();
   }
 
   @Override

@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.JetsonUdpRelay;
@@ -73,7 +72,6 @@ public class Vortex {
         swerve.resetOdometry(initialPose);
         swerve.setEstimatedPoseSupplier(poseEstimator::getEstimatedPosition);
         field2d.setRobotPose(initialPose);
-        SmartDashboard.putData("Field", field2d);
 
         LimelightHelpers.setCameraPose_RobotSpace(
             Constants.Vortex.kFrontLimelightName,
@@ -100,6 +98,38 @@ public class Vortex {
 
     public Pose2d getEstimatedAlliancePose() {
         return toAllianceRelative(getEstimatedPose());
+    }
+
+    public Field2d getField() {
+        return field2d;
+    }
+
+    public double getIntakeExtensionMeters() {
+        return intakeExtension.getAsDouble();
+    }
+
+    public boolean hasFrontJetsonPose() {
+        return hasFreshJetsonPose(frontJetsonTable);
+    }
+
+    public boolean hasBackJetsonPose() {
+        return hasFreshJetsonPose(backJetsonTable);
+    }
+
+    public boolean hasLimelightPose() {
+        return !Double.isNaN(lastLimelightMeasurementTimestamp);
+    }
+
+    public double getLastFrontJetsonMeasurementTimestamp() {
+        return lastFrontJetsonMeasurementTimestamp;
+    }
+
+    public double getLastBackJetsonMeasurementTimestamp() {
+        return lastBackJetsonMeasurementTimestamp;
+    }
+
+    public double getLastLimelightMeasurementTimestamp() {
+        return lastLimelightMeasurementTimestamp;
     }
 
     public Translation2d updatePositionEstimate() {
@@ -201,14 +231,7 @@ public class Vortex {
             backJetson.poll();
         }
 
-        Translation2d estimatedPosition = updatePositionEstimate();
-        Translation2d allianceEstimatedPosition = getEstimatedAlliancePosition();
-        Translation2d jetsonPosition = getLatestJetsonPose();
-        SmartDashboard.putNumber("JetsonX", jetsonPosition.getX());
-        SmartDashboard.putNumber("JetsonY", jetsonPosition.getY());
-        SmartDashboard.putNumber("EstimatorX", allianceEstimatedPosition.getX());
-        SmartDashboard.putNumber("EstimatorY", allianceEstimatedPosition.getY());
-        SmartDashboard.putNumber("IntakeExtensionMeters", intakeExtension.getAsDouble());
+        updatePositionEstimate();
     }
 
     private void postVortexToNT() {
@@ -219,9 +242,9 @@ public class Vortex {
             estimatedPose.getY(),
             estimatedPose.getRotation().getDegrees()
         });
-        vortexTable.getEntry("HasFrontJetsonPose").setBoolean(hasFreshJetsonPose(frontJetsonTable));
-        vortexTable.getEntry("HasBackJetsonPose").setBoolean(hasFreshJetsonPose(backJetsonTable));
-        vortexTable.getEntry("HasLimelightPose").setBoolean(!Double.isNaN(lastLimelightMeasurementTimestamp));
+        vortexTable.getEntry("HasFrontJetsonPose").setBoolean(hasFrontJetsonPose());
+        vortexTable.getEntry("HasBackJetsonPose").setBoolean(hasBackJetsonPose());
+        vortexTable.getEntry("HasLimelightPose").setBoolean(hasLimelightPose());
 
         field2d.setRobotPose(estimatedPose);
         field2d.getObject("front_jetson_pose").setPose(getJetsonPose(frontJetsonTable));
