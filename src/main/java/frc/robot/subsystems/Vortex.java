@@ -54,7 +54,7 @@ public class Vortex {
             0,
             0,
             -10, 
-            -180);
+            180);
         LimelightHelpers.setPipelineIndex(Constants.Vortex.kLimelightName, 0);
     }
 

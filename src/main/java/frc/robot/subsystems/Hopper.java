@@ -8,8 +8,6 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -178,7 +176,6 @@ public class Hopper extends SubsystemBase {
     
     @Override
     public void periodic() {
-        double start = Timer.getFPGATimestamp();
         // zeroing functionality to move until you hit minimum hardstop
         // if (!hasZeroedPosition) {
         //     if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
@@ -205,11 +202,6 @@ public class Hopper extends SubsystemBase {
             if (indexerState.rightTurret != previousIndexerState.rightTurret) 
                 kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
         }
-
-        SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset);
-        SmartDashboard.putString("HopperState", hopperStateString(hopperState));
-        SmartDashboard.putString("IndexerState", indexerStateString(indexerState));
-        SmartDashboard.putNumber("Timing/HopperPeriodicMs", (Timer.getFPGATimestamp() - start) * 1000.0);
     }
 
     public double getIntakeExtensionMeters() {
@@ -221,6 +213,5 @@ public class Hopper extends SubsystemBase {
     }
 
     public void logZero() {
-        SmartDashboard.putBoolean("HasZeroed", hasZeroedPosition);
     }
 }

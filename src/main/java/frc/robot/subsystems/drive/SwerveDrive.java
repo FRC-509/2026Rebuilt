@@ -353,26 +353,12 @@ public class SwerveDrive extends SubsystemBase {
 
 	@Override
 	public void periodic() {
-		double start = Timer.getFPGATimestamp();
 		odometry.update(getYaw(), getModulePositions());
-		double afterOdometry = Timer.getFPGATimestamp();
 
 		SmartDashboard.putNumber("yaw", getYaw().getDegrees());
-		// SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);
-
-		// ThinNT.putNumber("x-velocity", getChassisSpeeds().vxMetersPerSecond);
-		// ThinNT.putNumber("y-velocity", getChassisSpeeds().vyMetersPerSecond);
-		// ThinNT.putNumber("yaw-velocity", pigeon.getAngularVelocityZWorld());
-		// ThinNT.putNumber("target-heading", targetHeading);
-		// SmartDashboard.putNumberArray("Estimated Pose", new double[]{getEstimatedPose().getX(),getEstimatedPose().getY()});
-
+		
 		moduleStatePublisher.set(getModuleStates());
 		odometryPublisher.set(getRawOdometeryPose());
 		poseEstimatePublisher.set(getEstimatedPose());
-		double end = Timer.getFPGATimestamp();
-
-		SmartDashboard.putNumber("Timing/SwervePeriodicMs", (end - start) * 1000.0);
-		SmartDashboard.putNumber("Timing/SwerveOdometryMs", (afterOdometry - start) * 1000.0);
-		SmartDashboard.putNumber("Timing/SwervePublishMs", (end - afterOdometry) * 1000.0);
 	}
 }
