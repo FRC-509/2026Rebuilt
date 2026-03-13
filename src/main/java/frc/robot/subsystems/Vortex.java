@@ -81,14 +81,7 @@ public class Vortex {
         field2d.setRobotPose(initialPose);
         estimatedGlobalPosition = computeEstimatedGlobalPosition();
 
-        LimelightHelpers.setCameraPose_RobotSpace(
-            Constants.Vortex.kFrontLimelightName,
-            Constants.Vortex.kFrontLimelightForwardMeters,
-            Constants.Vortex.kFrontLimelightSideMeters,
-            Constants.Vortex.kFrontLimelightUpMeters,
-            Constants.Vortex.kFrontLimelightRollDegrees,
-            Constants.Vortex.kFrontLimelightPitchDegrees,
-            Constants.Vortex.kFrontLimelightYawDegrees);
+        configureFrontLimelightPose();
         LimelightHelpers.setPipelineIndex(Constants.Vortex.kFrontLimelightName, 0);
     }
 
@@ -169,10 +162,15 @@ public class Vortex {
         if (Double.isNaN(measurementTimestamp) || measurementTimestamp <= lastMeasurementTimestamp) {
             return lastMeasurementTimestamp;
         }
+        poseEstimator.addVisionMeasurement(
+            getJetsonPose(jetsonRelay),
+            measurementTimestamp,
+            getJetsonMeasurementStdDevs(jetsonRelay));
         return measurementTimestamp;
     }
 
     private void applyFrontLimelightMeasurement() {
+        configureFrontLimelightPose();
         LimelightHelpers.SetRobotOrientation(
             Constants.Vortex.kFrontLimelightName,
             swerveDrive.getYaw().getDegrees(),
@@ -184,7 +182,7 @@ public class Vortex {
 
         boolean isRedAlliance = SwerveDrive.getAlliance() == Alliance.Red;
         PoseEstimate poseEstimate = isRedAlliance
-            ? LimelightHelpers.getBotPoseEstimate_wpiRed(Constants.Vortex.kFrontLimelightName)
+            ? LimelightHelpers.getBotPoseEstimate_wpiRed_MegaTag2(Constants.Vortex.kFrontLimelightName)
             : LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(Constants.Vortex.kFrontLimelightName);
 
         if (poseEstimate == null
@@ -196,12 +194,8 @@ public class Vortex {
             return;
         }
 
-        Pose2d limelightPose = isRedAlliance
-            ? GeometryUtils.flipFieldPose(poseEstimate.pose)
-            : poseEstimate.pose;
-
         poseEstimator.addVisionMeasurement(
-            new Pose2d(limelightPose.getTranslation(), swerveDrive.getYaw()),
+            new Pose2d(poseEstimate.pose.getTranslation(), swerveDrive.getYaw()),
             poseEstimate.timestampSeconds,
             Constants.Vortex.kLimelightMeasurementStdDevs);
         lastLimelightMeasurementTimestamp = poseEstimate.timestampSeconds;
@@ -298,7 +292,7 @@ public class Vortex {
     private Translation2d toAllianceRelative(Translation2d globalPosition) {
         return SwerveDrive.getAlliance() == Alliance.Red
             ? new Translation2d(
-                Constants.Field.kFullFieldLength - globalPosition.getX(),
+                globalPosition.getX(),
                 Constants.Field.kFieldWidth - globalPosition.getY())
             : globalPosition;
     }
@@ -332,7 +326,9 @@ public class Vortex {
             return globalPose;
         }
 
-        return GeometryUtils.flipFieldPose(globalPose);
+        return new Pose2d(
+            toAllianceRelative(globalPose.getTranslation()),
+            Rotation2d.fromRadians(-globalPose.getRotation().getRadians()));
     }
 
     private Pose2d getFrontLimelightTagSpacePose() {
@@ -352,6 +348,18 @@ public class Vortex {
                 tagPose.getY() - botPoseTargetSpace.getY(),
                 Rotation2d.fromRadians(-botPoseTargetSpace.getRotation().getZ())))
             .orElse(null);
+    }
+
+    private void configureFrontLimelightPose() {
+        boolean isRedAlliance = SwerveDrive.getAlliance() == Alliance.Red;
+        LimelightHelpers.setCameraPose_RobotSpace(
+            Constants.Vortex.kFrontLimelightName,
+            isRedAlliance ? -Constants.Vortex.kFrontLimelightForwardMeters : Constants.Vortex.kFrontLimelightForwardMeters,
+            isRedAlliance ? -Constants.Vortex.kFrontLimelightSideMeters : Constants.Vortex.kFrontLimelightSideMeters,
+            isRedAlliance ? -Constants.Vortex.kFrontLimelightUpMeters : Constants.Vortex.kFrontLimelightUpMeters,
+            isRedAlliance ? -Constants.Vortex.kFrontLimelightRollDegrees : Constants.Vortex.kFrontLimelightRollDegrees,
+            isRedAlliance ? -Constants.Vortex.kFrontLimelightPitchDegrees : Constants.Vortex.kFrontLimelightPitchDegrees,
+            isRedAlliance ? Constants.Vortex.kFrontLimelightYawDegrees - 180.0 : Constants.Vortex.kFrontLimelightYawDegrees);
     }
 
     public void closeJetsons() {

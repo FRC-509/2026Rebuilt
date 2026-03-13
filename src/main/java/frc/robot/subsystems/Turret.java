@@ -145,14 +145,9 @@ public class Turret extends SubsystemBase {
         }
 
         public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
-            double aimBehindSign = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
-            double movementCorrectionConstant = SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-                ? 0.0
-                : Constants.Turret.kMovementCorrectionConstant;
-            
             return new Translation3d(
-                position.getX() + aimBehindMeters * aimBehindSign * Math.cos(swerveYawRadians) - robotVelocity.getX() * movementCorrectionConstant,
-                position.getY() + aimBehindMeters * aimBehindSign * Math.sin(swerveYawRadians) - robotVelocity.getY() * movementCorrectionConstant,
+                position.getX() + aimBehindMeters * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
+                position.getY() + aimBehindMeters * Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
                 position.getZ()
             );
         }
@@ -195,13 +190,13 @@ public class Turret extends SubsystemBase {
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
-        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition).toTranslation2d().minus(getTurretAlliancePosition());
-        double angleDegrees = Math.toDegrees(MathUtil.angleModulus(
+        Translation2d turretPosition = getTurretAlliancePosition();
+        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition, turretPosition, getTurretYawRadians(), robotVelocitySupplier.getAsTranslation2d())
+            .toTranslation2d()
+            .minus(turretPosition);
+        return Math.toDegrees(MathUtil.angleModulus(
             Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX())
                 - getTurretYawRadians()));
-        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-            ? angleDegrees * Constants.Turret.kRedAllianceAngleMultiplier
-            : angleDegrees;
     }
 
     public boolean isAbleToShoot() {
@@ -252,31 +247,44 @@ public class Turret extends SubsystemBase {
 
     private Translation3d getTargetTurretRelative() {
         Translation2d turretPosition = getTurretAlliancePosition();
-        return getTargetFieldPosition(aimTarget, getTurretYawRadians(), robotVelocitySupplier.getAsTranslation2d()).minus(
+        return getTargetFieldPosition(aimTarget, turretPosition, getTurretYawRadians(), robotVelocitySupplier.getAsTranslation2d()).minus(
             new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
     }
 
     private double getTurretYawRadians() {
-        double yawRadians = robotYawRadiansSupplier.getAsDouble();
-        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-            ? MathUtil.angleModulus(yawRadians + Math.PI)
-            : yawRadians;
+        return robotYawRadiansSupplier.getAsDouble();
     }
 
     private Translation3d getTargetFieldPosition(AimTarget target) {
-        return getTargetFieldPosition(target, 0.0, Translation2d.kZero);
+        return getTargetFieldPosition(target, getTurretAlliancePosition(), 0.0, Translation2d.kZero);
     }
 
-    private Translation3d getTargetFieldPosition(AimTarget target, double yawRadians, Translation2d robotVelocity) {
+    private Translation3d getTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians, Translation2d robotVelocity) {
         Translation3d targetPosition = target.aimAccountedTarget(yawRadians, robotVelocity);
         if (SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
-            return targetPosition;
+            return resolveCloserHubTarget(target, turretPosition, targetPosition);
         }
 
-        return new Translation3d(
+        Translation3d mirroredTargetPosition = new Translation3d(
             Constants.Field.kFullFieldLength - targetPosition.getX(),
             targetPosition.getY(),
             targetPosition.getZ());
+        return resolveCloserHubTarget(target, turretPosition, mirroredTargetPosition);
+    }
+
+    private Translation3d resolveCloserHubTarget(AimTarget target, Translation2d turretPosition, Translation3d candidateTargetPosition) {
+        if (target != AimTarget.HUB) {
+            return candidateTargetPosition;
+        }
+
+        Translation3d oppositeHubTargetPosition = new Translation3d(
+            Constants.Field.kFullFieldLength - candidateTargetPosition.getX(),
+            candidateTargetPosition.getY(),
+            candidateTargetPosition.getZ());
+
+        double candidateDistance = turretPosition.getDistance(candidateTargetPosition.toTranslation2d());
+        double oppositeDistance = turretPosition.getDistance(oppositeHubTargetPosition.toTranslation2d());
+        return candidateDistance <= oppositeDistance ? candidateTargetPosition : oppositeHubTargetPosition;
     }
 
     private double calculateFlywheelSpeeds() {
@@ -291,11 +299,7 @@ public class Turret extends SubsystemBase {
         double exitVelocity = Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom));
         
         double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
-        double flywheelSpeedRps = angularVelocityRadPerSec / 2 / Math.PI;
-        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
-            flywheelSpeedRps += Constants.Turret.kRedAllianceFlywheelSpeedOffsetRps;
-        }
-        return MathUtil.clamp(flywheelSpeedRps, 0, 100);
+        return MathUtil.clamp(angularVelocityRadPerSec / 2 / Math.PI, 0, 100);
     }
 
     private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect
@@ -378,10 +382,6 @@ public class Turret extends SubsystemBase {
         setRotationDegrees(commandedRotation);
 
         double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};
-        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
-            flywheelSpeeds[0] *= 1.25;
-            flywheelSpeeds[1] *= 1.25;
-        }
         
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, 100d);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, 100d);

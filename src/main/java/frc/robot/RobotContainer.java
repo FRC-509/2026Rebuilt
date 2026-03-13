@@ -71,7 +71,7 @@ public class RobotContainer {
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedGlobalPosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
 			new Translation2dSupplier() {
 				public Translation2d getAsTranslation2d() {
 					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
@@ -84,7 +84,7 @@ public class RobotContainer {
 			
 		this.rightTurret = new Turret(
 			Constants.Turret.kRightTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedGlobalPosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
 			new Translation2dSupplier() {
 				public Translation2d getAsTranslation2d() {
 					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
