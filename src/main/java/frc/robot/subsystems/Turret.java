@@ -199,8 +199,9 @@ public class Turret extends SubsystemBase {
             && MathUtil.isNear(targetTopFlywheelSpeed, kTopFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance);
     }
 
-    public void setOverrideAimTarget(boolean override) {
+    public void setOverrideAimTarget(boolean override, AimTarget target) {
         this.overrideAimTarget = override;
+        if (override) this.aimTarget = target;
     }
 
     private AimTarget getTargetFromPosition() {

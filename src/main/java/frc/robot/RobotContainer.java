@@ -14,10 +14,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Vortex;
+import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
+import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
@@ -44,6 +47,7 @@ public class RobotContainer {
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
+		this.gameManager = new GameManager();
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
 
@@ -54,11 +58,11 @@ public class RobotContainer {
 			() -> swerve.getYaw().getRadians());
 			
 			
-		// this.rightTurret = new Turret(
-		// 	Constants.Turret.kRightTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-		// 	() -> swerve.getYaw().getRadians());
+		this.rightTurret = new Turret(
+			Constants.Turret.kRightTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+			() -> swerve.getYaw().getRadians());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -118,6 +122,47 @@ public class RobotContainer {
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7,//leftTurret.isAbleToShoot(),
 			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7)); //rightTurret.isAbleToShoot()));
 
+
+		// force feed override
+		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
+		
+		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
+		
+		(new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
+
+		operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
+		operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
+
 	}
 
 	private void addAutonomousRoutines() {
@@ -129,8 +174,12 @@ public class RobotContainer {
 		}
 	}
 
-    public Command getAutonomousCommand() {
+	public Command getAutonomousCommand() {
       	return Commands.print("No autonomous command configured");
+	}
+
+	public GameManager getGameManager() {
+		return gameManager;
 	}
 
 	public void robotInit() {
