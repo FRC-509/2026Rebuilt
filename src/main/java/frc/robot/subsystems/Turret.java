@@ -146,10 +146,13 @@ public class Turret extends SubsystemBase {
 
         public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
             double aimBehindSign = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
+            double movementCorrectionConstant = SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+                ? 0.0
+                : Constants.Turret.kMovementCorrectionConstant;
             
             return new Translation3d(
-                position.getX() + aimBehindMeters * aimBehindSign * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
-                position.getY() + aimBehindMeters * aimBehindSign * Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
+                position.getX() + aimBehindMeters * aimBehindSign * Math.cos(swerveYawRadians) - robotVelocity.getX() * movementCorrectionConstant,
+                position.getY() + aimBehindMeters * aimBehindSign * Math.sin(swerveYawRadians) - robotVelocity.getY() * movementCorrectionConstant,
                 position.getZ()
             );
         }
@@ -288,7 +291,11 @@ public class Turret extends SubsystemBase {
         double exitVelocity = Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom));
         
         double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
-        return MathUtil.clamp(angularVelocityRadPerSec / 2 / Math.PI, 0, 100);
+        double flywheelSpeedRps = angularVelocityRadPerSec / 2 / Math.PI;
+        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
+            flywheelSpeedRps += Constants.Turret.kRedAllianceFlywheelSpeedOffsetRps;
+        }
+        return MathUtil.clamp(flywheelSpeedRps, 0, 100);
     }
 
     private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect

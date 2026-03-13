@@ -2,10 +2,13 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.NetworkTable;
@@ -38,6 +41,7 @@ public class Vortex {
     private final DoubleSupplier intakeExtension;
     private final SwerveDrivePoseEstimator poseEstimator;
     private final Field2d field2d;
+    private final AprilTagFieldLayout aprilTagFieldLayout;
 
     private double lastFrontJetsonMeasurementTimestamp = Double.NaN;
     private double lastBackJetsonMeasurementTimestamp = Double.NaN;
@@ -70,6 +74,7 @@ public class Vortex {
             swerve.getModulePositions(),
             initialPose);
         this.field2d = new Field2d();
+        this.aprilTagFieldLayout = AprilTagFields.kDefaultField.loadAprilTagLayoutField();
 
         swerve.resetOdometry(initialPose);
         swerve.setEstimatedPoseSupplier(poseEstimator::getEstimatedPosition);
@@ -278,6 +283,16 @@ public class Vortex {
         if (backJetson != null) {
             field2d.getObject("back_jetson_pose").setPose(getJetsonPose(backJetson));
         }
+
+        Pose2d mt2TagSpacePose = getFrontLimelightTagSpacePose();
+        if (mt2TagSpacePose != null) {
+            field2d.getObject("front_limelight_tagspace_pose").setPose(mt2TagSpacePose);
+            vortexTable.getEntry("FrontLimelightTagSpacePose").setDoubleArray(new double[] {
+                mt2TagSpacePose.getX(),
+                mt2TagSpacePose.getY(),
+                mt2TagSpacePose.getRotation().getDegrees()
+            });
+        }
     }
 
     private Translation2d toAllianceRelative(Translation2d globalPosition) {
@@ -318,6 +333,25 @@ public class Vortex {
         }
 
         return GeometryUtils.flipFieldPose(globalPose);
+    }
+
+    private Pose2d getFrontLimelightTagSpacePose() {
+        double fiducialId = LimelightHelpers.getFiducialID(Constants.Vortex.kFrontLimelightName);
+        if (fiducialId < 0) {
+            return null;
+        }
+
+        Pose3d botPoseTargetSpace = LimelightHelpers.getBotPose3d_TargetSpace(Constants.Vortex.kFrontLimelightName);
+        if (botPoseTargetSpace == null) {
+            return null;
+        }
+
+        return aprilTagFieldLayout.getTagPose((int) fiducialId)
+            .map(tagPose -> new Pose2d(
+                tagPose.getX() - botPoseTargetSpace.getX(),
+                tagPose.getY() - botPoseTargetSpace.getY(),
+                Rotation2d.fromRadians(-botPoseTargetSpace.getRotation().getZ())))
+            .orElse(null);
     }
 
     public void closeJetsons() {

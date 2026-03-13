@@ -154,6 +154,7 @@ public final class Constants {
 
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
         public static final double kRedAllianceAngleMultiplier = 1.3;
+        public static final double kRedAllianceFlywheelSpeedOffsetRps = 0.0;
 
 	}
 
