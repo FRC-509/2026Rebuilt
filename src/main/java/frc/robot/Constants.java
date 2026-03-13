@@ -162,6 +162,11 @@ public final class Constants {
 		public static final double kIndexingVelocity = 50;
 		
 		public static final double kIntakeExtension = 16.15;
+        public static final double kRetractedExtensionOffset = 0.5;
+        public static final double kRetractionResistanceTorqueThreshold = 19.0;
+        public static final double kRetractionResistanceHoldOffset = 0.5;
+        public static final double kMinExtensionPosition = 0.5;
+        public static final double kMaxExtensionPosition = kIntakeExtension;
         public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 

@@ -35,6 +35,7 @@ public class Hopper extends SubsystemBase {
 
     private boolean hasZeroedPosition;
     private double zeroedRotationOffset;
+    private double commandedExtensionSetpoint;
 
     public enum HopperState {
         PASSIVE(false, 0.0d),
@@ -167,6 +168,7 @@ public class Hopper extends SubsystemBase {
 
         this.hasZeroedPosition = false;
         this.zeroedRotationOffset = this.kIntakeExtension.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
+        this.commandedExtensionSetpoint = zeroedRotationOffset;
     }
 
     public void setHopperState(HopperState newHopperState, IndexerState newIndexerState) {
@@ -181,8 +183,17 @@ public class Hopper extends SubsystemBase {
         return hopperState == HopperState.INDEXING || hopperState == HopperState.INTAKING_AND_INDEXING;
     }
 
+    private double clampExtensionPosition(double mechanismPosition) {
+        double minPosition = zeroedRotationOffset + Constants.Hopper.kMinExtensionPosition;
+        double maxPosition = zeroedRotationOffset + Constants.Hopper.kMaxExtensionPosition;
+        return Math.max(minPosition, Math.min(maxPosition, mechanismPosition));
+    }
+
     private double getExtensionSetpoint(boolean extended) {
-        return zeroedRotationOffset + (extended ? Constants.Hopper.kIntakeExtension : 0.5);
+        double relativeSetpoint = extended
+            ? Constants.Hopper.kIntakeExtension
+            : Constants.Hopper.kRetractedExtensionOffset;
+        return clampExtensionPosition(zeroedRotationOffset + relativeSetpoint);
     }
     
     @Override
@@ -191,7 +202,8 @@ public class Hopper extends SubsystemBase {
         if (!hasZeroedPosition) {
             if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
                 zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(zeroedRotationOffset));
+                commandedExtensionSetpoint = clampExtensionPosition(zeroedRotationOffset);
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(commandedExtensionSetpoint));
                 hasZeroedPosition = true;
             } else {
                 kIntakeExtension.setControl(voltageOut.withOutput(-2));
@@ -202,9 +214,19 @@ public class Hopper extends SubsystemBase {
 
         kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
 
+        if (!hopperState.hopperIsExtended
+                && commandedExtensionSetpoint <= getExtensionSetpoint(false)
+                && Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) >= Constants.Hopper.kRetractionResistanceTorqueThreshold) {
+            commandedExtensionSetpoint = clampExtensionPosition(
+                kIntakeExtension.getPosition().getValueAsDouble() + Constants.Hopper.kRetractionResistanceHoldOffset);
+            kIntakeExtension.setControl(extensionDutyCycle.withPosition(commandedExtensionSetpoint));
+        }
+
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
-            if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                kIntakeExtension.setControl(extensionDutyCycle.withPosition(getExtensionSetpoint(hopperState.hopperIsExtended)));
+            if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) { //TODO: change to actual conversion
+                commandedExtensionSetpoint = getExtensionSetpoint(hopperState.hopperIsExtended);
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(commandedExtensionSetpoint));
+            }
             if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) 
             kIntakeRotation.setControl(hopperState.indexingVelocity != 0.0 ? intakeDutyCycle.withVelocity(hopperState.intakingVelocity) : voltageOut.withOutput(0));
         }
