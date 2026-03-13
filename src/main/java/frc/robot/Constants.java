@@ -53,7 +53,7 @@ public final class Constants {
 		public static final DCMotor kKrakenDcMotorProfile = new DCMotor(
 			12,
 			7.09, 
-			366, 
+			366,
 			2,
 			kKrakenFreeSpeedRPS * 2 * Math.PI,
 			1);
@@ -131,7 +131,7 @@ public final class Constants {
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(0.14,-0.14,0.48),
-			-86.3,
+			-111.005859,
 			86.3,
 			false);
 
@@ -160,7 +160,6 @@ public final class Constants {
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
-		public static final double kIndexerRollersVelocity = 30;
 		public static final double kIndexingVelocity = 50;
 		
 		public static final double kIntakeExtension = 15.85;
@@ -170,7 +169,7 @@ public final class Constants {
 	public static class Vortex {
         public static final String kLimelightName = "intake";
         public static final Vector<N3> kLimelightMeasurementStdDevs = VecBuilder.fill(.7, .7, 99999);
-		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.7, .7, 0.9); // TODO: find n3 confidence
+		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.9, 0.9, 0.9); // TODO: find n3 confidence
 	}
 
 	public static class IDs {
@@ -242,8 +241,8 @@ public final class Constants {
 
 		public static class Turret {
             public static final double kRotationP = 2.9;
-            public static final double kRotationI = 0;
-            public static final double kRotationD = 0;
+            public static final double kRotationI = 0.1;
+            public static final double kRotationD = 0.11;
 
             public static final double kFlywheelP = 2.3;
             public static final double kFlywheelI = 0.12;
@@ -252,15 +251,15 @@ public final class Constants {
 
 		public static class Hopper {
             public static final double kExtensionP = 0.095;
-            public static final double kExtensionI = 0.075;
+            public static final double kExtensionI = 0.1;
             public static final double kExtensionD = 0.0;
 
 			public static final double kIntakeP = 0.02; // TODO: redo
             public static final double kIntakeI = 0.1;
             public static final double kIntakeD = 0;
 			
-			public static final double kIndexerP = 1;
-            public static final double kIndexerI = 0;
+			public static final double kIndexerP = 0.02;
+            public static final double kIndexerI = 0.3;
             public static final double kIndexerD = 0;
 		}
 	}
@@ -269,23 +268,20 @@ public final class Constants {
 		public static final double kSwerveModuleSupply = 35.0d;
 		// SwerveStator ?
 
-        public static final double kTurretRotationSupply = 70;
-        public static final double kTurretRotationStator = 120;
+        public static final double kTurretRotationSupply = 25;
+        public static final double kTurretRotationStator = 35;
 
 		public static final double kTurretFlywheelSupply = 40;
         public static final double kTurretFlywheelStator = 40;
 
-		public static final double kIntakeExtensionSupply = 70;
-        public static final double kIntakeExtensionStator = 120;
+		public static final double kIntakeExtensionSupply = 10;
+        public static final double kIntakeExtensionStator = 20;
 
 		public static final double kIntakeSupply = 70;
         public static final double kIntakeStator = 120;
 
-        public static final double kIndexerSupply = 70;
-        public static final double kIndexerStator = 120;
-
-        public static final double kIndexerRollersSupply = 70;
-        public static final double kIndexerRollersStator = 120;
+        public static final double kIndexerSupply = 25;
+        public static final double kIndexerStator = 90;
 	}
 
 	public static class Field {

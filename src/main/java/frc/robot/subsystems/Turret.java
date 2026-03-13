@@ -72,11 +72,13 @@ public class Turret extends SubsystemBase {
 		rotationMotorConfig.Slot0.kI = Constants.PIDConstants.Turret.kRotationI;
 		rotationMotorConfig.Slot0.kD = Constants.PIDConstants.Turret.kRotationD;
 
-
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 		rotationMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kTurretRotationSupply; 
         rotationMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         rotationMotorConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kTurretRotationStator;
+
+        rotationMotorConfig.Voltage.PeakForwardVoltage = 5;
+        rotationMotorConfig.Voltage.PeakReverseVoltage = -5;
 
         this.kRotationMotor.getConfigurator().apply(rotationMotorConfig);
 
@@ -125,7 +127,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
     NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(4.54+2.5,3.97+0.6,1.88), 0),
+        HUB(new Translation3d(4.90,3.97,1.88), 0),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -328,17 +330,17 @@ public class Turret extends SubsystemBase {
         // // decide flywheel speed every 0.02s (ie always) for target
         // // if (true){//canAim) {
         double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};//calculateSpeedsManualMagnus();
-            kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
-            kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
+            // kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[0], 0d, 100d)));
+            // kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(MathUtil.clamp(flywheelSpeeds[1], 0d, 100d)));
         SmartDashboard.putNumber(side+"Turret Bottom flyweel speeds", flywheelSpeeds[0]);
         SmartDashboard.putNumber(side+"Turret Top flyweel speeds", flywheelSpeeds[1]);
 
         // }
 
-        // kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeeds[0]));
-        // kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(flywheelSpeeds[1]));
-        setRotationDegrees(0);
-        
+        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(35));
+        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(35));
+        setRotationDegrees(MathUtil.clamp(getRotationToTarget(AimTarget.HUB),-90,90));
+        SmartDashboard.putNumber("LeftTurretDesiredRotation", getRotationToTarget(AimTarget.HUB));
         SmartDashboard.putNumber(side+"TurretPosition", getRotationDegrees());
         SmartDashboard.putNumber(side+"TurretZeroOffset", zeroedRotationOffset * 360);
         SmartDashboard.putNumber(side+"TurretReal", kRotationMotor.getPosition().getValueAsDouble());

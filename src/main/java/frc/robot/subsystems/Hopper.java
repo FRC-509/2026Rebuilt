@@ -119,12 +119,15 @@ public class Hopper extends SubsystemBase {
         extensionConfig.CurrentLimits.StatorCurrentLimitEnable = true;
         extensionConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kIntakeExtensionStator;
 
+        extensionConfig.Voltage.PeakForwardVoltage = 6;
+        extensionConfig.Voltage.PeakReverseVoltage = -6;
+
         kIntakeExtension.getConfigurator().apply(extensionConfig);
 
 
         TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
 		intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		intakeConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+		intakeConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 		intakeConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		intakeConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
@@ -178,24 +181,23 @@ public class Hopper extends SubsystemBase {
     
     @Override
     public void periodic() {
-        double start = Timer.getFPGATimestamp();
         // zeroing functionality to move until you hit minimum hardstop
-        // if (!hasZeroedPosition) {
-        //     if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
-        //         kIntakeExtension.setControl(voltageOut.withOutput(0));
-        //         zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
-        //         hasZeroedPosition = true;
-        //     } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
-        //     hasZeroedPosition = true;
+        if (!hasZeroedPosition) {
+            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
+                kIntakeExtension.setControl(voltageOut.withOutput(0));
+                zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
+                hasZeroedPosition = true;
+            } else kIntakeExtension.setControl(voltageOut.withOutput(-2));
+            hasZeroedPosition = true;
 
-        //     if (!hasZeroedPosition) return;
-        // }
+            if (!hasZeroedPosition) return;
+        }
 
         kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
 
         if (!hopperState.equals(previousHopperState)) { // only change instruction on state change, not every 20ms
             if (hopperState.hopperIsExtended != previousHopperState.hopperIsExtended) //TODO: change to actual conversion
-                // kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.1));
+                kIntakeExtension.setControl(extensionDutyCycle.withPosition(hopperState.hopperIsExtended ? -zeroedRotationOffset + Constants.Hopper.kIntakeExtension : zeroedRotationOffset + 0.3));
             if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
         }
 
@@ -206,10 +208,10 @@ public class Hopper extends SubsystemBase {
                 kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
         }
 
+        SmartDashboard.putBoolean("IsZeroed", hasZeroedPosition);
         SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset);
         SmartDashboard.putString("HopperState", hopperStateString(hopperState));
         SmartDashboard.putString("IndexerState", indexerStateString(indexerState));
-        SmartDashboard.putNumber("Timing/HopperPeriodicMs", (Timer.getFPGATimestamp() - start) * 1000.0);
     }
 
     public double getIntakeExtensionMeters() {
