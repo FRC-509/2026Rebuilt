@@ -247,7 +247,7 @@ public class Vortex {
 
         return new Pose2d(
             toAllianceRelative(globalPose.getTranslation()),
-            Rotation2d.fromDegrees(180).minus(globalPose.getRotation()));
+            globalPose.getRotation());
     }
 
     public void closeJetsons() {
