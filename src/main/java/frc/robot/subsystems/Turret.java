@@ -130,7 +130,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
     NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.5),
+        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.55),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -204,6 +204,17 @@ public class Turret extends SubsystemBase {
             && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
             && isFlywheelAtTargetSpeed(kBottomFlywheelMotor, targetBottomFlywheelSpeed)
             && isFlywheelAtTargetSpeed(kTopFlywheelMotor, targetTopFlywheelSpeed);
+    }
+
+    public boolean isShooterUpToSpeed() {
+        return MathUtil.isNear(
+                Math.abs(targetBottomFlywheelSpeed),
+                Math.abs(kBottomFlywheelMotor.getVelocity().getValueAsDouble()),
+                Constants.Turret.kIndexerFeedFlywheelToleranceRps)
+            && MathUtil.isNear(
+                Math.abs(targetTopFlywheelSpeed),
+                Math.abs(kTopFlywheelMotor.getVelocity().getValueAsDouble()),
+                Constants.Turret.kIndexerFeedFlywheelToleranceRps);
     }
 
     public boolean canAim() {

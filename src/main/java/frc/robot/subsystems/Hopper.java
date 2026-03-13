@@ -41,8 +41,7 @@ public class Hopper extends SubsystemBase {
         PASSIVE(false, 0.0d),
         INDEXING(false, 0.0d), // depending on final geometry run intake wheels aswell 
         INTAKING(true, Constants.Hopper.kIntakingVelocity),
-        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity),
-        OUTTAKING(true, Constants.Hopper.kOuttakingVelocity);
+        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity);
 
         public boolean hopperIsExtended;
         public double intakingVelocity;

@@ -7,6 +7,7 @@ package frc.robot;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import edu.wpi.first.math.MathUtil;
@@ -20,6 +21,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.shuffleboard.WidgetType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -151,8 +153,8 @@ public class RobotContainer {
 			() -> driverRight.getTrigger(),
 			() -> driverLeft.getTrigger(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds),
-			() -> leftTurret.canAim(),
-			() -> rightTurret.canAim()));
+			leftTurret::isShooterUpToSpeed,
+			rightTurret::isShooterUpToSpeed));
 
 
 		// force feed override
@@ -225,14 +227,21 @@ public class RobotContainer {
 			.withWidget(BuiltInWidgets.kComboBoxChooser)
 			.withPosition(6, 0)
 			.withSize(3, 1);
-		elasticTab.addString("Match Timer", gameManager::getFormattedMatchTime)
-			.withWidget(BuiltInWidgets.kTextView)
-			.withPosition(6, 1)
-			.withSize(2, 1);
+		elasticTab.addDouble("Match Timer", gameManager::getMatchTimeSeconds).
+			withWidget(BuiltInWidgets.kDial);
 		elasticTab.addString("Match Phase", () -> gameManager.getCurrentPhase().name())
 			.withWidget(BuiltInWidgets.kTextView)
 			.withPosition(8, 1)
 			.withSize(2, 1);
+		elasticTab.addBoolean("Hub is Active", gameManager::isHubActive)
+			.withWidget(BuiltInWidgets.kBooleanBox)
+			.withPosition(8, 2)
+			.withSize(1, 1);
+		elasticTab.addDouble("Time Until Shift", gameManager::getTimeToNextShift)
+			.withWidget(BuiltInWidgets.kNumberBar)
+			.withProperties(Map.of("Min", -1, "Max", 30))
+			.withPosition(9, 2)
+			.withSize(1, 1);
 		elasticTab.addDouble("Swerve Yaw", () -> swerve.getYaw().getDegrees())
 			.withWidget(BuiltInWidgets.kDial)
 			.withPosition(6, 2)
