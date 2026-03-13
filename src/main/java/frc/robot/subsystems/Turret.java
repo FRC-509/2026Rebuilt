@@ -89,7 +89,6 @@ public class Turret extends SubsystemBase {
 		flywheelMotorConfig.MotorOutput.Inverted = turretConfiguration.zeroesCounterClockwise() ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive;
 		flywheelMotorConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		flywheelMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
-		flywheelMotorConfig.Feedback.SensorToMechanismRatio = Constants.Turret.kFlywheelMotorToMechanismRatio;
 
 		flywheelMotorConfig.Slot0.kP = Constants.PIDConstants.Turret.kFlywheelP;
 		flywheelMotorConfig.Slot0.kI = Constants.PIDConstants.Turret.kFlywheelI;

@@ -205,14 +205,6 @@ public class Hopper extends SubsystemBase {
             if (indexerState.rightTurret != previousIndexerState.rightTurret) 
                 kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
         }
-<<<<<<< HEAD
-
-        SmartDashboard.putBoolean("IsZeroed", hasZeroedPosition);
-        SmartDashboard.putNumber("IntakePosition", kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset);
-        SmartDashboard.putString("HopperState", hopperStateString(hopperState));
-        SmartDashboard.putString("IndexerState", indexerStateString(indexerState));
-=======
->>>>>>> 9f3fa3e7c9c66c32ac0bbed8e5879cd72956a418
     }
 
     public double getIntakeExtensionMeters() {

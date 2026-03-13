@@ -137,13 +137,11 @@ public final class Constants {
 
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
-		public static final double kFlywheelMotorToMechanismRatio = 0.0d;
-		public static final double kRotationToTurretDegrees = 0;
 
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25; // rpm
 
-        public static final double kTurretHeightFromGround = 0;
+        public static final double kTurretHeightFromGround = .48;
         public static final double kTurretAngleDegrees = 17;
 
 		public static final double kFlywheelRadiusMeters = Units.inchesToMeters(3/2);
