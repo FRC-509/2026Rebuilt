@@ -95,12 +95,14 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
                 true,
                 false,
                 false,
+                false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
             case "index":
                 return new HopperDefaultCommand(hopper,
                 false,
                 true,
+                false,
                 false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
@@ -109,10 +111,12 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
                 true,
                 true,
                 false,
+                false,
                 () -> leftTurret.isAbleToShoot(), () -> rightTurret.isAbleToShoot());
 
             case "passive":
                 return new HopperDefaultCommand(hopper,
+                false,
                 false,
                 false,
                 false,
@@ -134,6 +138,7 @@ public class FollowVortexRoutine extends ParallelCommandGroup {
                 hopper, 
                 false, 
                 false, 
+                false,
                 false,
                 () -> false, 
                 () -> false 

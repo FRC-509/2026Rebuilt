@@ -13,6 +13,7 @@ public class HopperDefaultCommand extends Command {
 
     private BooleanSupplier intakeSupplier;
     private BooleanSupplier indexingSupplier;
+    private BooleanSupplier prefireSupplier;
     private BooleanSupplier leftIndexingSupplier;
     private BooleanSupplier rightIndexingSupplier; 
 
@@ -20,12 +21,14 @@ public class HopperDefaultCommand extends Command {
             Hopper hopper,
             BooleanSupplier intakeSupplier, 
             BooleanSupplier indexingSupplier,
+            BooleanSupplier prefireSupplier,
             BooleanSupplier leftIndexingSupplier,
             BooleanSupplier rightIndexingSupplier) {
         this.hopper = hopper;
 
         this.intakeSupplier = intakeSupplier;
         this.indexingSupplier = indexingSupplier;
+        this.prefireSupplier = prefireSupplier;
         this.leftIndexingSupplier = leftIndexingSupplier;
         this.rightIndexingSupplier = rightIndexingSupplier;
 
@@ -36,6 +39,7 @@ public class HopperDefaultCommand extends Command {
             Hopper hopper, 
             boolean isIntaking,
             boolean isIndexing,
+            boolean isPrefiring,
             boolean isFeeding,
             BooleanSupplier leftTurretCanShootSupplier,
             BooleanSupplier rightTurretCanShootSupplier) {
@@ -43,6 +47,7 @@ public class HopperDefaultCommand extends Command {
 
         this.intakeSupplier = () -> isIntaking;
         this.indexingSupplier = () -> isIndexing;
+        this.prefireSupplier = () -> isPrefiring;
         this.leftIndexingSupplier = leftTurretCanShootSupplier;
         this.rightIndexingSupplier = rightTurretCanShootSupplier;
 
@@ -51,10 +56,11 @@ public class HopperDefaultCommand extends Command {
 
     @Override
     public void execute() {
+        boolean shouldIndex = indexingSupplier.getAsBoolean() || prefireSupplier.getAsBoolean();
         if (intakeSupplier.getAsBoolean()) {
-            if (indexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
-            else hopper.setHopperState(HopperState.INTAKING, getDesiredIndexerState());
-        } else if (indexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
+            if (shouldIndex) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
+            else hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE);
+        } else if (shouldIndex) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
         else hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE);
     }
 

@@ -33,6 +33,7 @@ import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.commands.NewPathAuto;
+import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
@@ -70,7 +71,7 @@ public class RobotContainer {
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedGlobalPosition(); } },
 			new Translation2dSupplier() {
 				public Translation2d getAsTranslation2d() {
 					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
@@ -83,7 +84,7 @@ public class RobotContainer {
 			
 		this.rightTurret = new Turret(
 			Constants.Turret.kRightTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedGlobalPosition(); } },
 			new Translation2dSupplier() {
 				public Translation2d getAsTranslation2d() {
 					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
@@ -149,8 +150,9 @@ public class RobotContainer {
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
 			() -> driverLeft.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> driverLeft.getTrigger()));
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds),
+			() -> leftTurret.canAim(),
+			() -> rightTurret.canAim()));
 
 
 		// force feed override
@@ -197,6 +199,7 @@ public class RobotContainer {
 
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
+		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
 		chooser.addOption("NewPathAuto", new NewPathAuto(swerve, pigeon));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo_routines");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
@@ -234,14 +237,6 @@ public class RobotContainer {
 			.withWidget(BuiltInWidgets.kDial)
 			.withPosition(6, 2)
 			.withSize(2, 2);
-		elasticTab.addBoolean("Left Can Shoot", leftTurret::isAbleToShoot)
-			.withWidget(BuiltInWidgets.kBooleanBox)
-			.withPosition(8, 2)
-			.withSize(1, 1);
-		elasticTab.addBoolean("Right Can Shoot", rightTurret::isAbleToShoot)
-			.withWidget(BuiltInWidgets.kBooleanBox)
-			.withPosition(9, 2)
-			.withSize(1, 1);
 		elasticTab.addBoolean("Left Can Aim", leftTurret::canAim)
 			.withWidget(BuiltInWidgets.kBooleanBox)
 			.withPosition(8, 3)
@@ -265,8 +260,8 @@ public class RobotContainer {
 
 	public void robotPeriodic() {
 		vortex.pollJetsons();
-		vortex.getField().getObject("left_turret").setPose(leftTurret.getTurretAlliancePose());
-		vortex.getField().getObject("right_turret").setPose(rightTurret.getTurretAlliancePose());
+		vortex.getField().getObject("left_turret").setPose(leftTurret.getTurretFieldPose());
+		vortex.getField().getObject("right_turret").setPose(rightTurret.getTurretFieldPose());
 
 		elasticTable.getEntry("MatchTimer").setString(gameManager.getFormattedMatchTime());
 		elasticTable.getEntry("MatchTimeSeconds").setDouble(gameManager.getMatchTimeSeconds());

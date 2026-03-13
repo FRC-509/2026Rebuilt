@@ -16,6 +16,7 @@ public class ChoreoAuto extends SequentialCommandGroup {
                     return;
                 }
 
+                swerve.setEstimatedPoseSupplier(swerve::getRawOdometeryPose);
                 pigeon.setYaw(trajectory.getInitialPose().getRotation().getDegrees());
                 swerve.resetOdometry(trajectory.getInitialPose());
                 swerve.setTargetHeading(trajectory.getInitialPose().getRotation().getDegrees());

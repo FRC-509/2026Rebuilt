@@ -21,11 +21,13 @@ import frc.robot.util.JetsonUdpRelay;
 import frc.robot.util.JetsonUdpRelay.RelayState;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.PoseEstimate;
+import frc.robot.util.math.GeometryUtils;
 
 public class Vortex {
     private static final String FRONT_JETSON_TABLE_NAME = "VortexFront";
     private static final String BACK_JETSON_TABLE_NAME = "VortexBack";
     private static final String VORTEX_TABLE_NAME = "Vortex";
+    private static final double RED_ALLIANCE_POSITION_ALPHA = 0.1;
 
     private final NetworkTable vortexTable;
 
@@ -40,6 +42,8 @@ public class Vortex {
     private double lastFrontJetsonMeasurementTimestamp = Double.NaN;
     private double lastBackJetsonMeasurementTimestamp = Double.NaN;
     private double lastLimelightMeasurementTimestamp = Double.NaN;
+    private Translation2d estimatedGlobalPosition = Translation2d.kZero;
+    private Translation2d filteredRedAlliancePosition = null;
 
     public Vortex(SwerveDrive swerve, Pose2d initialPose, DoubleSupplier intakeExtension) {
         this.swerveDrive = swerve;
@@ -70,6 +74,7 @@ public class Vortex {
         swerve.resetOdometry(initialPose);
         swerve.setEstimatedPoseSupplier(poseEstimator::getEstimatedPosition);
         field2d.setRobotPose(initialPose);
+        estimatedGlobalPosition = computeEstimatedGlobalPosition();
 
         LimelightHelpers.setCameraPose_RobotSpace(
             Constants.Vortex.kFrontLimelightName,
@@ -83,7 +88,7 @@ public class Vortex {
     }
 
     public Translation2d getEstimatedGlobalPosition() {
-        return poseEstimator.getEstimatedPosition().getTranslation();
+        return estimatedGlobalPosition;
     }
 
     public Translation2d getEstimatedAlliancePosition() {
@@ -144,6 +149,7 @@ public class Vortex {
         lastFrontJetsonMeasurementTimestamp = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
         lastBackJetsonMeasurementTimestamp = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
         applyFrontLimelightMeasurement();
+        estimatedGlobalPosition = computeEstimatedGlobalPosition();
         postVortexToNT();
 
         return getEstimatedGlobalPosition();
@@ -158,11 +164,6 @@ public class Vortex {
         if (Double.isNaN(measurementTimestamp) || measurementTimestamp <= lastMeasurementTimestamp) {
             return lastMeasurementTimestamp;
         }
-
-        poseEstimator.addVisionMeasurement(
-            getJetsonPose(jetsonRelay),
-            measurementTimestamp,
-            getJetsonMeasurementStdDevs(jetsonRelay));
         return measurementTimestamp;
     }
 
@@ -176,8 +177,10 @@ public class Vortex {
             0,
             0);
 
-        PoseEstimate poseEstimate =
-            LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(Constants.Vortex.kFrontLimelightName);
+        boolean isRedAlliance = SwerveDrive.getAlliance() == Alliance.Red;
+        PoseEstimate poseEstimate = isRedAlliance
+            ? LimelightHelpers.getBotPoseEstimate_wpiRed(Constants.Vortex.kFrontLimelightName)
+            : LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(Constants.Vortex.kFrontLimelightName);
 
         if (poseEstimate == null
                 || poseEstimate.pose == null
@@ -188,8 +191,12 @@ public class Vortex {
             return;
         }
 
+        Pose2d limelightPose = isRedAlliance
+            ? GeometryUtils.flipFieldPose(poseEstimate.pose)
+            : poseEstimate.pose;
+
         poseEstimator.addVisionMeasurement(
-            new Pose2d(poseEstimate.pose.getTranslation(), swerveDrive.getYaw()),
+            new Pose2d(limelightPose.getTranslation(), swerveDrive.getYaw()),
             poseEstimate.timestampSeconds,
             Constants.Vortex.kLimelightMeasurementStdDevs);
         lastLimelightMeasurementTimestamp = poseEstimate.timestampSeconds;
@@ -247,18 +254,24 @@ public class Vortex {
     }
 
     private void postVortexToNT() {
-        Pose2d estimatedPose = getEstimatedAlliancePose();
+        Pose2d estimatedGlobalPose = new Pose2d(getEstimatedGlobalPosition(), getEstimatedPose().getRotation());
+        Pose2d estimatedAlliancePose = getEstimatedAlliancePose();
 
         vortexTable.getEntry("EstimatedPose").setDoubleArray(new double[] {
-            estimatedPose.getX(),
-            estimatedPose.getY(),
-            estimatedPose.getRotation().getDegrees()
+            estimatedAlliancePose.getX(),
+            estimatedAlliancePose.getY(),
+            estimatedAlliancePose.getRotation().getDegrees()
+        });
+        vortexTable.getEntry("EstimatedGlobalPose").setDoubleArray(new double[] {
+            estimatedGlobalPose.getX(),
+            estimatedGlobalPose.getY(),
+            estimatedGlobalPose.getRotation().getDegrees()
         });
         vortexTable.getEntry("HasFrontJetsonPose").setBoolean(hasFrontJetsonPose());
         vortexTable.getEntry("HasBackJetsonPose").setBoolean(hasBackJetsonPose());
         vortexTable.getEntry("HasLimelightPose").setBoolean(hasLimelightPose());
 
-        field2d.setRobotPose(estimatedPose);
+        field2d.setRobotPose(estimatedGlobalPose);
         if (frontJetson != null) {
             field2d.getObject("front_jetson_pose").setPose(getJetsonPose(frontJetson));
         }
@@ -275,14 +288,36 @@ public class Vortex {
             : globalPosition;
     }
 
+    private Translation2d computeEstimatedGlobalPosition() {
+        Translation2d rawEstimatedPosition = poseEstimator.getEstimatedPosition().getTranslation();
+        Translation2d mirroredPosition = new Translation2d(
+            rawEstimatedPosition.getX(),
+            Constants.Field.kFieldWidth - rawEstimatedPosition.getY());
+
+        if (SwerveDrive.getAlliance() != Alliance.Red) {
+            filteredRedAlliancePosition = null;
+            return mirroredPosition;
+        }
+
+        if (filteredRedAlliancePosition == null) {
+            filteredRedAlliancePosition = mirroredPosition;
+            return filteredRedAlliancePosition;
+        }
+
+        filteredRedAlliancePosition = new Translation2d(
+            (RED_ALLIANCE_POSITION_ALPHA * mirroredPosition.getX())
+                + ((1.0 - RED_ALLIANCE_POSITION_ALPHA) * filteredRedAlliancePosition.getX()),
+            (RED_ALLIANCE_POSITION_ALPHA * mirroredPosition.getY())
+                + ((1.0 - RED_ALLIANCE_POSITION_ALPHA) * filteredRedAlliancePosition.getY()));
+        return filteredRedAlliancePosition;
+    }
+
     private Pose2d toAllianceRelative(Pose2d globalPose) {
         if (SwerveDrive.getAlliance() != Alliance.Red) {
             return globalPose;
         }
 
-        return new Pose2d(
-            toAllianceRelative(globalPose.getTranslation()),
-            globalPose.getRotation());
+        return GeometryUtils.flipFieldPose(globalPose);
     }
 
     public void closeJetsons() {

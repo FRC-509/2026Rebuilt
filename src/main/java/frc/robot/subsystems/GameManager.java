@@ -75,6 +75,20 @@ public class GameManager extends SubsystemBase {
         return nextShift != null && determineHubActive(nextShift);
     }
 
+    public boolean shouldPrefire(double leadTimeSeconds) {
+        double timeToNextShift = getTimeToNextShift();
+        if (hubActive && timeToNextShift >= 0.0 && timeToNextShift <= leadTimeSeconds && !isNextShiftActive()) {
+            return false;
+        }
+
+        if (hubActive) {
+            return true;
+        }
+
+        double timeToNextActiveShift = getTimeToNextActiveShift();
+        return timeToNextActiveShift >= 0.0 && timeToNextActiveShift <= leadTimeSeconds;
+    }
+
     public String getFormattedMatchTime() {
         if (matchTimeSeconds < 0.0) return "--:--";
 
@@ -97,6 +111,55 @@ public class GameManager extends SubsystemBase {
                 return MatchPhase.ALLIANCE_SHIFT_4;
             default:
                 return null;
+        }
+    }
+
+    private double getTimeToNextActiveShift() {
+        MatchPhase[] allianceShifts = {
+            MatchPhase.ALLIANCE_SHIFT_1,
+            MatchPhase.ALLIANCE_SHIFT_2,
+            MatchPhase.ALLIANCE_SHIFT_3,
+            MatchPhase.ALLIANCE_SHIFT_4
+        };
+
+        for (MatchPhase phase : allianceShifts) {
+            if (!determineHubActive(phase)) {
+                continue;
+            }
+
+            double timeUntilPhase = getTimeUntilPhaseStart(phase);
+            if (timeUntilPhase >= 0.0) {
+                return timeUntilPhase;
+            }
+        }
+
+        return -1.0;
+    }
+
+    private double getTimeUntilPhaseStart(MatchPhase phase) {
+        if (matchTimeSeconds < 0.0) {
+            return -1.0;
+        }
+
+        switch (phase) {
+            case ALLIANCE_SHIFT_1:
+                return currentPhase == MatchPhase.AUTONOMOUS
+                    ? matchTimeSeconds + (TELEOP_START_SECONDS - TRANSITION_SHIFT_START_SECONDS)
+                    : matchTimeSeconds - TRANSITION_SHIFT_START_SECONDS;
+            case ALLIANCE_SHIFT_2:
+                return currentPhase == MatchPhase.AUTONOMOUS
+                    ? matchTimeSeconds + (TELEOP_START_SECONDS - SHIFT_1_START_SECONDS)
+                    : matchTimeSeconds - SHIFT_1_START_SECONDS;
+            case ALLIANCE_SHIFT_3:
+                return currentPhase == MatchPhase.AUTONOMOUS
+                    ? matchTimeSeconds + (TELEOP_START_SECONDS - SHIFT_2_START_SECONDS)
+                    : matchTimeSeconds - SHIFT_2_START_SECONDS;
+            case ALLIANCE_SHIFT_4:
+                return currentPhase == MatchPhase.AUTONOMOUS
+                    ? matchTimeSeconds + (TELEOP_START_SECONDS - SHIFT_3_START_SECONDS)
+                    : matchTimeSeconds - SHIFT_3_START_SECONDS;
+            default:
+                return -1.0;
         }
     }
 

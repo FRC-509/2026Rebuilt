@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Chassis.TurretConfiguration;
+import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.Translation2dSupplier;
 
 public class Turret extends SubsystemBase {
@@ -144,9 +145,11 @@ public class Turret extends SubsystemBase {
         }
 
         public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
+            double aimBehindSign = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
+            
             return new Translation3d(
-                position.getX() + aimBehindMeters * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
-                position.getY() + aimBehindMeters * Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
+                position.getX() + aimBehindMeters * aimBehindSign * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
+                position.getY() + aimBehindMeters * aimBehindSign * Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
                 position.getZ()
             );
         }
@@ -171,7 +174,7 @@ public class Turret extends SubsystemBase {
     }
 
     public Translation2d getTurretAlliancePosition() {
-        double yawRadians = robotYawRadiansSupplier.getAsDouble();
+        double yawRadians = getTurretYawRadians();
         return positionEstimate.getAsTranslation2d().plus(
             new Translation2d(
                 offsetTranslation.getX() * Math.cos(yawRadians) - offsetTranslation.getY() * Math.sin(yawRadians),
@@ -180,16 +183,22 @@ public class Turret extends SubsystemBase {
     }
 
     public Pose2d getTurretAlliancePose() {
-        double fieldHeadingDegrees = Math.toDegrees(robotYawRadiansSupplier.getAsDouble()) + getRotationDegrees() - 180.0;
-        return new Pose2d(getTurretAlliancePosition(), Rotation2d.fromDegrees(fieldHeadingDegrees));
+        double headingDegrees = Math.toDegrees(getTurretYawRadians()) + getRotationDegrees() - 180.0;
+        return new Pose2d(getTurretAlliancePosition(), Rotation2d.fromDegrees(headingDegrees));
+    }
+
+    public Pose2d getTurretFieldPose() {
+        return getTurretAlliancePose();
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
-        Translation2d targetTurretRelative = targetPosition.position.toTranslation2d().minus(getTurretAlliancePosition());
-        double angle = MathUtil.angleModulus(
+        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition).toTranslation2d().minus(getTurretAlliancePosition());
+        double angleDegrees = Math.toDegrees(MathUtil.angleModulus(
             Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX())
-                - robotYawRadiansSupplier.getAsDouble());
-        return Math.toDegrees(angle);
+                - getTurretYawRadians()));
+        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+            ? angleDegrees * Constants.Turret.kRedAllianceAngleMultiplier
+            : angleDegrees;
     }
 
     public boolean isAbleToShoot() {
@@ -240,8 +249,31 @@ public class Turret extends SubsystemBase {
 
     private Translation3d getTargetTurretRelative() {
         Translation2d turretPosition = getTurretAlliancePosition();
-        return aimTarget.aimAccountedTarget(robotYawRadiansSupplier.getAsDouble(), robotVelocitySupplier.getAsTranslation2d()).minus(
+        return getTargetFieldPosition(aimTarget, getTurretYawRadians(), robotVelocitySupplier.getAsTranslation2d()).minus(
             new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
+    }
+
+    private double getTurretYawRadians() {
+        double yawRadians = robotYawRadiansSupplier.getAsDouble();
+        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+            ? MathUtil.angleModulus(yawRadians + Math.PI)
+            : yawRadians;
+    }
+
+    private Translation3d getTargetFieldPosition(AimTarget target) {
+        return getTargetFieldPosition(target, 0.0, Translation2d.kZero);
+    }
+
+    private Translation3d getTargetFieldPosition(AimTarget target, double yawRadians, Translation2d robotVelocity) {
+        Translation3d targetPosition = target.aimAccountedTarget(yawRadians, robotVelocity);
+        if (SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
+            return targetPosition;
+        }
+
+        return new Translation3d(
+            Constants.Field.kFullFieldLength - targetPosition.getX(),
+            targetPosition.getY(),
+            targetPosition.getZ());
     }
 
     private double calculateFlywheelSpeeds() {
@@ -339,8 +371,15 @@ public class Turret extends SubsystemBase {
         setRotationDegrees(commandedRotation);
 
         double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};
+        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
+            flywheelSpeeds[0] *= 1.25;
+            flywheelSpeeds[1] *= 1.25;
+        }
+        
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, 100d);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, 100d);
+       
+        
         if (isIndexingSupplier.getAsBoolean()) {
             kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
             kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));

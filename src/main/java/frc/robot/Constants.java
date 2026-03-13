@@ -147,12 +147,13 @@ public final class Constants {
 		public static final double kFlywheelRadiusMeters = Units.inchesToMeters(3/2);
         public static final double kAverageFuelMass = 0.216;
         public static final double kTargetSpinRadSec = 0.3;
-        public static final double kIdleFlywheelVoltage = 1.5;
+        public static final double kIdleFlywheelVoltage = 1.75;
 
         public static final double kEfficiency = 0.2673;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
+        public static final double kRedAllianceAngleMultiplier = 1.3;
 
 	}
 
@@ -160,10 +161,11 @@ public final class Constants {
         public static final double kIntakingVelocity = 57.0;
         public static final double kOuttakingVelocity = 0.0;
 		public static final double kIndexingVelocity = 50;
+		public static final double kPrefireLeadTimeSeconds = 2.0;
 		
 		public static final double kIntakeExtension = 16.15;
         public static final double kRetractedExtensionOffset = 0.5;
-        public static final double kRetractionResistanceTorqueThreshold = 19.0;
+        public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
         public static final double kMinExtensionPosition = 0.5;
         public static final double kMaxExtensionPosition = kIntakeExtension;
@@ -304,8 +306,8 @@ public final class Constants {
         public static final double kAllianceZoneLength = 0.0d; // TODO: find
         public static final double kNeutralZoneLength = kFullFieldLength - 2 * kAllianceZoneLength;
 		
-        public static final double kAverageFuelMass = 0;
-		public static final double kFuelRadiusMeters = 0;
+        public static final double kAverageFuelMass = 0.216;
+		public static final double kFuelRadiusMeters = Units.inchesToMeters(1.5);
 	}
 
 	public static double tunableNumber(String name, double defaultValue){
