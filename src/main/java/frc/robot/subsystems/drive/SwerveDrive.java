@@ -16,8 +16,6 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,7 +26,6 @@ import java.util.function.Supplier;
 import frc.robot.Constants;
 import frc.robot.util.LoggablePID;
 import frc.robot.util.PigeonWrapper;
-import frc.robot.util.ThinNT;
 import frc.robot.util.math.GeometryUtils;
 import frc.robot.util.math.Interpolator;
 
@@ -96,8 +93,6 @@ public class SwerveDrive extends SubsystemBase {
 		odometry = new SwerveDriveOdometry(kinematics, getYaw(), getModulePositions());
 		estimatedPoseSupplier = odometry::getPoseMeters;
 	
-		Shuffleboard.getTab("Robot Field Position");
-
 		headingPassive.setIntegratorRange(-180, 180);
 		headingAggressive.setIntegratorRange(-180, 180);
 		headingPassive.setTolerance(0.25);
@@ -354,15 +349,6 @@ public class SwerveDrive extends SubsystemBase {
 	@Override
 	public void periodic() {
 		odometry.update(getYaw(), getModulePositions());
-
-		SmartDashboard.putNumber("yaw", getYaw().getDegrees());
-		// SmartDashboard.putBoolean("Heading Correction Enabled?", !alwaysOmitRotationalCorrection);
-
-		// ThinNT.putNumber("x-velocity", getChassisSpeeds().vxMetersPerSecond);
-		// ThinNT.putNumber("y-velocity", getChassisSpeeds().vyMetersPerSecond);
-		// ThinNT.putNumber("yaw-velocity", pigeon.getAngularVelocityZWorld());
-		// ThinNT.putNumber("target-heading", targetHeading);
-		// SmartDashboard.putNumberArray("Estimated Pose", new double[]{getEstimatedPose().getX(),getEstimatedPose().getY()});
 
 		moduleStatePublisher.set(getModuleStates());
 		odometryPublisher.set(getRawOdometeryPose());

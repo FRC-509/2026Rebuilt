@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
@@ -10,10 +11,10 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Chassis.TurretConfiguration;
@@ -34,11 +35,11 @@ public class Turret extends SubsystemBase {
     private final double maxRotationCounterclockwise;
     private final boolean zeroesCounterClockwise;
     private final double zeroedRotationMaximumAdded;
-    private final String side;
 
     private final Translation2dSupplier positionEstimate;
     private final Translation2dSupplier robotVelocitySupplier;
     private final DoubleSupplier robotYawRadiansSupplier;
+    private final BooleanSupplier isIndexingSupplier;
 
     private AimTarget aimTarget;
     private double targetRotationDegrees;
@@ -55,7 +56,8 @@ public class Turret extends SubsystemBase {
             TurretConfiguration turretConfiguration,
             Translation2dSupplier positionEstimate,
             Translation2dSupplier robotVelocitySupplier,
-            DoubleSupplier robotYawSupplier) {
+            DoubleSupplier robotYawSupplier,
+            BooleanSupplier isIndexingSupplier) {
         this.kRotationMotor = new TalonFX(turretConfiguration.rotationMotorId(), Constants.kCanivore);
         this.kTopFlywheelMotor = new TalonFX(turretConfiguration.topFlywheelMotorId(), Constants.kCanivore);
         this.kBottomFlywheelMotor = new TalonFX(turretConfiguration.bottomFlywheelMotorId(), Constants.kCanivore);
@@ -108,6 +110,7 @@ public class Turret extends SubsystemBase {
         this.maxRotationClockwise = turretConfiguration.maxRotationClockwise();
         this.maxRotationCounterclockwise = turretConfiguration.maxRotationCounterclockwise();
         this.robotYawRadiansSupplier = robotYawSupplier;
+        this.isIndexingSupplier = isIndexingSupplier;
 
         this.aimTarget = AimTarget.HUB;
         this.targetRotationDegrees = 0;
@@ -121,13 +124,12 @@ public class Turret extends SubsystemBase {
         this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
         this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
         this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
-        this.side = turretConfiguration.side();
     }
  
     public enum AimTarget {
 
     NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(4.9,Constants.Field.kFieldWidth/2,1.88), 0),
+        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.5),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -160,6 +162,10 @@ public class Turret extends SubsystemBase {
         return (kRotationMotor.getPosition().getValueAsDouble() - zeroedRotationOffset) * 360 + zeroedRotationMaximumAdded;
     }
 
+    public double getCurrentRotationDegrees() {
+        return getRotationDegrees();
+    }
+
     public void setAimTarget(AimTarget aimTarget) {
         this.aimTarget = aimTarget;
     }
@@ -173,20 +179,28 @@ public class Turret extends SubsystemBase {
             ));
     }
 
+    public Pose2d getTurretAlliancePose() {
+        double fieldHeadingDegrees = Math.toDegrees(robotYawRadiansSupplier.getAsDouble()) + getRotationDegrees() - 180.0;
+        return new Pose2d(getTurretAlliancePosition(), Rotation2d.fromDegrees(fieldHeadingDegrees));
+    }
+
     public double getRotationToTarget(AimTarget targetPosition) {
         Translation2d targetTurretRelative = targetPosition.position.toTranslation2d().minus(getTurretAlliancePosition());
         double angle = MathUtil.angleModulus(
             Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX())
-                - robotYawRadiansSupplier.getAsDouble()
-                + Math.PI);
+                - robotYawRadiansSupplier.getAsDouble());
         return Math.toDegrees(angle);
     }
 
     public boolean isAbleToShoot() {
         return canAim
             && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
-            && MathUtil.isNear(targetBottomFlywheelSpeed, kBottomFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance)
-            && MathUtil.isNear(targetTopFlywheelSpeed, kTopFlywheelMotor.getVelocity().getValueAsDouble(), Constants.Turret.kFlywheelSpeedTolerance);
+            && isFlywheelAtTargetSpeed(kBottomFlywheelMotor, targetBottomFlywheelSpeed)
+            && isFlywheelAtTargetSpeed(kTopFlywheelMotor, targetTopFlywheelSpeed);
+    }
+
+    public boolean canAim() {
+        return canAim;
     }
 
     public void setOverrideAimTarget(boolean override, AimTarget target) {
@@ -195,24 +209,33 @@ public class Turret extends SubsystemBase {
     }
 
     private AimTarget getTargetFromPosition() {
-        /* Field orientation
-        * ^
-	    * | X+
-	    * ----> Y-
-        */
         Translation2d turretRelative = getTurretAlliancePosition();
         double neutralZoneStart = Constants.Field.kAllianceZoneLength;
         double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
 
+        AimTarget selectedTarget = AimTarget.HUB;
         if (turretRelative.getX() > opposingAllianceStart) {
-            if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.OPPOSING_ALLIANCE_FEED_LEFT;
-            return AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
-        } 
-        if (turretRelative.getX() > neutralZoneStart) {
-            if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.NEUTRALZONE_FEED_LEFT;
-            return AimTarget.NEUTRALZONE_FEED_RIGHT;
+            selectedTarget = turretRelative.getY() > Constants.Field.kFieldWidth / 2
+                ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT
+                : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
+        } else if (turretRelative.getX() > neutralZoneStart) {
+            selectedTarget = turretRelative.getY() > Constants.Field.kFieldWidth / 2
+                ? AimTarget.NEUTRALZONE_FEED_LEFT
+                : AimTarget.NEUTRALZONE_FEED_RIGHT;
         }
-        return AimTarget.HUB;
+
+        return hasConfiguredPosition(selectedTarget) ? selectedTarget : AimTarget.HUB;
+    }
+
+    private boolean hasConfiguredPosition(AimTarget target) {
+        return target == AimTarget.HUB || target.position.getNorm() > 0.001;
+    }
+
+    private boolean isFlywheelAtTargetSpeed(TalonFX motor, double targetVelocity) {
+        return MathUtil.isNear(
+            Math.abs(targetVelocity),
+            Math.abs(motor.getVelocity().getValueAsDouble()),
+            Constants.Turret.kFlywheelSpeedTolerance);
     }
 
     private Translation3d getTargetTurretRelative() {
@@ -318,8 +341,13 @@ public class Turret extends SubsystemBase {
         double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, 100d);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, 100d);
-        kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
-        kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));
+        if (isIndexingSupplier.getAsBoolean()) {
+            kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
+            kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));
+        } else {
+            kBottomFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
+            kTopFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
+        }
     }
 
     public void zeroPosition() {

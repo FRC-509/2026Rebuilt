@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class GameManager extends SubsystemBase {
@@ -42,6 +41,14 @@ public class GameManager extends SubsystemBase {
         return hubActive;
     }
 
+    public MatchPhase getCurrentPhase() {
+        return currentPhase;
+    }
+
+    public double getMatchTimeSeconds() {
+        return matchTimeSeconds;
+    }
+
     public double getTimeToNextShift() {
         MatchPhase nextShift = getNextAllianceShiftPhase();
         if (nextShift == null) return -1.0;
@@ -68,7 +75,7 @@ public class GameManager extends SubsystemBase {
         return nextShift != null && determineHubActive(nextShift);
     }
 
-    private String getFormattedMatchTime() {
+    public String getFormattedMatchTime() {
         if (matchTimeSeconds < 0.0) return "--:--";
 
         int totalSeconds = (int) Math.ceil(matchTimeSeconds);
@@ -136,11 +143,5 @@ public class GameManager extends SubsystemBase {
 
         currentPhase = updatedPhase;
         hubActive = determineHubActive(currentPhase);
-
-        SmartDashboard.putString("Game/Phase", currentPhase.name());
-        SmartDashboard.putString("Game/MatchTimeFormatted", getFormattedMatchTime());
-        SmartDashboard.putBoolean("Game/WonAuto", autoWinConfirmed);
-        SmartDashboard.putBoolean("Game/HubActive", hubActive);
-        SmartDashboard.putNumber("Game/TimeToNextShiftSeconds", getTimeToNextShift());
     }
 }

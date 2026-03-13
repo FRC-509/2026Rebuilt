@@ -177,6 +177,10 @@ public class Hopper extends SubsystemBase {
         this.indexerState = newIndexerState;
     }
 
+    public boolean isIndexing() {
+        return hopperState == HopperState.INDEXING || hopperState == HopperState.INTAKING_AND_INDEXING;
+    }
+
     private double getExtensionSetpoint(boolean extended) {
         return zeroedRotationOffset + (extended ? Constants.Hopper.kIntakeExtension : 0.5);
     }

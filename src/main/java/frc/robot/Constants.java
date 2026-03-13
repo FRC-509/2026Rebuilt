@@ -139,7 +139,7 @@ public final class Constants {
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
 
 		public static final double kRotationTolerance = 0.25; // degrees
-		public static final double kFlywheelSpeedTolerance = 25; // rpm
+		public static final double kFlywheelSpeedTolerance = 25.0 / 60.0; // rotations per second (25 rpm)
 
         public static final double kTurretHeightFromGround = .48;
         public static final double kTurretAngleDegrees = 17;
@@ -147,6 +147,7 @@ public final class Constants {
 		public static final double kFlywheelRadiusMeters = Units.inchesToMeters(3/2);
         public static final double kAverageFuelMass = 0.216;
         public static final double kTargetSpinRadSec = 0.3;
+        public static final double kIdleFlywheelVoltage = 1.5;
 
         public static final double kEfficiency = 0.2673;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
@@ -285,10 +286,10 @@ public final class Constants {
 		public static final double kIntakeExtensionSupply = 10;
         public static final double kIntakeExtensionStator = 20;
 
-		public static final double kIntakeSupply = 70;
-        public static final double kIntakeStator = 120;
+		public static final double kIntakeSupply = 45;
+        public static final double kIntakeStator = 90;
 
-        public static final double kIndexerSupply = 25;
+        public static final double kIndexerSupply = 35;
         public static final double kIndexerStator = 90;
 	}
 

@@ -4,13 +4,23 @@
 
 package frc.robot;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Stream;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -19,13 +29,14 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
+import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
+import frc.robot.commands.NewPathAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
-import frc.robot.util.ThinNT;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
 import frc.robot.util.controllers.ThrustmasterJoystick.StickButton;
@@ -44,6 +55,8 @@ public class RobotContainer {
 	private final Hopper hopper;
 	private final Vortex vortex;
 	private GameManager gameManager;
+	private final NetworkTable elasticTable;
+	private final ShuffleboardTab elasticTab;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
@@ -52,6 +65,8 @@ public class RobotContainer {
 		this.gameManager = new GameManager();
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
+		this.elasticTable = NetworkTableInstance.getDefault().getTable("Elastic");
+		this.elasticTab = Shuffleboard.getTab("Elastic");
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
@@ -62,7 +77,8 @@ public class RobotContainer {
 					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
 				}
 			},
-			() -> swerve.getYaw().getRadians());
+			() -> swerve.getYaw().getRadians(),
+			hopper::isIndexing);
 			
 			
 		this.rightTurret = new Turret(
@@ -73,10 +89,13 @@ public class RobotContainer {
 					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
 					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
 				}
-			},			() -> swerve.getYaw().getRadians());
+			},
+			() -> swerve.getYaw().getRadians(),
+			hopper::isIndexing);
 
 		configureBindings();
 		addAutonomousRoutines();
+		configureElastic();
 	}
 
     private void configureBindings() {
@@ -129,9 +148,9 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
-			() -> leftTurret.isAbleToShoot(),
-			() -> rightTurret.isAbleToShoot()));
+			() -> driverLeft.getTrigger(),
+			() -> driverLeft.getTrigger(),
+			() -> driverLeft.getTrigger()));
 
 
 		// force feed override
@@ -178,19 +197,87 @@ public class RobotContainer {
 
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
-		SmartDashboard.putData("Auto Mode", chooser);
+		chooser.addOption("NewPathAuto", new NewPathAuto(swerve, pigeon));
+		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo_routines");
+		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
+		// 	choreoFiles
+		// 		.filter(path -> path.getFileName().toString().endsWith(".traj"))
+		// 		forEach(path -> {
+		// 			String fileName = path.getFileName().toString();
+		// 			String trajectoryName = fileName.substring(0, fileName.length() - ".traj".length());
+		// 			if (!"NewPath".equals(trajectoryName)) {
+		// 				chooser.addOption("Choreo: " + trajectoryName, new ChoreoAuto(trajectoryName, swerve, pigeon));
+		// 			}
+		// 		});
+		// } catch (IOException ignored) {
+		// }
+	}
+
+	private void configureElastic() {
+		elasticTab.add("Robot Field", vortex.getField())
+			.withWidget(BuiltInWidgets.kField)
+			.withPosition(0, 0)
+			.withSize(6, 4);
+		elasticTab.add("Auto Mode", chooser)
+			.withWidget(BuiltInWidgets.kComboBoxChooser)
+			.withPosition(6, 0)
+			.withSize(3, 1);
+		elasticTab.addString("Match Timer", gameManager::getFormattedMatchTime)
+			.withWidget(BuiltInWidgets.kTextView)
+			.withPosition(6, 1)
+			.withSize(2, 1);
+		elasticTab.addString("Match Phase", () -> gameManager.getCurrentPhase().name())
+			.withWidget(BuiltInWidgets.kTextView)
+			.withPosition(8, 1)
+			.withSize(2, 1);
+		elasticTab.addDouble("Swerve Yaw", () -> swerve.getYaw().getDegrees())
+			.withWidget(BuiltInWidgets.kDial)
+			.withPosition(6, 2)
+			.withSize(2, 2);
+		elasticTab.addBoolean("Left Can Shoot", leftTurret::isAbleToShoot)
+			.withWidget(BuiltInWidgets.kBooleanBox)
+			.withPosition(8, 2)
+			.withSize(1, 1);
+		elasticTab.addBoolean("Right Can Shoot", rightTurret::isAbleToShoot)
+			.withWidget(BuiltInWidgets.kBooleanBox)
+			.withPosition(9, 2)
+			.withSize(1, 1);
+		elasticTab.addBoolean("Left Can Aim", leftTurret::canAim)
+			.withWidget(BuiltInWidgets.kBooleanBox)
+			.withPosition(8, 3)
+			.withSize(1, 1);
+		elasticTab.addBoolean("Right Can Aim", rightTurret::canAim)
+			.withWidget(BuiltInWidgets.kBooleanBox)
+			.withPosition(9, 3)
+			.withSize(1, 1);
 
 		if (RobotBase.isSimulation()) {
-			SmartDashboard.putData("Reset Swerve", Commands.runOnce(swerve::resetSimState, swerve));
+			elasticTab.add("Reset Swerve", Commands.runOnce(swerve::resetSimState, swerve))
+				.withPosition(9, 0)
+				.withSize(2, 1);
 		}
 	}
 
 	public Command getAutonomousCommand() {
-      	return Commands.print("No autonomous command configured");
+      	Command selected = chooser.getSelected();
+		return selected != null ? selected : Commands.print("No autonomous command configured");
 	}
 
 	public void robotPeriodic() {
-		vortex.pollJetsons();		
+		vortex.pollJetsons();
+		vortex.getField().getObject("left_turret").setPose(leftTurret.getTurretAlliancePose());
+		vortex.getField().getObject("right_turret").setPose(rightTurret.getTurretAlliancePose());
+
+		elasticTable.getEntry("MatchTimer").setString(gameManager.getFormattedMatchTime());
+		elasticTable.getEntry("MatchTimeSeconds").setDouble(gameManager.getMatchTimeSeconds());
+		elasticTable.getEntry("MatchPhase").setString(gameManager.getCurrentPhase().name());
+		elasticTable.getEntry("HubActive").setBoolean(gameManager.isHubActive());
+		elasticTable.getEntry("TimeToNextShiftSeconds").setDouble(gameManager.getTimeToNextShift());
+		elasticTable.getEntry("SwerveYawDegrees").setDouble(swerve.getYaw().getDegrees());
+		elasticTable.getEntry("LeftCanShoot").setBoolean(leftTurret.isAbleToShoot());
+		elasticTable.getEntry("RightCanShoot").setBoolean(rightTurret.isAbleToShoot());
+		elasticTable.getEntry("LeftCanAim").setBoolean(leftTurret.canAim());
+		elasticTable.getEntry("RightCanAim").setBoolean(rightTurret.canAim());
 	}
 
 	public void close() {
