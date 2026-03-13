@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -14,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Turret;
+import frc.robot.subsystems.Vortex;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.subsystems.Hopper;
@@ -33,21 +35,23 @@ public class RobotContainer {
 	private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
-	// private final Turret leftTurret;
+	private final Turret leftTurret;
 	// private final Turret rightTurret;
 	private final Hopper hopper;
+	private final Vortex vortex;
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
 		this.hopper = new Hopper();
+		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
 
-		// this.leftTurret = new Turret(
-		// 	Constants.Turret.kLeftTurretConfiguration,
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(2.86,2.16); } }, // vortex.getEstimatedAlliancePosition(); } },
-		// 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
-		// 	() -> swerve.getYaw().getRadians());
+		this.leftTurret = new Turret(
+			Constants.Turret.kLeftTurretConfiguration,
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getLatestJetsonPose(); } }, // vortex.getEstimatedAlliancePosition(); } },
+			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+			() -> swerve.getYaw().getRadians());
 			
 			
 		// this.rightTurret = new Turret(
@@ -133,14 +137,15 @@ public class RobotContainer {
 	}
 
 	public void robotPeriodic() {
-		ThinNT.putNumber("Hello", 0);
+		vortex.pollJetsons();		
 	}
 
 	public void close() {
+		vortex.closeJetsons();
 	}
 
 	public void zeroMechanisms() {
-		// leftTurret.zeroPosition();
+		leftTurret.zeroPosition();
 		// rightTurret.zeroPosition();
 		hopper.zeroPosition();
 	}
