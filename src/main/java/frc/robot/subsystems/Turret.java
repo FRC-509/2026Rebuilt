@@ -143,7 +143,7 @@ public class Turret extends SubsystemBase {
         public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
             return new Translation3d(
                 position.getX() + aimBehindMeters * Math.cos(swerveYawRadians) - robotVelocity.getX() * Constants.Turret.kMovementCorrectionConstant,
-                position.getY() + aimBehindMeters * -Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
+                position.getY() + aimBehindMeters * Math.sin(swerveYawRadians) - robotVelocity.getY() * Constants.Turret.kMovementCorrectionConstant,
                 position.getZ()
             );
         }
@@ -213,12 +213,14 @@ public class Turret extends SubsystemBase {
         Translation2d turretRelative = DriverStation.getAlliance().get().equals(Alliance.Red) //TODO: confirm blue alliance has 0,0
             ? new Translation2d(Constants.Field.kFullFieldLength,Constants.Field.kFieldWidth).minus(turretGlobal)
             : turretGlobal;
+        double neutralZoneStart = Constants.Field.kAllianceZoneLength;
+        double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
 
-        if (turretRelative.getX() > Constants.Field.kAllianceZoneLength + Constants.Field.kNeutralZoneLength) {
+        if (turretRelative.getX() > opposingAllianceStart) {
             if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.OPPOSING_ALLIANCE_FEED_LEFT;
             return AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
         } 
-        if (turretRelative.getX() > Constants.Field.kAllianceZoneLength + Constants.Field.kNeutralZoneLength) {
+        if (turretRelative.getX() > neutralZoneStart) {
             if (turretRelative.getY() > Constants.Field.kFieldWidth/2) return AimTarget.NEUTRALZONE_FEED_LEFT;
             return AimTarget.NEUTRALZONE_FEED_RIGHT;
         }

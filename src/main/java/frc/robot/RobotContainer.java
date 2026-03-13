@@ -5,6 +5,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -55,7 +56,12 @@ public class RobotContainer {
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
 			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getLatestJetsonPose(); } }, // vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return new Translation2d(swerve.getChassisSpeeds().vxMetersPerSecond, swerve.getChassisSpeeds().vyMetersPerSecond); } },
+			new Translation2dSupplier() {
+				public Translation2d getAsTranslation2d() {
+					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+				}
+			},
 			() -> swerve.getYaw().getRadians());
 			
 			
