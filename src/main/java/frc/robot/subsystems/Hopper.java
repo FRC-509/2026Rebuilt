@@ -168,7 +168,7 @@ public class Hopper extends SubsystemBase {
         this.previousIndexerState = IndexerState.PASSIVE;
 
         this.hasZeroedPosition = false;
-        this.zeroedRotationOffset = this.kIntakeExtension.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
+        this.zeroedRotationOffset = this.kIntakeExtension.getPosition().getValueAsDouble(); // temp to assume zeroed on initialize
         this.commandedExtensionSetpoint = zeroedRotationOffset;
     }
 

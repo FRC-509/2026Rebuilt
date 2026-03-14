@@ -205,6 +205,7 @@ public class RobotContainer {
 			leftTurret.zeroPosition();
 			rightTurret.zeroPosition();
 		}));
+		operatorController.leftBumper().onTrue(Commands.runOnce(hopper::zeroPosition, hopper));
 	}
 
 	private void addAutonomousRoutines() {
@@ -299,7 +300,7 @@ public class RobotContainer {
 	public void zeroMechanisms() {
 		leftTurret.zeroPosition();
 		rightTurret.zeroPosition();
-		hopper.zeroPosition();
+		// hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {

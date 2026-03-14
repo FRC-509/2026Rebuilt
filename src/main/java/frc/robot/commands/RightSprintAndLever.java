@@ -22,8 +22,8 @@ public class RightSprintAndLever extends ParallelCommandGroup {
                 Commands.runOnce(() -> hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE), hopper),
                 Commands.waitSeconds(3.14 - 0.9),
                 Commands.runOnce(() -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), hopper),
-                Commands.waitSeconds(5.1 - 3.14 - 0.9),
-                Commands.waitUntil(() -> LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName)),
+                Commands.waitSeconds(5.2 - 3.14 - 0.9),
+                // Commands.waitUntil(() -> LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName)),
                 Commands.runOnce(() -> hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH), hopper)
             )
         );
