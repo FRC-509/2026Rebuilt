@@ -34,7 +34,7 @@ import frc.robot.subsystems.Vortex;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
-import frc.robot.commands.NewPathAuto;
+import frc.robot.commands.RightSprintAndLever;
 import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
@@ -202,7 +202,7 @@ public class RobotContainer {
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
-		chooser.addOption("NewPathAuto", new NewPathAuto(swerve, pigeon));
+		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo_routines");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles

@@ -227,7 +227,12 @@ public class Turret extends SubsystemBase {
     }
 
     private AimTarget getTargetFromPosition() {
+        Translation2d robotRelative = positionEstimate.getAsTranslation2d();
         Translation2d turretRelative = getTurretAlliancePosition();
+        if (Math.abs(robotRelative.getX() - AimTarget.HUB.position.getX()) <= Constants.Chassis.kRobotWidth) {
+            return AimTarget.HUB;
+        }
+
         double neutralZoneStart = Constants.Field.kAllianceZoneLength;
         double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
 
