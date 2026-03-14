@@ -12,25 +12,37 @@ public class HopperDefaultCommand extends Command {
     private final Hopper hopper;
 
     private BooleanSupplier intakeSupplier;
+    private BooleanSupplier keepIntakeExtendedSupplier;
     private BooleanSupplier indexingSupplier;
+    private BooleanSupplier reverseIndexingSupplier;
     private BooleanSupplier prefireSupplier;
-    private BooleanSupplier leftIndexingSupplier;
-    private BooleanSupplier rightIndexingSupplier; 
+    private BooleanSupplier leftFeedIntentSupplier;
+    private BooleanSupplier rightFeedIntentSupplier;
+    private BooleanSupplier leftFeedReadySupplier;
+    private BooleanSupplier rightFeedReadySupplier;
 
     public HopperDefaultCommand(
             Hopper hopper,
-            BooleanSupplier intakeSupplier, 
+            BooleanSupplier intakeSupplier,
+            BooleanSupplier keepIntakeExtendedSupplier,
             BooleanSupplier indexingSupplier,
+            BooleanSupplier reverseIndexingSupplier,
             BooleanSupplier prefireSupplier,
-            BooleanSupplier leftIndexingSupplier,
-            BooleanSupplier rightIndexingSupplier) {
+            BooleanSupplier leftFeedIntentSupplier,
+            BooleanSupplier rightFeedIntentSupplier,
+            BooleanSupplier leftFeedReadySupplier,
+            BooleanSupplier rightFeedReadySupplier) {
         this.hopper = hopper;
 
         this.intakeSupplier = intakeSupplier;
+        this.keepIntakeExtendedSupplier = keepIntakeExtendedSupplier;
         this.indexingSupplier = indexingSupplier;
+        this.reverseIndexingSupplier = reverseIndexingSupplier;
         this.prefireSupplier = prefireSupplier;
-        this.leftIndexingSupplier = leftIndexingSupplier;
-        this.rightIndexingSupplier = rightIndexingSupplier;
+        this.leftFeedIntentSupplier = leftFeedIntentSupplier;
+        this.rightFeedIntentSupplier = rightFeedIntentSupplier;
+        this.leftFeedReadySupplier = leftFeedReadySupplier;
+        this.rightFeedReadySupplier = rightFeedReadySupplier;
 
         addRequirements(hopper);
     }
@@ -41,34 +53,56 @@ public class HopperDefaultCommand extends Command {
             boolean isIndexing,
             boolean isPrefiring,
             boolean isFeeding,
-            BooleanSupplier leftTurretCanShootSupplier,
-            BooleanSupplier rightTurretCanShootSupplier) {
+            BooleanSupplier leftFeedReadySupplier,
+            BooleanSupplier rightFeedReadySupplier) {
         this.hopper = hopper;
 
         this.intakeSupplier = () -> isIntaking;
+        this.keepIntakeExtendedSupplier = () -> false;
         this.indexingSupplier = () -> isIndexing;
+        this.reverseIndexingSupplier = () -> false;
         this.prefireSupplier = () -> isPrefiring;
-        this.leftIndexingSupplier = leftTurretCanShootSupplier;
-        this.rightIndexingSupplier = rightTurretCanShootSupplier;
+        this.leftFeedIntentSupplier = () -> isFeeding;
+        this.rightFeedIntentSupplier = () -> isFeeding;
+        this.leftFeedReadySupplier = leftFeedReadySupplier;
+        this.rightFeedReadySupplier = rightFeedReadySupplier;
 
         addRequirements(hopper);
     }
 
     @Override
     public void execute() {
-        boolean shouldIndex = indexingSupplier.getAsBoolean() || prefireSupplier.getAsBoolean();
-        if (intakeSupplier.getAsBoolean()) {
-            if (shouldIndex) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
+        boolean manualIndexing = indexingSupplier.getAsBoolean();
+        boolean shouldIndex = manualIndexing || prefireSupplier.getAsBoolean();
+        if (keepIntakeExtendedSupplier.getAsBoolean()) {
+            if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.EXTENDED, IndexerState.REVERSE);
+            else if (shouldIndex) hopper.setHopperState(HopperState.EXTENDED, getDesiredIndexerState());
+            else hopper.setHopperState(HopperState.EXTENDED, IndexerState.PASSIVE);
+        }
+        else if (intakeSupplier.getAsBoolean()) {
+            if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, IndexerState.REVERSE);
+            else if (shouldIndex) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
             else hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE);
-        } else if (shouldIndex) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
+        }
+        else if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INDEXING, IndexerState.REVERSE);
+        else if (shouldIndex) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
         else hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE);
     }
 
     private IndexerState getDesiredIndexerState() {
-        if (leftIndexingSupplier.getAsBoolean()) {
-            if (rightIndexingSupplier.getAsBoolean()) return IndexerState.BOTH;
-            return IndexerState.LEFT;           
-        } else if (rightIndexingSupplier.getAsBoolean()) return IndexerState.RIGHT;
+        if (indexingSupplier.getAsBoolean()) {
+            // if (rightFeedIntentSupplier.getAsBoolean()) {
+            //     return IndexerState.RIGHT;
+            // }
+            return IndexerState.BOTH;
+        }
+
+        boolean canFeedBoth = (leftFeedIntentSupplier.getAsBoolean() || rightFeedIntentSupplier.getAsBoolean())
+            && (leftFeedReadySupplier.getAsBoolean() || rightFeedReadySupplier.getAsBoolean());
+        if (canFeedBoth) {
+            return IndexerState.BOTH;
+        }
+
         return IndexerState.PASSIVE;
     }
 

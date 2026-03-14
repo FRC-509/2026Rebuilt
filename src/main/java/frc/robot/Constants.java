@@ -287,7 +287,7 @@ public final class Constants {
         public static final double kTurretRotationStator = 35;
 
 		public static final double kTurretFlywheelSupply = 40;
-        public static final double kTurretFlywheelStator = 40;
+        public static final double kTurretFlywheelStator = 47.5;
 
 		public static final double kIntakeExtensionSupply = 10;
         public static final double kIntakeExtensionStator = 20;

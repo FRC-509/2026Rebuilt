@@ -76,7 +76,7 @@
  },
  "generationFeatures":[],
  "codegen":{
-  "root":"src/main/deploy/choreo_routines",
+  "root":"src/main/deploy",
   "genVars":true,
   "genTrajData":true,
   "useChoreoLib":true

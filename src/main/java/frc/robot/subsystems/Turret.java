@@ -129,8 +129,8 @@ public class Turret extends SubsystemBase {
  
     public enum AimTarget {
 
-    NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.55),
+        NONE(Translation3d.kZero, 0),
+        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.125),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
@@ -169,6 +169,10 @@ public class Turret extends SubsystemBase {
 
     public void setAimTarget(AimTarget aimTarget) {
         this.aimTarget = aimTarget;
+    }
+
+    public void setShootSpeed(boolean isIndexing){
+
     }
 
     public Translation2d getTurretAlliancePosition() {
@@ -227,11 +231,11 @@ public class Turret extends SubsystemBase {
     }
 
     private AimTarget getTargetFromPosition() {
-        Translation2d robotRelative = positionEstimate.getAsTranslation2d();
+        // Translation2d robotRelative = positionEstimate.getAsTranslation2d();
         Translation2d turretRelative = getTurretAlliancePosition();
-        if (Math.abs(robotRelative.getX() - AimTarget.HUB.position.getX()) <= Constants.Chassis.kRobotWidth) {
-            return AimTarget.HUB;
-        }
+        // if (Math.abs(robotRelative.getX() - AimTarget.HUB.position.getX()) <= Constants.Chassis.kRobotWidth) {
+        //     return AimTarget.HUB;
+        // }
 
         double neutralZoneStart = Constants.Field.kAllianceZoneLength;
         double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
@@ -401,7 +405,6 @@ public class Turret extends SubsystemBase {
         
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, 100d);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, 100d);
-       
         
         if (isIndexingSupplier.getAsBoolean()) {
             kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));

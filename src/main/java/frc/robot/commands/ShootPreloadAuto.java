@@ -12,7 +12,7 @@ public final class ShootPreloadAuto {
     public static Command create(Hopper hopper) {
         return Commands.startEnd(
             () -> hopper.setHopperState(HopperState.INDEXING, IndexerState.BOTH),
-            () -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE),
+            () -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), 
             hopper)
             .withTimeout(6.0)
             .andThen(Commands.runOnce(

@@ -39,6 +39,7 @@ import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
+import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PigeonWrapper;
 import frc.robot.util.Translation2dSupplier;
 import frc.robot.util.controllers.ThrustmasterJoystick;
@@ -151,10 +152,14 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds),
-			leftTurret::isShooterUpToSpeed,
-			rightTurret::isShooterUpToSpeed));
+			() -> driverRight.isPressed(StickButton.Bottom),
+			() -> operatorController.getRightTriggerAxis() > 0.7,
+			() -> operatorController.b().getAsBoolean(),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds) && LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
+			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
+			() -> true,
+			() -> true));
 
 
 		// force feed override
@@ -196,14 +201,17 @@ public class RobotContainer {
 
 		operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
 		operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
-
+		operatorController.a().onTrue(Commands.runOnce(() -> {
+			leftTurret.zeroPosition();
+			rightTurret.zeroPosition();
+		}));
 	}
 
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
-		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon));
-		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo_routines");
+		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, hopper, leftTurret, rightTurret));
+		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles
 		// 		.filter(path -> path.getFileName().toString().endsWith(".traj"))
@@ -289,8 +297,8 @@ public class RobotContainer {
 	}
 
 	public void zeroMechanisms() {
-		// leftTurret.zeroPosition();
-		// rightTurret.zeroPosition();
+		leftTurret.zeroPosition();
+		rightTurret.zeroPosition();
 		hopper.zeroPosition();
 	}
 

@@ -39,6 +39,7 @@ public class Hopper extends SubsystemBase {
 
     public enum HopperState {
         PASSIVE(false, 0.0d),
+        EXTENDED(true, 0.0d),
         INDEXING(false, 0.0d), // depending on final geometry run intake wheels aswell 
         INTAKING(true, Constants.Hopper.kIntakingVelocity),
         INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity);
@@ -73,7 +74,8 @@ public class Hopper extends SubsystemBase {
         PASSIVE(false, false),
         LEFT(true,false),
         RIGHT(false,true),
-        BOTH(true,true);
+        BOTH(true,true),
+        REVERSE(true,true);
 
         public boolean leftTurret;
         public boolean rightTurret;
@@ -231,10 +233,11 @@ public class Hopper extends SubsystemBase {
         }
 
         if (!indexerState.equals(previousIndexerState)) { // only change instruction on state change, not every 20ms
+            double isReverse = indexerState.equals(IndexerState.REVERSE) ? -1 : 1;
             if (indexerState.leftTurret != previousIndexerState.leftTurret)
-                kLeftIndexer.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity : 0));
-            if (indexerState.rightTurret != previousIndexerState.rightTurret) 
-                kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity : 0));
+                kLeftIndexer.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity * isReverse : 0));
+            if (indexerState.rightTurret != previousIndexerState.rightTurret)
+                kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity  * isReverse : 0));
         }
     }
 

@@ -26,10 +26,19 @@ public class ChoreoTrajectory {
     }
 
     public static ChoreoTrajectory load(String name) {
-        Path deployPath = Filesystem.getDeployDirectory().toPath()
-            .resolve("choreo_routines")
-            .resolve(name + ".traj");
-        File trajectoryFile = deployPath.toFile();
+        File trajectoryFile = Filesystem.getDeployDirectory().toPath()
+            .resolve("choreo")
+            .resolve(name + ".traj")
+            .toFile();
+        if (!trajectoryFile.exists()) {
+            trajectoryFile = Filesystem.getDeployDirectory().toPath()
+                .resolve("choreo_routines")
+                .resolve(name + ".traj")
+                .toFile();
+        }
+        if (!trajectoryFile.exists()) {
+            trajectoryFile = Path.of("choreo", name + ".traj").toFile();
+        }
         if (!trajectoryFile.exists()) {
             trajectoryFile = Path.of("choreo_routines", name + ".traj").toFile();
         }
