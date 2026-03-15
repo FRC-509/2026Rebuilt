@@ -212,8 +212,8 @@ public class RobotContainer {
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
-		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, hopper, leftTurret, rightTurret));
-		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, hopper, leftTurret, rightTurret));
+		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles
@@ -222,7 +222,7 @@ public class RobotContainer {
 		// 			String fileName = path.getFileName().toString();
 		// 			String trajectoryName = fileName.substring(0, fileName.length() - ".traj".length());
 		// 			if (!"NewPath".equals(trajectoryName)) {
-		// 				chooser.addOption("Choreo: " + trajectoryName, new ChoreoAuto(trajectoryName, swerve, pigeon));
+		// 				chooser.addOption("Choreo: " + trajectoryName, new ChoreoAuto(trajectoryName, swerve, pigeon, vortex));
 		// 			}
 		// 		});
 		// } catch (IOException ignored) {

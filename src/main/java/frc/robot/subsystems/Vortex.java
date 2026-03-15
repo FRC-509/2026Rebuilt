@@ -97,6 +97,12 @@ public class Vortex {
         return poseEstimator.getEstimatedPosition();
     }
 
+    public void resetEstimatedPose(Pose2d pose) {
+        poseEstimator.resetPosition(swerveDrive.getYaw(), swerveDrive.getModulePositions(), pose);
+        estimatedGlobalPosition = computeEstimatedGlobalPosition();
+        postVortexToNT();
+    }
+
     public Pose2d getEstimatedAlliancePose() {
         return toAllianceRelative(getEstimatedPose());
     }

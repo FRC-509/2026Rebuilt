@@ -47,6 +47,8 @@ public class Turret extends SubsystemBase {
     private double targetRotationMotorPosition;
     private boolean canAim;
     private boolean overrideAimTarget;
+    private boolean overridePositionEstimate;
+    private Translation2d overriddenPositionEstimate;
     private double targetBottomFlywheelSpeed;
     private double targetTopFlywheelSpeed;
 
@@ -117,6 +119,8 @@ public class Turret extends SubsystemBase {
         this.targetRotationDegrees = 0;
         this.targetRotationMotorPosition = 0;
         this.overrideAimTarget = false;
+        this.overridePositionEstimate = false;
+        this.overriddenPositionEstimate = Translation2d.kZero;
         this.targetBottomFlywheelSpeed = 0; // change this to spin up at start of match?
         this.targetTopFlywheelSpeed = 0;
         this.canAim = false;
@@ -177,7 +181,10 @@ public class Turret extends SubsystemBase {
 
     public Translation2d getTurretAlliancePosition() {
         double yawRadians = getTurretYawRadians();
-        return positionEstimate.getAsTranslation2d().plus(
+        Translation2d robotPosition = overridePositionEstimate
+            ? overriddenPositionEstimate
+            : positionEstimate.getAsTranslation2d();
+        return robotPosition.plus(
             new Translation2d(
                 offsetTranslation.getX() * Math.cos(yawRadians) - offsetTranslation.getY() * Math.sin(yawRadians),
                 offsetTranslation.getX() * Math.sin(yawRadians) + offsetTranslation.getY() * Math.cos(yawRadians)
@@ -228,6 +235,15 @@ public class Turret extends SubsystemBase {
     public void setOverrideAimTarget(boolean override, AimTarget target) {
         this.overrideAimTarget = override;
         if (override) this.aimTarget = target;
+    }
+
+    public void setOverridePositionEstimate(Translation2d positionEstimate) {
+        overridePositionEstimate = true;
+        overriddenPositionEstimate = positionEstimate;
+    }
+
+    public void clearOverridePositionEstimate() {
+        overridePositionEstimate = false;
     }
 
     private AimTarget getTargetFromPosition() {
