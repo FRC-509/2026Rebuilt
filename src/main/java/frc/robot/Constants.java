@@ -158,11 +158,11 @@ public final class Constants {
 	}
 
 	public static class Hopper { // TODO: find me
-        public static final double kIntakingVelocity = 57.0;
+        public static final double kIntakingVelocity = 90;
 		public static final double kIndexingVelocity = 50;
 		public static final double kPrefireLeadTimeSeconds = 2.0;
 		
-		public static final double kIntakeExtension = 16.15;
+		public static final double kIntakeExtension = 16.15-1.1475;
         public static final double kRetractedExtensionOffset = 0.5;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
@@ -290,7 +290,7 @@ public final class Constants {
         public static final double kTurretFlywheelStator = 47.5;
 
 		public static final double kIntakeExtensionSupply = 10;
-        public static final double kIntakeExtensionStator = 20;
+        public static final double kIntakeExtensionStator = 25;
 
 		public static final double kIntakeSupply = 45;
         public static final double kIntakeStator = 90;

@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
+import frc.robot.autonomous.CenterAndDepot;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
@@ -212,6 +213,7 @@ public class RobotContainer {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
 		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, hopper, leftTurret, rightTurret));
+		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, hopper, leftTurret, rightTurret));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles
