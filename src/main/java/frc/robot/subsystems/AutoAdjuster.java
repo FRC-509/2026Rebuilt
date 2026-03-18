@@ -9,18 +9,17 @@ import frc.robot.util.LimelightHelpers;
 public class AutoAdjuster extends SubsystemBase {
     private final String limeLightName = "limelight-intake";
     private final NetworkTable limeLightTable;
-    private final NetworkTableInstance tx;
 
     public AutoAdjuster(){
         limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
-        tx = limeLightTable.getEntry("tx").getInstance();
+        
     }
     @Override
     public void periodic(){
         boolean hasTarget = LimelightHelpers.getTV(limeLightName);
         LimelightHelpers.setLEDMode_PipelineControl(limeLightName);
         LimelightHelpers.setLEDMode_ForceOn(limeLightName);
-        //SmartDashboard.putNumber
+                //SmartDashboard.putNumber
         if(hasTarget){
             double xOffset = LimelightHelpers.getTX(limeLightName);
             double yOffset = LimelightHelpers.getTY(limeLightName);
@@ -31,9 +30,11 @@ public class AutoAdjuster extends SubsystemBase {
             SmartDashboard.putNumber("Area", area);
             LimelightHelpers.setLEDMode_ForceOff(limeLightName);
             
+          //  SmartDashboard.putstr(limeLightName, limeLightName)("LimeLight", LimelightHelpers.getJSONDump(limeLightName));
         } else {
             SmartDashboard.putBoolean("Has Target", false);
         }
+
         
     }
 }
