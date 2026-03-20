@@ -173,6 +173,10 @@ public final class Constants {
 		public static final Matrix<N3, N1> kVortexMeasurementStdDevs = VecBuilder.fill(.7, .7, 0.9); // TODO: find n3 confidence
 	}
 
+	public static class Vision {
+		public static final double kCameraHeight = 0;
+	}
+
 	public static class IDs {
 		// Swerve Drive
 		public static final int kFrontLeftDrive = 1;
