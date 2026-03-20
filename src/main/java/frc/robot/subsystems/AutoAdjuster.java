@@ -5,21 +5,30 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.commands.DefaultDriveCommand;
+import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.PigeonWrapper;
 
 public class AutoAdjuster extends SubsystemBase {
     private final String limeLightName = "limelight-intake";
     private final NetworkTable limeLightTable;
+    private final PigeonWrapper pigeon = new PigeonWrapper(0);
+    private final SwerveDrive swerve;
 
     public AutoAdjuster(){
         limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
-        
+        this.swerve = new SwerveDrive(pigeon);
     }
 
     // public double getDistance(){
     //     return Constants.Vision.kCameraHeight / Math.cos(LimelightHelpers.getTXNC(limeLightName));
     // }
 
+    public void adjustSwerveDrive(){
+        double rotation = Constants.PIDConstants.Drive.kSteerAngleP * LimelightHelpers.getTX(limeLightName);
+        swerve.runOnce(() -> new DefaultDriveCommand(swerve, 0.0, 0.0, rotation, true));
+    }
 
     @Override
     public void periodic(){
@@ -43,8 +52,11 @@ public class AutoAdjuster extends SubsystemBase {
             LimelightHelpers.setLEDMode_ForceOn(limeLightName);
         }
 
+
         
     }
+
+
 }
 
 // {
