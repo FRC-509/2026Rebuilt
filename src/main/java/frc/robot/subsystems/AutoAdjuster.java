@@ -9,6 +9,7 @@ import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PigeonWrapper;
+import java.util.List;
 
 public class AutoAdjuster extends SubsystemBase {
     private final String limeLightName = "limelight-intake";
@@ -16,6 +17,29 @@ public class AutoAdjuster extends SubsystemBase {
     private final PigeonWrapper pigeon = new PigeonWrapper(0);
     private final SwerveDrive swerve;
 
+    private class RetroTarget {
+        public double ta;
+        public double tx;
+        public double ty;
+
+        public RetroTarget(double ta, double tx, double ty) {
+            this.ta = ta;
+            this.tx = tx;
+            this.ty = ty;
+        }
+
+        public getLargestRetroTarget(List<RetroTarget> targets) {
+            RetroTarget largest = null;
+            double maxArea = 0.0; 
+            for (RetroTarget target : targets) {
+                (if target.ta > maxArea) {
+                    maxArea = target.ta;
+                    largest = target;
+                }
+            }
+            return largest;
+        }
+    }
     public AutoAdjuster(){
         limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
         this.swerve = new SwerveDrive(pigeon);
@@ -25,9 +49,13 @@ public class AutoAdjuster extends SubsystemBase {
     //     return Constants.Vision.kCameraHeight / Math.cos(LimelightHelpers.getTXNC(limeLightName));
     // }
 
-    public void adjustSwerveDrive(){
+    public void adjustSwerveDrive(List<RetroTarget> targets){
+        
+        RetroTarget largest = getLargetsRetroTarget(targets);
+        if (largest != null) {
         double rotation = Constants.PIDConstants.Drive.kSteerAngleP * LimelightHelpers.getTX(limeLightName);
         swerve.runOnce(() -> new DefaultDriveCommand(swerve, 0.0, 0.0, rotation, true));
+        }
     }
 
     @Override
@@ -65,7 +93,7 @@ public class AutoAdjuster extends SubsystemBase {
 //         "Classifier": [],
 //         "Detector": [],
 //         "Fiducial": [],
-//         "Retro": [
+//         "Retro": [ we want this and to see which has the biggest ta
 //             {
 //                 "pts": [],
 //                 "t6c_ts": [],
