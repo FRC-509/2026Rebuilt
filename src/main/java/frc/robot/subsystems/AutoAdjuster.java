@@ -28,11 +28,11 @@ public class AutoAdjuster extends SubsystemBase {
             this.ty = ty;
         }
 
-        public getLargestRetroTarget(List<RetroTarget> targets) {
+        public static RetroTarget getLargestRetroTarget(List<RetroTarget> targets) {
             RetroTarget largest = null;
             double maxArea = 0.0; 
             for (RetroTarget target : targets) {
-                (if target.ta > maxArea) {
+                if (target.ta > maxArea) {
                     maxArea = target.ta;
                     largest = target;
                 }
@@ -51,7 +51,7 @@ public class AutoAdjuster extends SubsystemBase {
 
     public void adjustSwerveDrive(List<RetroTarget> targets){
         
-        RetroTarget largest = getLargetsRetroTarget(targets);
+        RetroTarget largest = RetroTarget.getLargestRetroTarget(targets);
         if (largest != null) {
         double rotation = Constants.PIDConstants.Drive.kSteerAngleP * LimelightHelpers.getTX(limeLightName);
         swerve.runOnce(() -> new DefaultDriveCommand(swerve, 0.0, 0.0, rotation, true));
