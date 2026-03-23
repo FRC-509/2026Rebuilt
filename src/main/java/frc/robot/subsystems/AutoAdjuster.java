@@ -8,14 +8,16 @@ import frc.robot.Constants;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.LimelightHelpers.LimelightResults;
+import frc.robot.util.LimelightHelpers.LimelightTarget_Retro;
 import frc.robot.util.PigeonWrapper;
 import java.util.List;
 
 public class AutoAdjuster extends SubsystemBase {
     private final String limeLightName = "limelight-intake";
-    private final NetworkTable limeLightTable;
-    private final PigeonWrapper pigeon = new PigeonWrapper(0);
+     private final NetworkTable limeLightTable;
     private final SwerveDrive swerve;
+
 
     private class RetroTarget {
         public double ta;
@@ -28,10 +30,10 @@ public class AutoAdjuster extends SubsystemBase {
             this.ty = ty;
         }
 
-        public static RetroTarget getLargestRetroTarget(List<RetroTarget> targets) {
-            RetroTarget largest = null;
-            double maxArea = 0.0; 
-            for (RetroTarget target : targets) {
+        public static LimelightTarget_Retro getLargestRetroTarget(LimelightTarget_Retro[] targets) {
+                    LimelightTarget_Retro largest = null;
+                    double maxArea = 0.0; 
+                    for (LimelightTarget_Retro target : targets) {
                 if (target.ta > maxArea) {
                     maxArea = target.ta;
                     largest = target;
@@ -40,47 +42,33 @@ public class AutoAdjuster extends SubsystemBase {
             return largest;
         }
     }
-    public AutoAdjuster(){
-        limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
-        this.swerve = new SwerveDrive(pigeon);
+    public AutoAdjuster(SwerveDrive swerve){
+       this.swerve = swerve;
+       this.limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
     }
 
     // public double getDistance(){
     //     return Constants.Vision.kCameraHeight / Math.cos(LimelightHelpers.getTXNC(limeLightName));
     // }
 
-    public void adjustSwerveDrive(List<RetroTarget> targets){
+    public void adjustSwerveDrive(LimelightTarget_Retro[] targets){
         
-        RetroTarget largest = RetroTarget.getLargestRetroTarget(targets);
+        LimelightTarget_Retro largest = RetroTarget.getLargestRetroTarget(targets);
         if (largest != null) {
-        double rotation = Constants.PIDConstants.Drive.kSteerAngleP * LimelightHelpers.getTX(limeLightName);
-        swerve.runOnce(() -> new DefaultDriveCommand(swerve, 0.0, 0.0, rotation, true));
+        double rotation = Constants.PIDConstants.Drive.kSteerAngleP * largest.tx;
+        SmartDashboard.putNumber("Rotation", rotation);
+        //swerve.runOnce(() -> new DefaultDriveCommand(swerve, 0.0, 0.0, rotation, true));
         }
     }
 
     @Override
     public void periodic(){
-        boolean hasTarget = LimelightHelpers.getTV(limeLightName);
-        LimelightHelpers.setLEDMode_PipelineControl(limeLightName);
-        LimelightHelpers.setLEDMode_ForceOn(limeLightName);
-                //SmartDashboard.putNumber
-        if(hasTarget){
-            double xOffset = LimelightHelpers.getTX(limeLightName);
-            double yOffset = LimelightHelpers.getTY(limeLightName);
-            double area = LimelightHelpers.getTA(limeLightName);
-            SmartDashboard.putBoolean("Has Target", hasTarget);
-            SmartDashboard.putNumber("X Offset", xOffset);
-            SmartDashboard.putNumber("Y Offset", yOffset);
-            SmartDashboard.putNumber("Area", area);
-            LimelightHelpers.setLEDMode_ForceOff(limeLightName);
+        LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults(limeLightName); 
+        LimelightTarget_Retro[] targets = results.targets_Retro;
+        if (targets == null) return;
+        SmartDashboard.putString("Retro Targets", targets.toString());
+        adjustSwerveDrive(targets);
             
-          //  SmartDashboard.putstr(limeLightName, limeLightName)("LimeLight", LimelightHelpers.getJSONDump(limeLightName));
-        } else {
-            SmartDashboard.putBoolean("Has Target", false);
-            LimelightHelpers.setLEDMode_ForceOn(limeLightName);
-        }
-
-
         
     }
 

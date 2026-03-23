@@ -47,7 +47,7 @@ public class RobotContainer {
 		this.swerve = new SwerveDrive(pigeon);
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
-		this.autoAdjuster = new AutoAdjuster();
+		this.autoAdjuster = new AutoAdjuster(swerve);
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,

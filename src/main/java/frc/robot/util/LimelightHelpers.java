@@ -448,6 +448,10 @@ public class LimelightHelpers {
         @JsonProperty("Barcode")
         public LimelightTarget_Barcode[] targets_Barcode;
 
+        public Object targetingResults;
+
+        public Object targeting;
+
         public LimelightResults() {
             botpose = new double[6];
             botpose_wpired = new double[6];
