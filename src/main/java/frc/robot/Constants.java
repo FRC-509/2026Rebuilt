@@ -175,6 +175,7 @@ public final class Constants {
 
 	public static class Vision {
 		public static final double kCameraHeight = 0;
+		public static final String kLimelightName = "limelight-intake";
 	}
 
 	public static class IDs {

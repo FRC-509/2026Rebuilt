@@ -10,12 +10,12 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.LimelightHelpers.LimelightResults;
 import frc.robot.util.LimelightHelpers.LimelightTarget_Retro;
-import frc.robot.util.PigeonWrapper;
+// import frc.robot.util.PigeonWrapper;
 import java.util.List;
 
 public class AutoAdjuster extends SubsystemBase {
-    private final String limeLightName = "limelight-intake";
-     private final NetworkTable limeLightTable;
+    
+    //private final NetworkTable limeLightTable;
     private final SwerveDrive swerve;
 
 
@@ -39,12 +39,13 @@ public class AutoAdjuster extends SubsystemBase {
                     largest = target;
                 }
             }
+            SmartDashboard.putString("Largest Target Area", largest.toString());
             return largest;
         }
     }
     public AutoAdjuster(SwerveDrive swerve){
        this.swerve = swerve;
-       this.limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
+    //    this.limeLightTable = NetworkTableInstance.getDefault().getTable(limeLightName);
     }
 
     // public double getDistance(){
@@ -63,11 +64,7 @@ public class AutoAdjuster extends SubsystemBase {
 
     @Override
     public void periodic(){
-        LimelightHelpers.LimelightResults results = LimelightHelpers.getLatestResults(limeLightName); 
-        LimelightTarget_Retro[] targets = results.targets_Retro;
-        if (targets == null) return;
-        SmartDashboard.putString("Retro Targets", targets.toString());
-        adjustSwerveDrive(targets);
+        
             
         
     }
