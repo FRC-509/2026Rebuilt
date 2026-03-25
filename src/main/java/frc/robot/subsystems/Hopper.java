@@ -106,7 +106,7 @@ public class Hopper extends SubsystemBase {
         TalonFXConfiguration extensionConfig = new TalonFXConfiguration();
         
 		extensionConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		extensionConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+		extensionConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 		extensionConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		extensionConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
