@@ -196,6 +196,19 @@ public class Hopper extends SubsystemBase {
             : Constants.Hopper.kRetractedExtensionOffset;
         return clampExtensionPosition(zeroedRotationOffset + relativeSetpoint);
     }
+
+    private double getCurrentExtensionPosition() {
+        return kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset;
+    }
+
+    private double getDesiredIntakeVelocity() {
+        if (getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.65)) return 0.0;
+        if (hopperState == HopperState.EXTENDED
+            || hopperState == HopperState.INTAKING
+            || hopperState == HopperState.INTAKING_AND_INDEXING) 
+                return hopperState.intakingVelocity;
+        return Constants.Hopper.kIntakingVelocity;
+    }
     
     @Override
     public void periodic() {
@@ -213,7 +226,7 @@ public class Hopper extends SubsystemBase {
             if (!hasZeroedPosition) return;
         }
 
-        kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+        kIntakeRotation.setControl(intakeDutyCycle.withVelocity(getDesiredIntakeVelocity()));
 
         if (!hopperState.hopperIsExtended
                 && commandedExtensionSetpoint <= getExtensionSetpoint(false)
@@ -228,8 +241,6 @@ public class Hopper extends SubsystemBase {
                 commandedExtensionSetpoint = getExtensionSetpoint(hopperState.hopperIsExtended);
                 kIntakeExtension.setControl(extensionDutyCycle.withPosition(commandedExtensionSetpoint));
             }
-            if (hopperState.intakingVelocity != previousHopperState.intakingVelocity) 
-            kIntakeRotation.setControl(hopperState.indexingVelocity != 0.0 ? intakeDutyCycle.withVelocity(hopperState.intakingVelocity) : voltageOut.withOutput(0));
         }
 
         if (!indexerState.equals(previousIndexerState)) { // only change instruction on state change, not every 20ms
