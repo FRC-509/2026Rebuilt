@@ -157,7 +157,9 @@ public class RobotContainer {
 			() -> driverRight.isDown(StickButton.Bottom),
 			() -> operatorController.getRightTriggerAxis() > 0.7,
 			() -> operatorController.b().getAsBoolean(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds) && LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
+					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
+					&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
 			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
 			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
 			() -> true,
@@ -311,6 +313,14 @@ public class RobotContainer {
 		double deadbanded = MathUtil.applyDeadband(axis, Constants.Operator.kStickDeadband);
 		double squared = Math.abs(deadbanded) * deadbanded;
 		return squared;
+	}
+
+	private double getAirtimeEstimate() {
+		double estimate = leftTurret.getAirtimeSeconds();
+		if (estimate != 0) return estimate;
+		estimate = rightTurret.getAirtimeSeconds();
+		if (estimate != 0) return estimate;
+		return Constants.Turret.kPrefireLeadTimeSeconds;
 	}
   
 }

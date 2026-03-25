@@ -137,6 +137,8 @@ public final class Constants {
 
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
+		public static final double kFlywheelMotorToMechanismRatio = 24.0 / 18.0;
+		public static final double kFlywheelMechanismMaxRps = 100.0d / kFlywheelMotorToMechanismRatio;
 
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25.0 / 60.0; // rotations per second (25 rpm)
@@ -152,16 +154,18 @@ public final class Constants {
         public static final double kEfficiency = 0.2673;
         public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
+		public static final double kPrefireLeadTimeSeconds = 2.0;
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
+        public static final int kTimeOfFlightIterations = 3;
 
 	}
 
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 70;
 		public static final double kIndexingVelocity = 50;
-		public static final double kPrefireLeadTimeSeconds = 2.0;
 		
 		public static final double kIntakeExtension = 11.429-1;
+		public static final double kIntakeFullExtensionMeters = 0.29;
         public static final double kRetractedExtensionOffset = 0.5;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
@@ -179,7 +183,7 @@ public final class Constants {
         public static final double kJetsonMaxStdDevMultiplier = 2.0;
         
 		public static final double kFrontLimelightForwardMeters = 0.4;
-        public static final double kFrontLimelightSideMeters = 0.117348;
+        public static final double kFrontLimelightSideMeters = -0.117348;
         public static final double kFrontLimelightUpMeters = 0.26;
         public static final double kFrontLimelightRollDegrees = 0.0;
         public static final double kFrontLimelightPitchDegrees = -17.0;
