@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.Constants.Chassis.TurretConfiguration;
@@ -36,6 +37,7 @@ public class Turret extends SubsystemBase {
     private final double maxRotationCounterclockwise;
     private final boolean zeroesCounterClockwise;
     private final double zeroedRotationMaximumAdded;
+    private final String side;
 
     private final Translation2dSupplier positionEstimate;
     private final Translation2dSupplier robotVelocitySupplier;
@@ -129,6 +131,7 @@ public class Turret extends SubsystemBase {
         this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
         this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
         this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
+        this.side = turretConfiguration.side();
     }
  
     public enum AimTarget {
@@ -399,11 +402,11 @@ public class Turret extends SubsystemBase {
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            if (Math.abs(kRotationMotor.getTorqueCurrent().getValueAsDouble()) > 24.1) {
+            if (Math.abs(kRotationMotor.getTorqueCurrent().getValueAsDouble()) > 35) {
                 kRotationMotor.setControl(kVoltageOut.withOutput(0));
                 zeroedRotationOffset = kRotationMotor.getPosition().getValueAsDouble();
                 hasZeroedPosition = true;
-            } else kRotationMotor.setControl(kVoltageOut.withOutput(zeroesCounterClockwise ? 1 : -1));
+            } else kRotationMotor.setControl(kVoltageOut.withOutput(zeroesCounterClockwise ? 1.5 : -1.5));
 
             if (!hasZeroedPosition) return;
         }
@@ -427,10 +430,11 @@ public class Turret extends SubsystemBase {
         if (isIndexingSupplier.getAsBoolean()) {
             kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
             kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));
-        } else {
+    } else {
             kBottomFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
             kTopFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
         }
+        SmartDashboard.putNumber(side+"RotationDegrees", getRotationDegrees());
     }
 
     public void zeroPosition() {

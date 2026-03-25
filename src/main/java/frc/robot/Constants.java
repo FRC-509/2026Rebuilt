@@ -121,9 +121,9 @@ public final class Constants {
 			Constants.IDs.kLeftTopFlywheel, 
 			Constants.IDs.kLeftBottomFlywheel,
 			new Translation3d(0.14,0.14,0.48),
-			-88,
-			106.88,
-			true);
+			-59.502,
+			191.162,
+			false);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
 			"Right",
@@ -131,9 +131,9 @@ public final class Constants {
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(0.14,-0.14,0.48),
-			-111.005859,
-			86.3,
-			false);
+			-191.162,
+			64.424,
+			true);
 
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
@@ -179,7 +179,7 @@ public final class Constants {
         public static final double kJetsonMaxStdDevMultiplier = 2.0;
         
 		public static final double kFrontLimelightForwardMeters = 0.4;
-        public static final double kFrontLimelightSideMeters = 0.02;
+        public static final double kFrontLimelightSideMeters = 0.117348;
         public static final double kFrontLimelightUpMeters = 0.26;
         public static final double kFrontLimelightRollDegrees = 0.0;
         public static final double kFrontLimelightPitchDegrees = -17.0;
