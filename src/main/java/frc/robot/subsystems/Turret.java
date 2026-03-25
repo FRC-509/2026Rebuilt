@@ -133,19 +133,21 @@ public class Turret extends SubsystemBase {
  
     public enum AimTarget {
 
-        NONE(Translation3d.kZero, 0),
-        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.125),
-        NEUTRALZONE_FEED_LEFT(new Translation3d(),0),
-        NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0),
-        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0),
-        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(), 0);
+        NONE(Translation3d.kZero, 0, 0),
+        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.125, 1.8),
+        NEUTRALZONE_FEED_LEFT(new Translation3d(),0, 0),
+        NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0, 0),
+        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0, 0),
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(), 0, 0);
 
         public final Translation3d position;
         public final double aimBehindMeters;
+        public final double targetBackspinRadSec;
 
-        private AimTarget(Translation3d position, double aimBehindMeters) {
+        private AimTarget(Translation3d position, double aimBehindMeters, double targetBackspinRadSec) {
             this.position = position;
             this.aimBehindMeters = aimBehindMeters;
+            this.targetBackspinRadSec = targetBackspinRadSec;
         }
 
         public Translation3d aimAccountedTarget(double swerveYawRadians, Translation2d robotVelocity) { // aim slightly behind target for accuracy, and account for chassis movement
@@ -344,7 +346,7 @@ public class Turret extends SubsystemBase {
         double targetZ = targetTurretRelative.getZ();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
     
-        double liftAcceleration = Constants.Turret.kMagnusCoefficient * Constants.Turret.kTargetSpinRadSec; // magnus effect approximationn
+        double liftAcceleration = Constants.Turret.kMagnusCoefficient * aimTarget.targetBackspinRadSec; // magnus effect approximationn
         double gEff = 9.8 - liftAcceleration;
         double cosT = Math.cos(theta);
         double denom = (dist * Math.tan(theta)) - targetZ;
@@ -353,7 +355,7 @@ public class Turret extends SubsystemBase {
         double exitVelocity = Math.sqrt((gEff * dist * dist) / (2 * cosT * cosT * denom));
 
         // v_exit = (Vb + Vt)/2, Spin_surface = (Vb - Vt)/2, therefore: Vb = V_exit + Spin_surface
-        double surfaceSpeedDiff = Constants.Turret.kTargetSpinRadSec * Constants.Field.kFuelRadiusMeters;
+        double surfaceSpeedDiff = aimTarget.targetBackspinRadSec * Constants.Field.kFuelRadiusMeters;
         double vBottom = (exitVelocity + surfaceSpeedDiff) / Constants.Turret.kEfficiency;
         double vTop = (exitVelocity - surfaceSpeedDiff) / Constants.Turret.kEfficiency;
 
@@ -375,7 +377,7 @@ public class Turret extends SubsystemBase {
         // magnus force = 1/2 * rho * A * liftCoeff * v^2   (liftCoeff for a sphere is often approximated as (r * spin / v))
         double airDensity = 1.225;
         double crossSectionArea = Math.PI * Math.pow(Constants.Field.kFuelRadiusMeters, 2);
-        double spinRatio = (Constants.Field.kFuelRadiusMeters * Constants.Turret.kTargetSpinRadSec) / initialV;
+        double spinRatio = (Constants.Field.kFuelRadiusMeters * aimTarget.targetBackspinRadSec) / initialV;
         double liftCoefficient = 1.5 * spinRatio; 
         
         double forceLift = 0.5 * airDensity * Math.pow(initialV, 2) * crossSectionArea * liftCoefficient;
@@ -385,7 +387,7 @@ public class Turret extends SubsystemBase {
         double finalExitVelocity = Math.sqrt(((9.8 - accelLift) * dist * dist) / (2 * cosT * cosT * denom));
 
         // split between flywheels
-        double surfaceSpeedDiff = Constants.Turret.kTargetSpinRadSec * Constants.Field.kFuelRadiusMeters;
+        double surfaceSpeedDiff = aimTarget.targetBackspinRadSec * Constants.Field.kFuelRadiusMeters;
         double vBottom = (finalExitVelocity + surfaceSpeedDiff) / Constants.Turret.kEfficiency;
         double vTop = (finalExitVelocity - surfaceSpeedDiff) / Constants.Turret.kEfficiency;
 
