@@ -153,7 +153,7 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
-			() -> driverRight.isPressed(StickButton.Bottom),
+			() -> driverRight.isDown(StickButton.Bottom),
 			() -> operatorController.getRightTriggerAxis() > 0.7,
 			() -> operatorController.b().getAsBoolean(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 && gameManager.shouldPrefire(Constants.Hopper.kPrefireLeadTimeSeconds) && LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
