@@ -74,15 +74,15 @@ public class HopperDefaultCommand extends Command {
     public void execute() {
         boolean manualIndexing = indexingSupplier.getAsBoolean();
         boolean shouldIndex = manualIndexing || prefireSupplier.getAsBoolean();
-        if (keepIntakeExtendedSupplier.getAsBoolean()) {
-            if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.EXTENDED, IndexerState.REVERSE);
-            else if (shouldIndex) hopper.setHopperState(HopperState.EXTENDED, getDesiredIndexerState());
-            else hopper.setHopperState(HopperState.EXTENDED, IndexerState.PASSIVE);
-        }
-        else if (intakeSupplier.getAsBoolean()) {
+        if (intakeSupplier.getAsBoolean()) {
             if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, IndexerState.REVERSE);
             else if (shouldIndex) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
             else hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE);
+        }
+        else if (keepIntakeExtendedSupplier.getAsBoolean()) {
+            if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.EXTENDED, IndexerState.REVERSE);
+            else if (shouldIndex) hopper.setHopperState(HopperState.EXTENDED, getDesiredIndexerState());
+            else hopper.setHopperState(HopperState.EXTENDED, IndexerState.PASSIVE);
         }
         else if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INDEXING, IndexerState.REVERSE);
         else if (shouldIndex) hopper.setHopperState(HopperState.INDEXING, getDesiredIndexerState());
