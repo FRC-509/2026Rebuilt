@@ -35,7 +35,7 @@ import frc.robot.autonomous.CenterAndDepot;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
-import frc.robot.commands.RightSprintAndLever;
+import frc.robot.autonomous.RightSprintAndLever;
 import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;

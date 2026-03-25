@@ -16,21 +16,23 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.PigeonWrapper;
 
-public class RightSprintAndLever extends ParallelCommandGroup {
+public class RightSprintAndLever extends SequentialCommandGroup {
    public RightSprintAndLever(SwerveDrive swerve, PigeonWrapper pigeon, Vortex vortex, Hopper hopper, Turret leftTurret, Turret rightTurret) {
 
         addCommands(
-            new ChoreoAuto("RightSprintAndLever1", swerve, pigeon, vortex),
-            Commands.sequence(
-                Commands.waitSeconds(0.9),
-                Commands.runOnce(() -> hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE), hopper),
-                Commands.waitSeconds(3.14 - 0.9),
-                Commands.runOnce(() -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), hopper),
-                Commands.waitSeconds(5.2 - 3.14 - 0.9)
+            Commands.parallel(
+                new ChoreoAuto("RightSprintAndLever1", swerve, pigeon, vortex),
+                Commands.sequence(
+                    Commands.waitSeconds(0.9),
+                    Commands.runOnce(() -> hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE), hopper),
+                    Commands.waitSeconds(3.14 - 0.9),
+                    Commands.runOnce(() -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), hopper),
+                    Commands.waitSeconds(5.2 - 3.14 - 0.9)
+                )
             ),
             ShootPreloadAuto.shootWithPositionForTime(hopper, leftTurret, rightTurret,
                 new Translation2d(
-                    2.5181660652160645, 
+                    2.5181660652160645,
                     2.6205806732177734), 
                     5),
             new ChoreoAuto("RightSprintAndLever2", swerve, pigeon, vortex),
