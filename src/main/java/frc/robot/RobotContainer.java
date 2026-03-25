@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.shuffleboard.WidgetType;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -230,6 +231,9 @@ public class RobotContainer {
 	}
 
 	private void configureElastic() {
+		SmartDashboard.putData("Elastic/Robot Field", vortex.getField());
+		SmartDashboard.putData("Elastic/Auto Mode", chooser);
+
 		elasticTab.add("Robot Field", vortex.getField())
 			.withWidget(BuiltInWidgets.kField)
 			.withPosition(0, 0)
@@ -289,8 +293,6 @@ public class RobotContainer {
 		elasticTable.getEntry("HubActive").setBoolean(gameManager.isHubActive());
 		elasticTable.getEntry("TimeToNextShiftSeconds").setDouble(gameManager.getTimeToNextShift());
 		elasticTable.getEntry("SwerveYawDegrees").setDouble(swerve.getYaw().getDegrees());
-		elasticTable.getEntry("LeftCanShoot").setBoolean(leftTurret.isAbleToShoot());
-		elasticTable.getEntry("RightCanShoot").setBoolean(rightTurret.isAbleToShoot());
 		elasticTable.getEntry("LeftCanAim").setBoolean(leftTurret.canAim());
 		elasticTable.getEntry("RightCanAim").setBoolean(rightTurret.canAim());
 	}

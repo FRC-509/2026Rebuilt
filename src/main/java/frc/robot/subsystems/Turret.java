@@ -137,7 +137,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(5.4,Constants.Field.kFieldWidth/2,1.88), 0.125, 1.8),
+        HUB(new Translation3d(4.74,Constants.Field.kFieldWidth/2,1.88), 0, 1.8),
         NEUTRALZONE_FEED_LEFT(new Translation3d(),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0, 0),
@@ -434,7 +434,6 @@ public class Turret extends SubsystemBase {
             kBottomFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
             kTopFlywheelMotor.setControl(kVoltageOut.withOutput(Constants.Turret.kIdleFlywheelVoltage));
         }
-        SmartDashboard.putNumber(side+"RotationDegrees", getRotationDegrees());
     }
 
     public void zeroPosition() {

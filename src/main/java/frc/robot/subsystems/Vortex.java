@@ -150,32 +150,46 @@ public class Vortex {
     public Translation2d updatePositionEstimate() {
         poseEstimator.update(swerveDrive.getYaw(), swerveDrive.getModulePositions());
 
-        lastFrontJetsonMeasurementTimestamp = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
-        lastBackJetsonMeasurementTimestamp = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
-        applyFrontLimelightMeasurement();
+        boolean acceptedVisionMeasurement = false;
+
+        MeasurementResult frontJetsonResult = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
+        lastFrontJetsonMeasurementTimestamp = frontJetsonResult.timestampSeconds();
+        acceptedVisionMeasurement |= frontJetsonResult.accepted();
+
+        MeasurementResult backJetsonResult = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
+        lastBackJetsonMeasurementTimestamp = backJetsonResult.timestampSeconds();
+        acceptedVisionMeasurement |= backJetsonResult.accepted();
+
+        MeasurementResult limelightResult = applyFrontLimelightMeasurement();
+        lastLimelightMeasurementTimestamp = limelightResult.timestampSeconds();
+        acceptedVisionMeasurement |= limelightResult.accepted();
+
+        if (!acceptedVisionMeasurement) {
+            // Intentionally coast on odometry when no fresh valid vision measurement is accepted.
+        }
         estimatedGlobalPosition = computeEstimatedGlobalPosition();
         postVortexToNT();
 
         return getEstimatedGlobalPosition();
     }
 
-    private double applyJetsonMeasurement(JetsonUdpRelay jetsonRelay, double lastMeasurementTimestamp) {
+    private MeasurementResult applyJetsonMeasurement(JetsonUdpRelay jetsonRelay, double lastMeasurementTimestamp) {
         if (jetsonRelay == null || !jetsonRelay.hasPose()) {
-            return lastMeasurementTimestamp;
+            return new MeasurementResult(false, lastMeasurementTimestamp);
         }
 
         double measurementTimestamp = jetsonRelay.getLastPacketTimestamp();
         if (Double.isNaN(measurementTimestamp) || measurementTimestamp <= lastMeasurementTimestamp) {
-            return lastMeasurementTimestamp;
+            return new MeasurementResult(false, lastMeasurementTimestamp);
         }
         poseEstimator.addVisionMeasurement(
             getJetsonPose(jetsonRelay),
             measurementTimestamp,
             getJetsonMeasurementStdDevs(jetsonRelay));
-        return measurementTimestamp;
+        return new MeasurementResult(true, measurementTimestamp);
     }
 
-    private void applyFrontLimelightMeasurement() {
+    private MeasurementResult applyFrontLimelightMeasurement() {
         configureFrontLimelightPose();
         LimelightHelpers.SetRobotOrientation(
             Constants.Vortex.kFrontLimelightName,
@@ -197,21 +211,30 @@ public class Vortex {
                 || poseEstimate.tagCount == 0
                 || poseEstimate.timestampSeconds <= lastLimelightMeasurementTimestamp
                 || LimelightHelpers.getCurrentPipelineIndex(Constants.Vortex.kFrontLimelightName) != 0) {
-            return;
+            return new MeasurementResult(false, lastLimelightMeasurementTimestamp);
         }
 
         poseEstimator.addVisionMeasurement(
             new Pose2d(poseEstimate.pose.getTranslation(), swerveDrive.getYaw()),
             poseEstimate.timestampSeconds,
             Constants.Vortex.kLimelightMeasurementStdDevs);
-        lastLimelightMeasurementTimestamp = poseEstimate.timestampSeconds;
+        return new MeasurementResult(true, poseEstimate.timestampSeconds);
     }
+
+    private record MeasurementResult(boolean accepted, double timestampSeconds) {}
 
     private Pose2d getJetsonPose(JetsonUdpRelay jetsonRelay) {
         return new Pose2d(
             jetsonRelay.getRobotX(),
             jetsonRelay.getRobotY(),
             swerveDrive.getYaw());
+    }
+
+    private Pose2d getJetsonDashboardPose(JetsonUdpRelay jetsonRelay) {
+        Pose2d jetsonPose = getJetsonPose(jetsonRelay);
+        return SwerveDrive.getAlliance() == Alliance.Red
+            ? GeometryUtils.flipFieldPose(jetsonPose)
+            : jetsonPose;
     }
 
     private Matrix<N3, N1> getJetsonMeasurementStdDevs(JetsonUdpRelay jetsonRelay) {
@@ -272,26 +295,26 @@ public class Vortex {
             estimatedGlobalPose.getY(),
             estimatedGlobalPose.getRotation().getDegrees()
         });
-        vortexTable.getEntry("HasFrontJetsonPose").setBoolean(hasFrontJetsonPose());
-        vortexTable.getEntry("HasBackJetsonPose").setBoolean(hasBackJetsonPose());
-        vortexTable.getEntry("HasLimelightPose").setBoolean(hasLimelightPose());
+        // vortexTable.getEntry("HasFrontJetsonPose").setBoolean(hasFrontJetsonPose());
+        // vortexTable.getEntry("HasBackJetsonPose").setBoolean(hasBackJetsonPose());
+        // vortexTable.getEntry("HasLimelightPose").setBoolean(hasLimelightPose());
 
         field2d.setRobotPose(estimatedGlobalPose);
         if (frontJetson != null) {
-            field2d.getObject("front_jetson_pose").setPose(getJetsonPose(frontJetson));
+            field2d.getObject("front_jetson_pose").setPose(getJetsonDashboardPose(frontJetson));
         }
         if (backJetson != null) {
-            field2d.getObject("back_jetson_pose").setPose(getJetsonPose(backJetson));
+            field2d.getObject("back_jetson_pose").setPose(getJetsonDashboardPose(backJetson));
         }
 
         Pose2d mt2TagSpacePose = getFrontLimelightTagSpacePose();
         if (mt2TagSpacePose != null) {
             field2d.getObject("front_limelight_tagspace_pose").setPose(mt2TagSpacePose);
-            vortexTable.getEntry("FrontLimelightTagSpacePose").setDoubleArray(new double[] {
-                mt2TagSpacePose.getX(),
-                mt2TagSpacePose.getY(),
-                mt2TagSpacePose.getRotation().getDegrees()
-            });
+            // vortexTable.getEntry("FrontLimelightTagSpacePose").setDoubleArray(new double[] {
+            //     mt2TagSpacePose.getX(),
+            //     mt2TagSpacePose.getY(),
+            //     mt2TagSpacePose.getRotation().getDegrees()
+            // });
         }
     }
 
