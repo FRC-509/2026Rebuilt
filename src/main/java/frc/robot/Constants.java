@@ -176,7 +176,9 @@ public final class Constants {
 
 	public static class Vortex {
         public static final String kFrontLimelightName = "limelight-front";
+        public static final String kIntakeLimelightName = "limelight-intake";
         public static final Vector<N3> kLimelightMeasurementStdDevs = VecBuilder.fill(.7, .7, 99999);
+        public static final Vector<N3> kIntakeLimelightMeasurementStdDevs = VecBuilder.fill(1.0, 1.0, 99999);
 		public static final Matrix<N3, N1> kJetsonBaseMeasurementStdDevs = VecBuilder.fill(.9, 0.9, 0.9); // TODO: find n3 confidence
         public static final double kJetsonFloorErrorTrustThresholdMeters = 0.02;
         public static final double kJetsonFloorErrorStdDevScale = 2.4;
@@ -188,6 +190,13 @@ public final class Constants {
         public static final double kFrontLimelightRollDegrees = 0.0;
         public static final double kFrontLimelightPitchDegrees = -17.0;
         public static final double kFrontLimelightYawDegrees = 0;
+
+        public static final double kIntakeLimelightForwardMeters = -0.324;
+        public static final double kIntakeLimelightSideMeters = 0.0;
+        public static final double kIntakeLimelightUpMeters = 0.341;
+        public static final double kIntakeLimelightRollDegrees = 0.0;
+        public static final double kIntakeLimelightPitchDegrees = 0.0;
+        public static final double kIntakeLimelightYawDegrees = 180.0;
 	}
 
 	public static class IDs {

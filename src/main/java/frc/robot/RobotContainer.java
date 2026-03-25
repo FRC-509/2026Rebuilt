@@ -33,6 +33,7 @@ import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
 import frc.robot.autonomous.CenterAndDepot;
+import frc.robot.autonomous.RightDream;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
@@ -70,7 +71,7 @@ public class RobotContainer {
 		this.swerve = new SwerveDrive(pigeon);
 		this.gameManager = new GameManager();
 		this.hopper = new Hopper();
-		this.vortex = new Vortex(swerve, new Pose2d(), () -> 0);
+		this.vortex = new Vortex(swerve, new Pose2d(), hopper::getIntakeExtensionMeters);
 		this.elasticTable = NetworkTableInstance.getDefault().getTable("Elastic");
 		this.elasticTab = Shuffleboard.getTab("Elastic");
 
@@ -217,6 +218,8 @@ public class RobotContainer {
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
 		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("RightDream", new RightDream(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles

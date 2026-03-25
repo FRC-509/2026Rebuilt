@@ -1,9 +1,17 @@
 package frc.robot.commands;
 
+import java.security.PublicKey;
+
+import edu.wpi.first.math.Pair;
+import edu.wpi.first.units.UnitBuilder;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.choreo.ChoreoTrajectory;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Vortex;
+import frc.robot.subsystems.Hopper.HopperState;
+import frc.robot.subsystems.Hopper.IndexerState;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.PigeonWrapper;
 
@@ -23,5 +31,30 @@ public class ChoreoAuto extends SequentialCommandGroup {
                 swerve.setTargetHeading(trajectory.getInitialPose().getRotation().getDegrees());
             }, swerve),
             new FollowChoreoTrajectory(trajectory, swerve, vortex));
+    }
+
+    public static Command StageHopper(Hopper hopper, ChoreoStage... stages) {
+        SequentialCommandGroup sequence = new SequentialCommandGroup();
+        double deltaT = 0.0d;
+        for (ChoreoStage stage : stages) {
+            sequence.addCommands(
+                Commands.waitSeconds(stage.timestamp - deltaT),
+                Commands.runOnce(() -> hopper.setHopperState(stage.hopperState, stage.indexerState), hopper)         
+            );
+            deltaT += stage.timestamp;
+        }
+        return sequence;
+    }
+
+    public class ChoreoStage {
+        public HopperState hopperState;
+        public IndexerState indexerState;
+        public double timestamp;
+
+        public ChoreoStage(double timestamp, HopperState hopperState, IndexerState indexerState){
+            this.hopperState = hopperState;
+            this.indexerState = indexerState;
+            this.timestamp = timestamp;
+        }
     }
 }

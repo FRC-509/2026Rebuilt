@@ -253,7 +253,15 @@ public class Hopper extends SubsystemBase {
     }
 
     public double getIntakeExtensionMeters() {
-        return (kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset) * Constants.Hopper.kIntakeExtensionToMetersConversion;
+        double currentExtensionPosition = kIntakeExtension.getPosition().getValueAsDouble() - zeroedRotationOffset;
+        double extensionRange = Constants.Hopper.kMaxExtensionPosition - Constants.Hopper.kRetractedExtensionOffset;
+        if (extensionRange <= 0.0) {
+            return 0.0;
+        }
+
+        double normalizedExtension = (currentExtensionPosition - Constants.Hopper.kRetractedExtensionOffset) / extensionRange;
+        normalizedExtension = Math.max(0.0, Math.min(1.0, normalizedExtension));
+        return normalizedExtension * Constants.Hopper.kIntakeFullExtensionMeters;
     }
 
     public void zeroPosition() {
