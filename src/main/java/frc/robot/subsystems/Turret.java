@@ -53,6 +53,7 @@ public class Turret extends SubsystemBase {
     private Translation2d overriddenPositionEstimate;
     private double targetBottomFlywheelSpeed;
     private double targetTopFlywheelSpeed;
+    private AimTarget lastAutoSelectedTarget;
 
     private boolean hasZeroedPosition;
     private double zeroedRotationOffset;
@@ -127,6 +128,7 @@ public class Turret extends SubsystemBase {
         this.targetBottomFlywheelSpeed = 0; // change this to spin up at start of match?
         this.targetTopFlywheelSpeed = 0;
         this.canAim = false;
+        this.lastAutoSelectedTarget = AimTarget.HUB;
 
         this.hasZeroedPosition = false;
         this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
@@ -139,10 +141,10 @@ public class Turret extends SubsystemBase {
 
         NONE(Translation3d.kZero, 0, 0),
         HUB(new Translation3d(4.6,Constants.Field.kFieldWidth/2,1.88), 0, 1.8),
-        NEUTRALZONE_FEED_LEFT(new Translation3d(),0, 0),
-        NEUTRALZONE_FEED_RIGHT(new Translation3d(), 0, 0),
-        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(),0, 0),
-        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(), 0, 0);
+        NEUTRALZONE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
+        NEUTRALZONE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0),
+        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0);
 
         public final Translation3d position;
         public final double aimBehindMeters;
@@ -179,6 +181,18 @@ public class Turret extends SubsystemBase {
 
     public void setAimTarget(AimTarget aimTarget) {
         this.aimTarget = aimTarget;
+    }
+
+    public AimTarget getAimTarget() {
+        return aimTarget;
+    }
+
+    public boolean wantsLeftFeed() {
+        return aimTarget == AimTarget.NEUTRALZONE_FEED_LEFT || aimTarget == AimTarget.OPPOSING_ALLIANCE_FEED_LEFT;
+    }
+
+    public boolean wantsRightFeed() {
+        return aimTarget == AimTarget.NEUTRALZONE_FEED_RIGHT || aimTarget == AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
     }
 
     public void setShootSpeed(boolean isIndexing){
@@ -251,7 +265,11 @@ public class Turret extends SubsystemBase {
 
     public void setOverrideAimTarget(boolean override, AimTarget target) {
         this.overrideAimTarget = override;
-        if (override) this.aimTarget = target;
+        if (override) {
+            this.aimTarget = target;
+        } else {
+            this.lastAutoSelectedTarget = AimTarget.HUB;
+        }
     }
 
     public void setOverridePositionEstimate(Translation2d positionEstimate) {
@@ -264,31 +282,92 @@ public class Turret extends SubsystemBase {
     }
 
     private AimTarget getTargetFromPosition() {
-        // Translation2d robotRelative = positionEstimate.getAsTranslation2d();
         Translation2d turretRelative = getTurretAlliancePosition();
-        // if (Math.abs(robotRelative.getX() - AimTarget.HUB.position.getX()) <= Constants.Chassis.kRobotWidth) {
-        //     return AimTarget.HUB;
-        // }
-
-        double neutralZoneStart = Constants.Field.kAllianceZoneLength;
-        double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
-
-        AimTarget selectedTarget = AimTarget.HUB;
-        if (turretRelative.getX() > opposingAllianceStart) {
-            selectedTarget = turretRelative.getY() > Constants.Field.kFieldWidth / 2
-                ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT
-                : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
-        } else if (turretRelative.getX() > neutralZoneStart) {
-            selectedTarget = turretRelative.getY() > Constants.Field.kFieldWidth / 2
-                ? AimTarget.NEUTRALZONE_FEED_LEFT
-                : AimTarget.NEUTRALZONE_FEED_RIGHT;
-        }
-
-        return hasConfiguredPosition(selectedTarget) ? selectedTarget : AimTarget.HUB;
+        AimTarget selectedTarget = selectTargetFromPosition(turretRelative);
+        lastAutoSelectedTarget = selectedTarget;
+        return selectedTarget;
     }
 
-    private boolean hasConfiguredPosition(AimTarget target) {
-        return target == AimTarget.HUB || target.position.getNorm() > 0.001;
+    private AimTarget selectTargetFromPosition(Translation2d turretRelative) {
+        double neutralZoneStart = Constants.Field.kAllianceZoneLength;
+        double opposingAllianceStart = neutralZoneStart + Constants.Field.kNeutralZoneLength;
+        double hysteresis = Constants.Turret.kAutoTargetZoneHysteresisMeters;
+
+        TargetZone currentZone = getZoneForTarget(lastAutoSelectedTarget);
+        double allianceX = turretRelative.getX();
+        TargetZone targetZone;
+        switch (currentZone) {
+            case HUB:
+                targetZone = allianceX >= opposingAllianceStart
+                    ? TargetZone.OPPOSING
+                    : allianceX >= neutralZoneStart
+                        ? TargetZone.NEUTRAL
+                        : TargetZone.HUB;
+                break;
+            case NEUTRAL:
+                targetZone = allianceX < neutralZoneStart - hysteresis
+                    ? TargetZone.HUB
+                    : allianceX >= opposingAllianceStart
+                        ? TargetZone.OPPOSING
+                        : TargetZone.NEUTRAL;
+                break;
+            case OPPOSING:
+                targetZone = allianceX < opposingAllianceStart - hysteresis
+                    ? TargetZone.NEUTRAL
+                    : TargetZone.OPPOSING;
+                break;
+            default:
+                targetZone = getZoneForPosition(allianceX, neutralZoneStart, opposingAllianceStart);
+                break;
+        }
+
+        if (targetZone == TargetZone.HUB) {
+            return AimTarget.HUB;
+        }
+
+        boolean leftSide = isLeftHalf(turretRelative.getY());
+        if (targetZone == TargetZone.NEUTRAL) {
+            return leftSide ? AimTarget.NEUTRALZONE_FEED_LEFT : AimTarget.NEUTRALZONE_FEED_RIGHT;
+        }
+        return leftSide ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
+    }
+
+    private boolean isLeftHalf(double allianceY) {
+        double centerY = Constants.Field.kFieldWidth / 2.0;
+        double hysteresis = Constants.Turret.kAutoTargetZoneHysteresisMeters;
+        if (lastAutoSelectedTarget == AimTarget.NEUTRALZONE_FEED_LEFT
+                || lastAutoSelectedTarget == AimTarget.OPPOSING_ALLIANCE_FEED_LEFT) {
+            return allianceY >= centerY - hysteresis;
+        }
+        if (lastAutoSelectedTarget == AimTarget.NEUTRALZONE_FEED_RIGHT
+                || lastAutoSelectedTarget == AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT) {
+            return allianceY > centerY + hysteresis;
+        }
+        return allianceY > centerY;
+    }
+
+    private TargetZone getZoneForPosition(double allianceX, double neutralZoneStart, double opposingAllianceStart) {
+        if (allianceX > opposingAllianceStart) {
+            return TargetZone.OPPOSING;
+        }
+        if (allianceX > neutralZoneStart) {
+            return TargetZone.NEUTRAL;
+        }
+        return TargetZone.HUB;
+    }
+
+    private TargetZone getZoneForTarget(AimTarget target) {
+        return switch (target) {
+            case NEUTRALZONE_FEED_LEFT, NEUTRALZONE_FEED_RIGHT -> TargetZone.NEUTRAL;
+            case OPPOSING_ALLIANCE_FEED_LEFT, OPPOSING_ALLIANCE_FEED_RIGHT -> TargetZone.OPPOSING;
+            default -> TargetZone.HUB;
+        };
+    }
+
+    private enum TargetZone {
+        HUB,
+        NEUTRAL,
+        OPPOSING
     }
 
     private boolean isFlywheelAtTargetSpeed(TalonFX motor, double targetVelocity) {
@@ -346,6 +425,9 @@ public class Turret extends SubsystemBase {
 
     private Translation3d getAllianceAdjustedTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians) {
         Translation3d targetPosition = target.aimAccountedTarget(yawRadians);
+        if (target != AimTarget.HUB) {
+            return targetPosition;
+        }
         if (SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
             return resolveCloserHubTarget(target, turretPosition, targetPosition);
         }
@@ -485,6 +567,10 @@ public class Turret extends SubsystemBase {
 
 
         if (!overrideAimTarget) aimTarget = getTargetFromPosition();
+
+        SmartDashboard.putString(side + "TurretAimTarget", aimTarget.name());
+        SmartDashboard.putNumber(side + "TurretAllianceX", getTurretAlliancePosition().getX());
+        SmartDashboard.putNumber(side + "TurretAllianceY", getTurretAlliancePosition().getY());
 
         double angleToTarget = getRotationToTarget(aimTarget);
         double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);

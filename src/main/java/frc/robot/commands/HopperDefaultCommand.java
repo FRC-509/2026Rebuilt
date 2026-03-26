@@ -91,16 +91,20 @@ public class HopperDefaultCommand extends Command {
 
     private IndexerState getDesiredIndexerState() {
         if (indexingSupplier.getAsBoolean()) {
-            // if (rightFeedIntentSupplier.getAsBoolean()) {
-            //     return IndexerState.RIGHT;
-            // }
             return IndexerState.BOTH;
         }
 
-        boolean canFeedBoth = (leftFeedIntentSupplier.getAsBoolean() || rightFeedIntentSupplier.getAsBoolean())
-            && (leftFeedReadySupplier.getAsBoolean() || rightFeedReadySupplier.getAsBoolean());
-        if (canFeedBoth) {
+        boolean shouldFeedLeft = leftFeedIntentSupplier.getAsBoolean() && leftFeedReadySupplier.getAsBoolean();
+        boolean shouldFeedRight = rightFeedIntentSupplier.getAsBoolean() && rightFeedReadySupplier.getAsBoolean();
+
+        if (shouldFeedLeft && shouldFeedRight) {
             return IndexerState.BOTH;
+        }
+        if (shouldFeedLeft) {
+            return IndexerState.LEFT;
+        }
+        if (shouldFeedRight) {
+            return IndexerState.RIGHT;
         }
 
         return IndexerState.PASSIVE;

@@ -30,6 +30,7 @@ public class Vortex {
     private static final String FRONT_JETSON_TABLE_NAME = "VortexFront";
     private static final String BACK_JETSON_TABLE_NAME = "VortexBack";
     private static final String VORTEX_TABLE_NAME = "Vortex";
+    private static final boolean ENABLE_JETSON_POSE_FUSION = false;
     private static final double RED_ALLIANCE_POSITION_ALPHA = 0.1;
 
     private final NetworkTable vortexTable;
@@ -165,13 +166,15 @@ public class Vortex {
 
         boolean acceptedVisionMeasurement = false;
 
-        MeasurementResult frontJetsonResult = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
-        lastFrontJetsonMeasurementTimestamp = frontJetsonResult.timestampSeconds();
-        acceptedVisionMeasurement |= frontJetsonResult.accepted();
+        if (ENABLE_JETSON_POSE_FUSION) {
+            MeasurementResult frontJetsonResult = applyJetsonMeasurement(frontJetson, lastFrontJetsonMeasurementTimestamp);
+            lastFrontJetsonMeasurementTimestamp = frontJetsonResult.timestampSeconds();
+            acceptedVisionMeasurement |= frontJetsonResult.accepted();
 
-        MeasurementResult backJetsonResult = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
-        lastBackJetsonMeasurementTimestamp = backJetsonResult.timestampSeconds();
-        acceptedVisionMeasurement |= backJetsonResult.accepted();
+            MeasurementResult backJetsonResult = applyJetsonMeasurement(backJetson, lastBackJetsonMeasurementTimestamp);
+            lastBackJetsonMeasurementTimestamp = backJetsonResult.timestampSeconds();
+            acceptedVisionMeasurement |= backJetsonResult.accepted();
+        }
 
         MeasurementResult limelightResult = applyFrontLimelightMeasurement();
         lastLimelightMeasurementTimestamp = limelightResult.timestampSeconds();

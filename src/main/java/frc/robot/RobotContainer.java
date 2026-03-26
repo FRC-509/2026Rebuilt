@@ -161,48 +161,48 @@ public class RobotContainer {
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
 					&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
-			() -> Math.abs(operatorController.getRightTriggerAxis()) > 0.7,
-			() -> true,
-			() -> true));
+			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
+			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
+			() -> leftTurret.isShooterUpToSpeed(),
+			() -> rightTurret.isShooterUpToSpeed()));
 
 
 		// force feed override
-		// (new Trigger(() -> operatorController.povLeft().getAsBoolean()))
-		// 	.onTrue(Commands.runOnce(
-		// 		() -> {
-		// 			leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-		// 			rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-		// 		}, leftTurret, rightTurret))
-		// 	.onFalse(Commands.runOnce(
-		// 	() -> {
-		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 	}, leftTurret, rightTurret));
+		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
 		
-		// (new Trigger(() -> operatorController.povRight().getAsBoolean()))
-		// 	.onTrue(Commands.runOnce(
-		// 		() -> {
-		// 			leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-		// 			rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-		// 		}, leftTurret, rightTurret))
-		// 	.onFalse(Commands.runOnce(
-		// 	() -> {
-		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 	}, leftTurret, rightTurret));
+		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
 		
-		// (new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
-		// 	.onTrue(Commands.runOnce(
-		// 		() -> {
-		// 			leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-		// 			rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-		// 		}, leftTurret, rightTurret))
-		// 	.onFalse(Commands.runOnce(
-		// 	() -> {
-		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// 	}, leftTurret, rightTurret));
+		(new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
+			.onTrue(Commands.runOnce(
+				() -> {
+					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+				}, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(
+			() -> {
+				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+			}, leftTurret, rightTurret));
 
 		operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
 		operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));

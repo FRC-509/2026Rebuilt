@@ -152,26 +152,26 @@ public final class Constants {
         public static final double kIdleFlywheelVoltage = 1.75;
 
         public static final double kEfficiency = 0.2673;
-        public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
+		public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
 
 		public static final double kPrefireLeadTimeSeconds = 2.0;
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
         public static final int kTimeOfFlightIterations = 3;
 
+		public static final double kAutoTargetZoneHysteresisMeters = 0.35;
 	}
 
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 70;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 11.429-1;
+		public static final double kIntakeExtension = 11.429;
 		public static final double kIntakeFullExtensionMeters = 0.29;
         public static final double kRetractedExtensionOffset = 0.5;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
         public static final double kMinExtensionPosition = 0.5;
         public static final double kMaxExtensionPosition = kIntakeExtension;
-        public static final double kIntakeExtensionToMetersConversion = 0;
 	}
 
 	public static class Vortex {
@@ -301,8 +301,8 @@ public final class Constants {
 		public static final double kTurretFlywheelSupply = 40;
         public static final double kTurretFlywheelStator = 47.5;
 
-		public static final double kIntakeExtensionSupply = 10;
-        public static final double kIntakeExtensionStator = 25;
+		public static final double kIntakeExtensionSupply = 30;
+        public static final double kIntakeExtensionStator = 30;
 
 		public static final double kIntakeSupply = 45;
         public static final double kIntakeStator = 90;
@@ -314,7 +314,7 @@ public final class Constants {
 	public static class Field {
 		public static final double kFullFieldLength = 16.54d; // Double check
         public static final double kFieldWidth = 8.1;
-        public static final double kAllianceZoneLength = 0.0d; // TODO: find
+        public static final double kAllianceZoneLength = 5.5d;
         public static final double kNeutralZoneLength = kFullFieldLength - 2 * kAllianceZoneLength;
 		
         public static final double kAverageFuelMass = 0.216;
