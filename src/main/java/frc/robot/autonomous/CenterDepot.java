@@ -17,13 +17,13 @@ public class CenterDepot extends ParallelCommandGroup{
         addCommands(
             Commands.parallel(
                 path,
-                ChoreoAuto.StageHopper(hopper, 
+                ChoreoAuto.StageHopper(hopper, leftTurret, rightTurret,
                     path.new ChoreoStage(1.36, HopperState.INTAKING, IndexerState.PASSIVE),
                     path.new ChoreoStage(4.12, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(5.5, HopperState.INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(7, HopperState.INTAKING_AND_INDEXING, IndexerState.REVERSE),
-                    path.new ChoreoStage(8, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(9, HopperState.INDEXING, IndexerState.BOTH))
+                    path.new ChoreoStage(7, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(9, HopperState.INTAKING_AND_INDEXING, IndexerState.REVERSE),
+                    path.new ChoreoStage(11, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(13, HopperState.INDEXING, IndexerState.BOTH))
             )
         );
     }

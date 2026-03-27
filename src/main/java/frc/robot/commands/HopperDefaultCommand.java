@@ -16,6 +16,7 @@ public class HopperDefaultCommand extends Command {
     private BooleanSupplier indexingSupplier;
     private BooleanSupplier reverseIndexingSupplier;
     private BooleanSupplier prefireSupplier;
+    private BooleanSupplier manualFeedOverrideSupplier;
     private BooleanSupplier leftFeedIntentSupplier;
     private BooleanSupplier rightFeedIntentSupplier;
     private BooleanSupplier leftFeedReadySupplier;
@@ -28,6 +29,7 @@ public class HopperDefaultCommand extends Command {
             BooleanSupplier indexingSupplier,
             BooleanSupplier reverseIndexingSupplier,
             BooleanSupplier prefireSupplier,
+            BooleanSupplier manualFeedOverrideSupplier,
             BooleanSupplier leftFeedIntentSupplier,
             BooleanSupplier rightFeedIntentSupplier,
             BooleanSupplier leftFeedReadySupplier,
@@ -39,6 +41,7 @@ public class HopperDefaultCommand extends Command {
         this.indexingSupplier = indexingSupplier;
         this.reverseIndexingSupplier = reverseIndexingSupplier;
         this.prefireSupplier = prefireSupplier;
+        this.manualFeedOverrideSupplier = manualFeedOverrideSupplier;
         this.leftFeedIntentSupplier = leftFeedIntentSupplier;
         this.rightFeedIntentSupplier = rightFeedIntentSupplier;
         this.leftFeedReadySupplier = leftFeedReadySupplier;
@@ -62,6 +65,7 @@ public class HopperDefaultCommand extends Command {
         this.indexingSupplier = () -> isIndexing;
         this.reverseIndexingSupplier = () -> false;
         this.prefireSupplier = () -> isPrefiring;
+        this.manualFeedOverrideSupplier = () -> false;
         this.leftFeedIntentSupplier = () -> isFeeding;
         this.rightFeedIntentSupplier = () -> isFeeding;
         this.leftFeedReadySupplier = leftFeedReadySupplier;
@@ -91,7 +95,28 @@ public class HopperDefaultCommand extends Command {
 
     private IndexerState getDesiredIndexerState() {
         if (indexingSupplier.getAsBoolean()) {
-            return IndexerState.BOTH;
+            if (manualFeedOverrideSupplier.getAsBoolean()) {
+                return IndexerState.BOTH;
+            }
+
+            boolean wantsFeedTargets = leftFeedIntentSupplier.getAsBoolean() || rightFeedIntentSupplier.getAsBoolean();
+            boolean shouldFeedLeft = wantsFeedTargets
+                ? leftFeedIntentSupplier.getAsBoolean() && leftFeedReadySupplier.getAsBoolean()
+                : leftFeedReadySupplier.getAsBoolean();
+            boolean shouldFeedRight = wantsFeedTargets
+                ? rightFeedIntentSupplier.getAsBoolean() && rightFeedReadySupplier.getAsBoolean()
+                : rightFeedReadySupplier.getAsBoolean();
+
+            if (shouldFeedLeft && shouldFeedRight) {
+                return IndexerState.BOTH;
+            }
+            if (shouldFeedLeft) {
+                return IndexerState.LEFT;
+            }
+            if (shouldFeedRight) {
+                return IndexerState.RIGHT;
+            }
+            return IndexerState.PASSIVE;
         }
 
         boolean shouldFeedLeft = leftFeedIntentSupplier.getAsBoolean() && leftFeedReadySupplier.getAsBoolean();

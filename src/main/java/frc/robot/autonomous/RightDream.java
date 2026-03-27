@@ -17,7 +17,7 @@ public class RightDream extends ParallelCommandGroup{
         addCommands(
             Commands.parallel(
                 path,
-                ChoreoAuto.StageHopper(hopper, 
+                ChoreoAuto.StageHopper(hopper, leftTurret, rightTurret,
                     path.new ChoreoStage(0.8, HopperState.INTAKING, IndexerState.PASSIVE),
                     path.new ChoreoStage(3.2, HopperState.PASSIVE, IndexerState.PASSIVE))
             )

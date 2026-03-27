@@ -360,6 +360,9 @@ public class Vortex {
     }
 
     private Translation2d toAllianceRelative(Translation2d globalPosition) {
+        if (SwerveDrive.getAlliance() != Alliance.Red) {
+            return globalPosition;
+        }
         return new Translation2d(
             globalPosition.getX(),
             Constants.Field.kFieldWidth - globalPosition.getY());
@@ -367,14 +370,14 @@ public class Vortex {
 
     private Translation2d computeEstimatedGlobalPosition() {
         Translation2d rawEstimatedPosition = poseEstimator.getEstimatedPosition().getTranslation();
+        if (SwerveDrive.getAlliance() != Alliance.Red) {
+            filteredRedAlliancePosition = null;
+            return rawEstimatedPosition;
+        }
+
         Translation2d mirroredPosition = new Translation2d(
             rawEstimatedPosition.getX(),
             Constants.Field.kFieldWidth - rawEstimatedPosition.getY());
-
-        if (SwerveDrive.getAlliance() != Alliance.Red) {
-            filteredRedAlliancePosition = null;
-            return mirroredPosition;
-        }
 
         if (filteredRedAlliancePosition == null) {
             filteredRedAlliancePosition = mirroredPosition;
@@ -390,11 +393,12 @@ public class Vortex {
     }
 
     private Pose2d toAllianceRelative(Pose2d globalPose) {
+        if (SwerveDrive.getAlliance() != Alliance.Red) {
+            return globalPose;
+        }
         return new Pose2d(
             toAllianceRelative(globalPose.getTranslation()),
-            SwerveDrive.getAlliance() == Alliance.Red
-                ? Rotation2d.fromRadians(-globalPose.getRotation().getRadians())
-                : globalPose.getRotation());
+            Rotation2d.fromRadians(-globalPose.getRotation().getRadians()));
     }
 
     private Pose2d getFrontLimelightTagSpacePose() {

@@ -33,6 +33,7 @@ import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
 import frc.robot.autonomous.CenterAndDepot;
+import frc.robot.autonomous.CenterBoth;
 import frc.robot.autonomous.CenterDepot;
 import frc.robot.autonomous.RightDream;
 import frc.robot.commands.ChoreoAuto;
@@ -162,6 +163,7 @@ public class RobotContainer {
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
 					&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
+			() -> operatorController.rightBumper().getAsBoolean(),
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
 			() -> leftTurret.isShooterUpToSpeed(),
@@ -226,6 +228,7 @@ public class RobotContainer {
 		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightDream", new RightDream(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("CenterBoth", new CenterBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles
