@@ -151,8 +151,9 @@ public final class Constants {
         public static final double kAverageFuelMass = 0.216;
         public static final double kIdleFlywheelVoltage = 1.75;
 
-        public static final double kEfficiency = 0.2673;
+		public static final double kEfficiency = 0.2673;
 		public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
+		public static final double kFlywheelSpeedScale = 1;
 
 		public static final double kPrefireLeadTimeSeconds = 2.0;
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me

@@ -31,6 +31,7 @@ public class Vortex {
     private static final String BACK_JETSON_TABLE_NAME = "VortexBack";
     private static final String VORTEX_TABLE_NAME = "Vortex";
     private static final boolean ENABLE_JETSON_POSE_FUSION = false;
+    private static final boolean ENABLE_INTAKE_LIMELIGHT_FUSION = false;
     private static final double RED_ALLIANCE_POSITION_ALPHA = 0.1;
 
     private final NetworkTable vortexTable;
@@ -180,9 +181,11 @@ public class Vortex {
         lastLimelightMeasurementTimestamp = limelightResult.timestampSeconds();
         acceptedVisionMeasurement |= limelightResult.accepted();
 
-        MeasurementResult intakeLimelightResult = applyIntakeLimelightMeasurement();
-        lastIntakeLimelightMeasurementTimestamp = intakeLimelightResult.timestampSeconds();
-        acceptedVisionMeasurement |= intakeLimelightResult.accepted();
+        if (ENABLE_INTAKE_LIMELIGHT_FUSION) {
+            MeasurementResult intakeLimelightResult = applyIntakeLimelightMeasurement();
+            lastIntakeLimelightMeasurementTimestamp = intakeLimelightResult.timestampSeconds();
+            acceptedVisionMeasurement |= intakeLimelightResult.accepted();
+        }
 
         if (!acceptedVisionMeasurement) {
             // Intentionally coast on odometry when no fresh valid vision measurement is accepted.
@@ -427,7 +430,7 @@ public class Vortex {
     private void configureIntakeLimelightPose() {
         configureLimelightPose(
             Constants.Vortex.kIntakeLimelightName,
-            Constants.Vortex.kIntakeLimelightForwardMeters,
+            Constants.Vortex.kIntakeLimelightForwardMeters - getIntakeExtensionMeters(),
             Constants.Vortex.kIntakeLimelightSideMeters,
             Constants.Vortex.kIntakeLimelightUpMeters,
             Constants.Vortex.kIntakeLimelightRollDegrees,

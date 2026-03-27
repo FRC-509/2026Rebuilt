@@ -33,6 +33,7 @@ import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
 import frc.robot.autonomous.CenterAndDepot;
+import frc.robot.autonomous.CenterDepot;
 import frc.robot.autonomous.RightDream;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
@@ -224,7 +225,7 @@ public class RobotContainer {
 		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightDream", new RightDream(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-
+		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
 		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
 		// 	choreoFiles

@@ -393,7 +393,7 @@ public class Turret extends SubsystemBase {
     private Translation2d getAllianceRobotVelocity() {
         Translation2d velocity = robotVelocitySupplier.getAsTranslation2d();
         return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-            ? new Translation2d(velocity.getX(), -velocity.getY())
+            ? new Translation2d(-velocity.getX(), velocity.getY())
             : velocity;
     }
 
@@ -411,12 +411,9 @@ public class Turret extends SubsystemBase {
                 break;
             }
 
-            double leadDirection = SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-                ? 1.0
-                : -1.0;
             compensatedTargetPosition = targetPosition.minus(new Translation3d(
-                robotVelocity.getX() * flightTimeSeconds * leadDirection,
-                robotVelocity.getY() * flightTimeSeconds * leadDirection,
+                robotVelocity.getX() * flightTimeSeconds * -1.0,
+                robotVelocity.getY() * flightTimeSeconds * -1.0,
                 0.0));
         }
 
@@ -489,7 +486,7 @@ public class Turret extends SubsystemBase {
         
         double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
         return MathUtil.clamp(
-            angularVelocityRadPerSec / 2 / Math.PI,
+            (angularVelocityRadPerSec / 2 / Math.PI) * Constants.Turret.kFlywheelSpeedScale,
             0,
             Constants.Turret.kFlywheelMechanismMaxRps);
     }
@@ -515,8 +512,8 @@ public class Turret extends SubsystemBase {
 
         double circ = 2 * Math.PI * Constants.Turret.kFlywheelRadiusMeters;
         return new double[] { 
-            MathUtil.clamp(vBottom / circ, 0, Constants.Turret.kFlywheelMechanismMaxRps), 
-            MathUtil.clamp(vTop / circ, 0, Constants.Turret.kFlywheelMechanismMaxRps) 
+            MathUtil.clamp((vBottom / circ) * Constants.Turret.kFlywheelSpeedScale, 0, Constants.Turret.kFlywheelMechanismMaxRps), 
+            MathUtil.clamp((vTop / circ) * Constants.Turret.kFlywheelSpeedScale, 0, Constants.Turret.kFlywheelMechanismMaxRps) 
         };
     }
 
@@ -547,8 +544,8 @@ public class Turret extends SubsystemBase {
 
         double circ = 2 * Math.PI * Constants.Turret.kFlywheelRadiusMeters;
         return new double[] {
-            MathUtil.clamp(vBottom / circ, 0, Constants.Turret.kFlywheelMechanismMaxRps),
-            MathUtil.clamp(vTop / circ, 0, Constants.Turret.kFlywheelMechanismMaxRps)
+            MathUtil.clamp((vBottom / circ) * Constants.Turret.kFlywheelSpeedScale, 0, Constants.Turret.kFlywheelMechanismMaxRps),
+            MathUtil.clamp((vTop / circ) * Constants.Turret.kFlywheelSpeedScale, 0, Constants.Turret.kFlywheelMechanismMaxRps)
         };
     }
 
