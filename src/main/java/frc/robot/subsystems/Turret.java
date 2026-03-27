@@ -140,7 +140,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.6,Constants.Field.kFieldWidth/2,1.88), 0, 1.8),
+        HUB(new Translation3d(4.4,Constants.Field.kFieldWidth/2,1.88), 0, 1.8),
         NEUTRALZONE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),

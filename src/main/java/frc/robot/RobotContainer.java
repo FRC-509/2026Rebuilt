@@ -168,7 +168,7 @@ public class RobotContainer {
 
 
 		// force feed override
-		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
+		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
 			.onTrue(Commands.runOnce(
 				() -> {
 					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
@@ -180,7 +180,7 @@ public class RobotContainer {
 				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
 			}, leftTurret, rightTurret));
 		
-		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
+		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
 			.onTrue(Commands.runOnce(
 				() -> {
 					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
@@ -195,8 +195,13 @@ public class RobotContainer {
 		(new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
 			.onTrue(Commands.runOnce(
 				() -> {
-					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+					boolean leftTurretIsFurtherLeft = leftTurret.getTurretFieldPose().getY() >= rightTurret.getTurretFieldPose().getY();
+					leftTurret.setOverrideAimTarget(
+						true,
+						leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+					rightTurret.setOverrideAimTarget(
+						true,
+						leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT : AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
 				}, leftTurret, rightTurret))
 			.onFalse(Commands.runOnce(
 			() -> {
