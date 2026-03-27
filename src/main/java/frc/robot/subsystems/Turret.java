@@ -411,9 +411,12 @@ public class Turret extends SubsystemBase {
                 break;
             }
 
+            double leadDirection = SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+                ? -1.0
+                : 1.0;
             compensatedTargetPosition = targetPosition.minus(new Translation3d(
-                robotVelocity.getX() * flightTimeSeconds * -1.0,
-                robotVelocity.getY() * flightTimeSeconds * -1.0,
+                robotVelocity.getX() * flightTimeSeconds * leadDirection,
+                robotVelocity.getY() * flightTimeSeconds * leadDirection,
                 0.0));
         }
 
