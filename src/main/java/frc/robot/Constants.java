@@ -268,9 +268,9 @@ public final class Constants {
 		}
 
 		public static class Turret {
-            public static final double kRotationP = 18.2;
-            public static final double kRotationI = 0.3;
-            public static final double kRotationD = 0.75;
+            public static final double kRotationP = 14.2;
+            public static final double kRotationI = 0.8;
+            public static final double kRotationD = 0.524;
 
             public static final double kFlywheelP = 2.3;
             public static final double kFlywheelI = 0.12;

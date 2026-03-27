@@ -91,7 +91,7 @@ public class Vortex {
     }
 
     public Translation2d getEstimatedGlobalPosition() {
-        return getOffsetEstimatedPose(rawEstimatedPose()).getTranslation();
+        return rawEstimatedPose().getTranslation();
     }
 
     public Translation2d getEstimatedAlliancePosition() {
@@ -99,7 +99,7 @@ public class Vortex {
     }
 
     public Pose2d getEstimatedPose() {
-        return getOffsetEstimatedPose(rawEstimatedPose());
+        return rawEstimatedPose();
     }
 
     public void resetEstimatedPose(Pose2d pose) {
@@ -122,12 +122,6 @@ public class Vortex {
 
     private Pose2d rawEstimatedPose() {
         return poseEstimator.getEstimatedPosition();
-    }
-
-    private Pose2d getOffsetEstimatedPose(Pose2d pose) {
-        Translation2d intakeOffset = new Translation2d(-getIntakeExtensionMeters(), 0.0)
-            .rotateBy(swerveDrive.getYaw());
-        return new Pose2d(pose.getTranslation().plus(intakeOffset), pose.getRotation());
     }
 
     public boolean hasFrontJetsonPose() {
@@ -222,10 +216,11 @@ public class Vortex {
 
     private MeasurementResult applyIntakeLimelightMeasurement() {
         configureIntakeLimelightPose();
-        return applyLimelightMeasurement(
+        MeasurementResult result = applyLimelightMeasurement(
             Constants.Vortex.kIntakeLimelightName,
             lastIntakeLimelightMeasurementTimestamp,
             Constants.Vortex.kIntakeLimelightMeasurementStdDevs);
+        return result;
     }
 
     private MeasurementResult applyLimelightMeasurement(
@@ -255,8 +250,13 @@ public class Vortex {
             return new MeasurementResult(false, lastMeasurementTimestamp);
         }
 
+        Pose2d measuredPose = new Pose2d(poseEstimate.pose.getTranslation(), swerveDrive.getYaw());
+        if (Constants.Vortex.kIntakeLimelightName.equals(limelightName)) {
+            measuredPose = offsetIntakeLimelightPose(measuredPose);
+        }
+
         poseEstimator.addVisionMeasurement(
-            new Pose2d(poseEstimate.pose.getTranslation(), swerveDrive.getYaw()),
+            measuredPose,
             poseEstimate.timestampSeconds,
             measurementStdDevs);
         return new MeasurementResult(true, poseEstimate.timestampSeconds);
@@ -430,7 +430,7 @@ public class Vortex {
     private void configureIntakeLimelightPose() {
         configureLimelightPose(
             Constants.Vortex.kIntakeLimelightName,
-            Constants.Vortex.kIntakeLimelightForwardMeters - getIntakeExtensionMeters(),
+            Constants.Vortex.kIntakeLimelightForwardMeters,
             Constants.Vortex.kIntakeLimelightSideMeters,
             Constants.Vortex.kIntakeLimelightUpMeters,
             Constants.Vortex.kIntakeLimelightRollDegrees,
@@ -455,6 +455,12 @@ public class Vortex {
             isRedAlliance ? -rollDegrees : rollDegrees,
             isRedAlliance ? -pitchDegrees : pitchDegrees,
             isRedAlliance ? yawDegrees - 180.0 : yawDegrees);
+    }
+
+    private Pose2d offsetIntakeLimelightPose(Pose2d measuredPose) {
+        Translation2d intakeExtensionOffset = new Translation2d(getIntakeExtensionMeters(), 0.0)
+            .rotateBy(swerveDrive.getYaw());
+        return new Pose2d(measuredPose.getTranslation().plus(intakeExtensionOffset), measuredPose.getRotation());
     }
 
     public void closeJetsons() {
