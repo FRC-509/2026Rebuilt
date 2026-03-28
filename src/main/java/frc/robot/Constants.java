@@ -153,7 +153,7 @@ public final class Constants {
 
 		public static final double kEfficiency = 0.2673;
 		public static final double kMagnusCoefficient = 0.02; // tune 0.02~0.05
-		public static final double kFlywheelSpeedScale = 0.9;
+		public static final double kFlywheelSpeedScale = 0.94;
 
 		public static final double kPrefireLeadTimeSeconds = 2.0;
         public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
@@ -303,8 +303,8 @@ public final class Constants {
 		public static final double kTurretFlywheelSupply = 40;
         public static final double kTurretFlywheelStator = 47.5;
 
-		public static final double kIntakeExtensionSupply = 20;
-        public static final double kIntakeExtensionStator = 20;
+		public static final double kIntakeExtensionSupply = 35;
+        public static final double kIntakeExtensionStator = 35;
 
 		public static final double kIntakeSupply = 30;
         public static final double kIntakeStator = 90;

@@ -35,6 +35,9 @@ import frc.robot.subsystems.Vortex;
 import frc.robot.autonomous.CenterAndDepot;
 import frc.robot.autonomous.CenterBoth;
 import frc.robot.autonomous.CenterDepot;
+import frc.robot.autonomous.LeftBumpDepot;
+import frc.robot.autonomous.LeftSimpleSwipe;
+import frc.robot.autonomous.RightBoth;
 import frc.robot.autonomous.RightDream;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
@@ -158,7 +161,7 @@ public class RobotContainer {
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
 			() -> driverRight.isDown(StickButton.Bottom),
-			() -> operatorController.getRightTriggerAxis() > 0.7,
+			() -> operatorController.getRightTriggerAxis() > 0.7 || driverLeft.isDown(StickButton.Bottom),
 			() -> operatorController.b().getAsBoolean(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
@@ -224,24 +227,11 @@ public class RobotContainer {
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper, leftTurret, rightTurret));
-		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("RightDream", new RightDream(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterBoth", new CenterBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		Path choreoDirectory = Filesystem.getDeployDirectory().toPath().resolve("choreo");
-		// try (Stream<Path> choreoFiles = Files.list(choreoDirectory)) {
-		// 	choreoFiles
-		// 		.filter(path -> path.getFileName().toString().endsWith(".traj"))
-		// 		forEach(path -> {
-		// 			String fileName = path.getFileName().toString();
-		// 			String trajectoryName = fileName.substring(0, fileName.length() - ".traj".length());
-		// 			if (!"NewPath".equals(trajectoryName)) {
-		// 				chooser.addOption("Choreo: " + trajectoryName, new ChoreoAuto(trajectoryName, swerve, pigeon, vortex));
-		// 			}
-		// 		});
-		// } catch (IOException ignored) {
-		// }
+		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("LeftSimpleSwipe", new LeftSimpleSwipe(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 	}
 
 	private void configureElastic() {
