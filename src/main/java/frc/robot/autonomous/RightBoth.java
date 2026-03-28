@@ -19,7 +19,7 @@ public class RightBoth extends ParallelCommandGroup{
                 path,
                 ChoreoAuto.StageHopper(hopper, leftTurret, rightTurret,
                     path.new ChoreoStage(1, HopperState.INTAKING, IndexerState.PASSIVE),
-                    
+
                     // first shoot
                     path.new ChoreoStage(6.9, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(7.3, HopperState.INDEXING, IndexerState.BOTH),
@@ -28,8 +28,8 @@ public class RightBoth extends ParallelCommandGroup{
                     path.new ChoreoStage(9.7, HopperState.INTAKING, IndexerState.PASSIVE),
 
                     // pickup and shoot at outpost
-                    path.new ChoreoStage(14.4, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(15.1, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(11.27, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(13, HopperState.INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(15.8, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
 
                     // depot
