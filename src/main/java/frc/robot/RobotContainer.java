@@ -306,8 +306,8 @@ public class RobotContainer {
 	}
 
 	public void zeroMechanisms() {
-		leftTurret.zeroPosition();
-		rightTurret.zeroPosition();
+		// leftTurret.zeroPosition();
+		// rightTurret.zeroPosition();
 		// hopper.zeroPosition();
 	}
 
