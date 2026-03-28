@@ -14,15 +14,19 @@ public final class ShootPreloadAuto {
 
     private ShootPreloadAuto() {}
 
-    public static Command create(Hopper hopper) {
-        return Commands.startEnd(
-            () -> hopper.setHopperState(HopperState.INDEXING, IndexerState.BOTH),
-            () -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), 
-            hopper)
-            .withTimeout(6.0)
-            .andThen(Commands.runOnce(
-                () -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE),
-                hopper));
+    public static Command create(Hopper hopper, Turret leftTurret, Turret rightTurret) {
+        return Commands.sequence(
+            Commands.runOnce(() -> hopper.setFeedFlywheelSpinupRequested(true), hopper),
+            Commands.waitUntil(() -> leftTurret.isAbleToShoot() || rightTurret.isAbleToShoot()),
+            Commands.startEnd(
+                () -> hopper.setHopperState(HopperState.INDEXING, IndexerState.BOTH),
+                () -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE), 
+                hopper)
+                .withTimeout(6.0))
+            .finallyDo(() -> {
+                hopper.setFeedFlywheelSpinupRequested(false);
+                hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE);
+            });
     }
 
     public static Command shootWithPositionForTime(
@@ -53,10 +57,20 @@ public final class ShootPreloadAuto {
                 hopper),
             Commands.waitSeconds(kShootPulseIndexSeconds));
 
-        return Commands.deadline(
-            Commands.waitSeconds(seconds),
+        Command spinUpAndFeed = Commands.sequence(
+            Commands.runOnce(() -> hopper.setFeedFlywheelSpinupRequested(true), hopper),
+            Commands.deadline(
+                Commands.waitSeconds(seconds),
+                Commands.sequence(
+                    Commands.waitUntil(() -> leftTurret.isAbleToShoot() || rightTurret.isAbleToShoot()),
+                    pulseShotFeed)));
+
+        return Commands.parallel(
             holdPositionOverride,
-            pulseShotFeed)
-            .finallyDo(() -> hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE));
+            spinUpAndFeed)
+            .finallyDo(() -> {
+                hopper.setFeedFlywheelSpinupRequested(false);
+                hopper.setHopperState(HopperState.PASSIVE, IndexerState.PASSIVE);
+            });
     }
 }

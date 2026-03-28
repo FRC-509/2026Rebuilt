@@ -37,6 +37,9 @@ public class ChoreoAuto extends SequentialCommandGroup {
         for (ChoreoStage stage : stages) {
             sequence.addCommands(
                 Commands.waitSeconds(stage.timestamp - deltaT),
+                Commands.runOnce(
+                    () -> hopper.setFeedFlywheelSpinupRequested(stage.waitForTurretReady || stage.indexerState != IndexerState.PASSIVE),
+                    hopper),
                 stage.waitForTurretReady
                     ? Commands.waitUntil(() -> leftTurret.isAbleToShoot() || rightTurret.isAbleToShoot())
                     : Commands.none(),
@@ -44,7 +47,7 @@ public class ChoreoAuto extends SequentialCommandGroup {
             );
             deltaT = stage.timestamp;
         }
-        return sequence;
+        return sequence.finallyDo(() -> hopper.setFeedFlywheelSpinupRequested(false));
     }
 
     public class ChoreoStage {

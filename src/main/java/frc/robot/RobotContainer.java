@@ -87,7 +87,7 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
-			hopper::isIndexing);
+			this::shouldSpinUpFeedFlywheels);
 			
 			
 		this.rightTurret = new Turret(
@@ -100,7 +100,7 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
-			hopper::isIndexing);
+			this::shouldSpinUpFeedFlywheels);
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -223,7 +223,7 @@ public class RobotContainer {
 
 	private void addAutonomousRoutines() {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
-		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper));
+		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper, leftTurret, rightTurret));
 		chooser.addOption("RightSprintAndLever", new RightSprintAndLever(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterAndDepot", new CenterAndDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightDream", new RightDream(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
@@ -333,6 +333,14 @@ public class RobotContainer {
 		estimate = rightTurret.getAirtimeSeconds();
 		if (estimate != 0) return estimate;
 		return Constants.Turret.kPrefireLeadTimeSeconds;
+	}
+
+	private boolean shouldSpinUpFeedFlywheels() {
+		boolean manualIndexRequest = operatorController.getRightTriggerAxis() > 0.7;
+		boolean prefireRequest = Math.abs(operatorController.getLeftTriggerAxis()) > 0.7
+			&& gameManager.shouldPrefire(getAirtimeEstimate())
+			&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName);
+		return hopper.shouldSpinUpFeedFlywheels() || manualIndexRequest || prefireRequest;
 	}
   
 }

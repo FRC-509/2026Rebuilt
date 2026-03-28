@@ -415,8 +415,8 @@ public class Turret extends SubsystemBase {
                 ? -1.0
                 : 1.0;
             compensatedTargetPosition = targetPosition.minus(new Translation3d(
-                robotVelocity.getX() * flightTimeSeconds * leadDirection,
-                robotVelocity.getY() * flightTimeSeconds * leadDirection,
+                robotVelocity.getX() * flightTimeSeconds * leadDirection * Constants.Turret.kMovingLeadScale,
+                robotVelocity.getY() * flightTimeSeconds * leadDirection * Constants.Turret.kMovingLeadScale,
                 0.0));
         }
 

@@ -32,6 +32,7 @@ public class Hopper extends SubsystemBase {
     
     private IndexerState indexerState;
     private IndexerState previousIndexerState;
+    private boolean feedFlywheelSpinupRequested;
 
     private boolean hasZeroedPosition;
     private double zeroedRotationOffset;
@@ -166,6 +167,7 @@ public class Hopper extends SubsystemBase {
 
         this.indexerState = IndexerState.PASSIVE;
         this.previousIndexerState = IndexerState.PASSIVE;
+        this.feedFlywheelSpinupRequested = false;
 
         this.hasZeroedPosition = false;
         this.zeroedRotationOffset = this.kIntakeExtension.getPosition().getValueAsDouble(); // temp to assume zeroed on initialize
@@ -181,7 +183,16 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean isIndexing() {
-        return hopperState == HopperState.INDEXING || hopperState == HopperState.INTAKING_AND_INDEXING;
+        return indexerState != IndexerState.PASSIVE;
+    }
+
+    public void setFeedFlywheelSpinupRequested(boolean requested) {
+        this.feedFlywheelSpinupRequested = requested;
+    }
+
+    public boolean shouldSpinUpFeedFlywheels() {
+        return feedFlywheelSpinupRequested
+            || (indexerState != IndexerState.PASSIVE && indexerState != IndexerState.REVERSE);
     }
 
     private double clampExtensionPosition(double mechanismPosition) {
