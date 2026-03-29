@@ -43,6 +43,8 @@ public class Turret extends SubsystemBase {
     private final Translation2dSupplier robotVelocitySupplier;
     private final DoubleSupplier robotYawRadiansSupplier;
     private final BooleanSupplier isIndexingSupplier;
+    private final BooleanSupplier overshootSupplier;
+    private final BooleanSupplier maxFlywheelOverrideSupplier;
 
     private AimTarget aimTarget;
     private double targetRotationDegrees;
@@ -63,7 +65,9 @@ public class Turret extends SubsystemBase {
             Translation2dSupplier positionEstimate,
             Translation2dSupplier robotVelocitySupplier,
             DoubleSupplier robotYawSupplier,
-            BooleanSupplier isIndexingSupplier) {
+            BooleanSupplier isIndexingSupplier,
+            BooleanSupplier overshootSupplier,
+            BooleanSupplier maxFlywheelOverrideSupplier) {
         this.kRotationMotor = new TalonFX(turretConfiguration.rotationMotorId(), Constants.kCanivore);
         this.kTopFlywheelMotor = new TalonFX(turretConfiguration.topFlywheelMotorId(), Constants.kCanivore);
         this.kBottomFlywheelMotor = new TalonFX(turretConfiguration.bottomFlywheelMotorId(), Constants.kCanivore);
@@ -135,12 +139,15 @@ public class Turret extends SubsystemBase {
         this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
         this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
         this.side = turretConfiguration.side();
+
+        this.overshootSupplier = overshootSupplier;
+        this.maxFlywheelOverrideSupplier = maxFlywheelOverrideSupplier;
     }
  
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.35,Constants.Field.kFieldWidth/2,1.88),0, 1.8),
+        HUB(new Translation3d(4.28,Constants.Field.kFieldWidth/2,1.88),0, 1.8),
         NEUTRALZONE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
@@ -156,9 +163,11 @@ public class Turret extends SubsystemBase {
             this.targetBackspinRadSec = targetBackspinRadSec;
         }
 
-        public Translation3d aimAccountedTarget(double turretYawRadians) { // aim slightly behind target for accuracy, and account for chassis movement
+        public Translation3d aimAccountedTarget(double turretYawRadians, boolean overshoot) { // aim slightly behind target for accuracy, and account for chassis movement
+            double overshootDist = overshoot ? 0.3 : 0;
+            
             return new Translation3d(
-                position.getX() + aimBehindMeters * Math.cos(turretYawRadians),
+                position.getX() + aimBehindMeters * Math.cos(turretYawRadians) + overshootDist,
                 position.getY() + aimBehindMeters * Math.sin(turretYawRadians),
                 position.getZ()
             );
@@ -424,7 +433,7 @@ public class Turret extends SubsystemBase {
     }
 
     private Translation3d getAllianceAdjustedTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians) {
-        Translation3d targetPosition = target.aimAccountedTarget(yawRadians);
+        Translation3d targetPosition = target.aimAccountedTarget(yawRadians, overshootSupplier.getAsBoolean());
         if (target != AimTarget.HUB) {
             return targetPosition;
         }
@@ -472,7 +481,7 @@ public class Turret extends SubsystemBase {
 
     public double getAirtimeSeconds() {
         return canAim ?
-            estimateFlightTimeSeconds(getTurretAlliancePosition(), aimTarget.aimAccountedTarget(getTurretYawRadians()))
+            estimateFlightTimeSeconds(getTurretAlliancePosition(), aimTarget.aimAccountedTarget(getTurretYawRadians(), overshootSupplier.getAsBoolean()))
             : 0.0d;
     }
 
@@ -581,11 +590,12 @@ public class Turret extends SubsystemBase {
         setRotationDegrees(commandedRotation);
 
         double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};
-        
+        if (maxFlywheelOverrideSupplier.getAsBoolean()) flywheelSpeeds = new double[] {Constants.Turret.kFlywheelMechanismMaxRps,Constants.Turret.kFlywheelMechanismMaxRps};
+        // double[] flywheelSpeeds = calculateSpeedsManualMagnus();
+        SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
-        
-        if (isIndexingSupplier.getAsBoolean()) {
+        if (isIndexingSupplier.getAsBoolean() || maxFlywheelOverrideSupplier.getAsBoolean()) {
             kBottomFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetBottomFlywheelSpeed));
             kTopFlywheelMotor.setControl(kVelocityDutyCycle.withVelocity(targetTopFlywheelSpeed));
     } else {

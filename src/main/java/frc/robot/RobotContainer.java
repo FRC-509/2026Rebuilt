@@ -69,6 +69,7 @@ public class RobotContainer {
 	private GameManager gameManager;
 	private final NetworkTable elasticTable;
 	private final ShuffleboardTab elasticTab;
+	private static final Translation2d kFixedShotPosition = new Translation2d(0,AimTarget.HUB.position.getY());
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
@@ -90,7 +91,9 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
-			this::shouldSpinUpFeedFlywheels);
+			this::shouldSpinUpFeedFlywheels,
+			() -> operatorController.leftBumper().getAsBoolean(),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
 			
 			
 		this.rightTurret = new Turret(
@@ -103,7 +106,9 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
-			this::shouldSpinUpFeedFlywheels);
+			this::shouldSpinUpFeedFlywheels,
+			() -> operatorController.leftBumper().getAsBoolean(),
+			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -161,12 +166,12 @@ public class RobotContainer {
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
 			() -> driverRight.isDown(StickButton.Bottom),
-			() -> operatorController.getRightTriggerAxis() > 0.7 || driverLeft.isDown(StickButton.Bottom),
+			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.getLeftTriggerAxis() > 0.7 || driverLeft.isDown(StickButton.Bottom),
 			() -> operatorController.b().getAsBoolean(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
 					&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
-			() -> operatorController.rightBumper().getAsBoolean(),
+			() -> operatorController.getLeftTriggerAxis() > 0.7,
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
 			() -> leftTurret.isShooterUpToSpeed(),
@@ -221,7 +226,13 @@ public class RobotContainer {
 			leftTurret.zeroPosition();
 			rightTurret.zeroPosition();
 		}));
-		operatorController.leftBumper().onTrue(Commands.runOnce(hopper::zeroPosition, hopper));
+
+		// fixed position bind
+		operatorController.rightBumper()
+			.onTrue(Commands.runOnce(this::enableFixedPoseShotMode, leftTurret, rightTurret))
+			.onFalse(Commands.runOnce(this::disableFixedPoseShotMode, leftTurret, rightTurret));
+
+		operatorController.start().onTrue(Commands.runOnce(hopper::zeroPosition, hopper));
 	}
 
 	private void addAutonomousRoutines() {
@@ -331,6 +342,20 @@ public class RobotContainer {
 			&& gameManager.shouldPrefire(getAirtimeEstimate())
 			&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName);
 		return hopper.shouldSpinUpFeedFlywheels() || manualIndexRequest || prefireRequest;
+	}
+
+	private void enableFixedPoseShotMode() {
+		leftTurret.setOverrideAimTarget(true, AimTarget.HUB);
+		rightTurret.setOverrideAimTarget(true, AimTarget.HUB);
+		leftTurret.setOverridePositionEstimate(kFixedShotPosition);
+		rightTurret.setOverridePositionEstimate(kFixedShotPosition);
+	}
+
+	private void disableFixedPoseShotMode() {
+		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		leftTurret.clearOverridePositionEstimate();
+		rightTurret.clearOverridePositionEstimate();
 	}
   
 }

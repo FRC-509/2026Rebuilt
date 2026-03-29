@@ -22,6 +22,7 @@ public class CenterBoth extends ParallelCommandGroup{
                     path.new ChoreoStage(1.7, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(2.4, HopperState.INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(2.7, HopperState.INTAKING, IndexerState.PASSIVE),
+                    path.new ChoreoStage(3.9, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(10, HopperState.INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(10.8, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(11.5, HopperState.INDEXING, IndexerState.BOTH),
