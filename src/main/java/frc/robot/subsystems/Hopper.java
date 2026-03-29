@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -32,6 +33,8 @@ public class Hopper extends SubsystemBase {
     
     private IndexerState indexerState;
     private IndexerState previousIndexerState;
+    private IndexerState lastAppliedIndexerState;
+    private boolean lastAppliedIndexerReversed;
     private boolean feedFlywheelSpinupRequested;
 
     private boolean hasZeroedPosition;
@@ -167,6 +170,8 @@ public class Hopper extends SubsystemBase {
 
         this.indexerState = IndexerState.PASSIVE;
         this.previousIndexerState = IndexerState.PASSIVE;
+        this.lastAppliedIndexerState = IndexerState.PASSIVE;
+        this.lastAppliedIndexerReversed = false;
         this.feedFlywheelSpinupRequested = false;
 
         this.hasZeroedPosition = false;
@@ -191,8 +196,29 @@ public class Hopper extends SubsystemBase {
     }
 
     public boolean shouldSpinUpFeedFlywheels() {
-        return feedFlywheelSpinupRequested
-            || (indexerState != IndexerState.PASSIVE && indexerState != IndexerState.REVERSE);
+        return feedFlywheelSpinupRequested || indexerState != IndexerState.PASSIVE;
+    }
+
+    private boolean shouldReverseIndexedFeed() {
+        if (indexerState == IndexerState.PASSIVE || indexerState == IndexerState.REVERSE) {
+            return indexerState == IndexerState.REVERSE;
+        }
+
+        double cycleTimeSeconds = 2.7;
+        double reverseStartSeconds = 2.45;
+        double cyclePosition = Timer.getFPGATimestamp() % cycleTimeSeconds;
+        return cyclePosition >= reverseStartSeconds;
+    }
+
+    private void applyIndexerOutputs(IndexerState targetState, boolean reverseRequested) {
+        double direction = reverseRequested ? -1.0 : 1.0;
+        double leftVelocity = targetState.leftTurret ? Constants.Hopper.kIndexingVelocity * direction : 0.0;
+        double rightVelocity = targetState.rightTurret ? Constants.Hopper.kIndexingVelocity * direction : 0.0;
+
+        kLeftIndexer.setControl(leftIndexerDutyCycle.withVelocity(leftVelocity));
+        kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(rightVelocity));
+        lastAppliedIndexerState = targetState;
+        lastAppliedIndexerReversed = reverseRequested;
     }
 
     private double clampExtensionPosition(double mechanismPosition) {
@@ -254,12 +280,9 @@ public class Hopper extends SubsystemBase {
             }
         }
 
-        if (!indexerState.equals(previousIndexerState)) { // only change instruction on state change, not every 20ms
-            double isReverse = indexerState.equals(IndexerState.REVERSE) ? -1 : 1;
-            if (indexerState.leftTurret != previousIndexerState.leftTurret)
-                kLeftIndexer.setControl(leftIndexerDutyCycle.withVelocity(indexerState.leftTurret ? Constants.Hopper.kIndexingVelocity * isReverse : 0));
-            if (indexerState.rightTurret != previousIndexerState.rightTurret)
-                kRightIndexer.setControl(rightIndexerDutyCycle.withVelocity(indexerState.rightTurret ? Constants.Hopper.kIndexingVelocity  * isReverse : 0));
+        boolean reverseRequested = shouldReverseIndexedFeed();
+        if (!indexerState.equals(lastAppliedIndexerState) || reverseRequested != lastAppliedIndexerReversed) {
+            applyIndexerOutputs(indexerState, reverseRequested);
         }
     }
 

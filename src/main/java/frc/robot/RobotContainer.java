@@ -43,6 +43,7 @@ import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
 import frc.robot.autonomous.RightSprintAndLever;
+import frc.robot.autonomous.SimpleCenterDepot;
 import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
@@ -243,6 +244,7 @@ public class RobotContainer {
 		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("LeftSimpleSwipe", new LeftSimpleSwipe(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("SimpleCenterDepot", new SimpleCenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 	}
 
 	private void configureElastic() {
