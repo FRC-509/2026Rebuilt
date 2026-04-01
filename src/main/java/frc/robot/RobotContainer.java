@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.Turret;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
-import frc.robot.subsystems.AutoAdjuster;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.subsystems.Vortex;
@@ -39,7 +38,7 @@ public class RobotContainer {
 	private final Turret rightTurret;
 	private final Hopper hopper;
 	private final Vortex vortex;
-	private final AutoAdjuster autoAdjuster;
+	
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
@@ -47,7 +46,7 @@ public class RobotContainer {
 		this.swerve = new SwerveDrive(pigeon);
 		this.hopper = new Hopper();
 		this.vortex = new Vortex(swerve, new Pose2d(), () -> hopper.getIntakeExtensionMeters());
-		this.autoAdjuster = new AutoAdjuster(swerve);
+		
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
