@@ -378,9 +378,10 @@ public class Turret extends SubsystemBase {
         OPPOSING
     }
 
-    private Translation3d getTargetTurretRelative() {
+    private Translation3d getTargetTurretRelative(AimTarget target) {
         Translation2d turretPosition = getTurretAlliancePosition();
-        return getTargetFieldPosition(aimTarget, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity()).minus(
+        Translation3d targetFieldPosition = getTargetFieldPosition(target, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity());
+        return targetFieldPosition.minus(
             new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
     }
 
@@ -407,7 +408,9 @@ public class Turret extends SubsystemBase {
         Translation3d compensatedTargetPosition = targetPosition;
 
         for (int i = 0; i < Constants.Turret.kTimeOfFlightIterations; i++) {
-            double flightTimeSeconds = estimateFlightTimeSeconds(turretPosition, compensatedTargetPosition);
+            Translation3d targetTurretRelative = compensatedTargetPosition.minus(
+                new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
+            double flightTimeSeconds = estimateFlightTimeSeconds(targetTurretRelative);
             if (!(flightTimeSeconds > 0.0)) {
                 break;
             }
@@ -455,9 +458,7 @@ public class Turret extends SubsystemBase {
         return candidateDistance <= oppositeDistance ? candidateTargetPosition : oppositeHubTargetPosition;
     }
 
-    private double estimateFlightTimeSeconds(Translation2d turretPosition, Translation3d targetFieldPosition) {
-        Translation3d targetTurretRelative = targetFieldPosition.minus(
-            new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
+    private double estimateFlightTimeSeconds(Translation3d targetTurretRelative) {
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
         double cosT = Math.cos(theta);
         double dist = targetTurretRelative.toTranslation2d().getNorm();
@@ -472,31 +473,33 @@ public class Turret extends SubsystemBase {
     }
 
     public double getAirtimeSeconds() {
-        return canAim ?
-            estimateFlightTimeSeconds(getTurretAlliancePosition(), aimTarget.aimAccountedTarget(getTurretYawRadians(), overshootSupplier.getAsBoolean()))
-            : 0.0d;
+        if (!canAim) {
+            return 0.0d;
+        }
+
+        return estimateFlightTimeSeconds(getTargetTurretRelative(aimTarget));
     }
 
-    private double calculateFlywheelSpeeds() {
-        Translation3d targetTurretRelative = getTargetTurretRelative();
+    private double[] calculateFlywheelSpeeds(Translation3d targetTurretRelative) {
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
         double cosT = Math.cos(theta);
         
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
         double denom = (dist * Math.tan(theta)) - targetTurretRelative.getZ();
-        if (!(denom > 0 && Math.abs(cosT) > 0.001)) return 0d;
+        if (!(denom > 0 && Math.abs(cosT) > 0.001)) return new double[] {0.0, 0.0};
 
         double exitVelocity = Math.sqrt((9.8 * dist * dist) / (2 * cosT * cosT * denom));
         
         double angularVelocityRadPerSec = exitVelocity / Constants.Turret.kFlywheelRadiusMeters;
-        return MathUtil.clamp(
+        double flywheelSpeed = MathUtil.clamp(
             (angularVelocityRadPerSec / 2 / Math.PI) * Constants.Turret.kFlywheelSpeedScale,
             0,
             Constants.Turret.kFlywheelMechanismMaxRps);
+        return new double[] {flywheelSpeed, flywheelSpeed};
     }
 
     private double[] calculateFlywheelSpeedsGeff() { // solves for aim with spin + approximation of magnus effect
-        Translation3d targetTurretRelative = getTargetTurretRelative();
+        Translation3d targetTurretRelative = getTargetTurretRelative(aimTarget);
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
         double targetZ = targetTurretRelative.getZ();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
@@ -522,7 +525,7 @@ public class Turret extends SubsystemBase {
     }
 
     private double[] calculateSpeedsManualMagnus() {
-        Translation3d targetTurretRelative = getTargetTurretRelative();
+        Translation3d targetTurretRelative = getTargetTurretRelative(aimTarget);
         double dist = targetTurretRelative.toTranslation2d().getDistance(Translation2d.kZero);
         double targetZ = targetTurretRelative.getZ();
         double theta = Math.toRadians(90 - Constants.Turret.kTurretAngleDegrees);
@@ -573,7 +576,13 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber(side + "TurretAllianceX", getTurretAlliancePosition().getX());
         SmartDashboard.putNumber(side + "TurretAllianceY", getTurretAlliancePosition().getY());
 
-        double angleToTarget = getRotationToTarget(aimTarget);
+        Translation3d targetTurretRelative3d = getTargetTurretRelative(aimTarget);
+        Translation2d targetTurretRelative = targetTurretRelative3d.toTranslation2d();
+        double angleToTarget = Math.toDegrees(MathUtil.angleModulus(
+            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - getTurretYawRadians()));
+        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
+            angleToTarget = -angleToTarget;
+        }
         double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
         double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
         canAim = !aimTarget.equals(AimTarget.NONE) && angleToTarget >= minRotationBound && angleToTarget <= maxRotationBound;
@@ -581,10 +590,11 @@ public class Turret extends SubsystemBase {
         double commandedRotation = MathUtil.clamp(angleToTarget, minRotationBound, maxRotationBound);
         setRotationDegrees(commandedRotation);
 
-        double[] flywheelSpeeds = new double[] {calculateFlywheelSpeeds(),calculateFlywheelSpeeds()};
+        double[] flywheelSpeeds = calculateFlywheelSpeeds(targetTurretRelative3d);
         if (maxFlywheelOverrideSupplier.getAsBoolean()) flywheelSpeeds = new double[] {Constants.Turret.kFlywheelMechanismMaxRps,Constants.Turret.kFlywheelMechanismMaxRps};
         // double[] flywheelSpeeds = calculateSpeedsManualMagnus();
         SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
+        SmartDashboard.putNumber(side + "FlightTimeSeconds", estimateFlightTimeSeconds(targetTurretRelative3d));
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         if (isIndexingSupplier.getAsBoolean() || maxFlywheelOverrideSupplier.getAsBoolean()) {
