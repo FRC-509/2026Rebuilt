@@ -175,8 +175,8 @@ public class RobotContainer {
 			() -> operatorController.getLeftTriggerAxis() > 0.7,
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
-			() -> leftTurret.isShooterUpToSpeed(),
-			() -> rightTurret.isShooterUpToSpeed()));
+			() -> leftTurret.isAbleToShoot(),
+			() -> rightTurret.isAbleToShoot()));
 
 
 		// force feed override

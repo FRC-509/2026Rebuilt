@@ -253,8 +253,7 @@ public class Turret extends SubsystemBase {
     public boolean isAbleToShoot() {
         return canAim
             && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
-            && isFlywheelAtTargetSpeed(kBottomFlywheelMotor, targetBottomFlywheelSpeed)
-            && isFlywheelAtTargetSpeed(kTopFlywheelMotor, targetTopFlywheelSpeed);
+            && isShooterUpToSpeed();
     }
 
     public boolean isShooterUpToSpeed() {
@@ -377,13 +376,6 @@ public class Turret extends SubsystemBase {
         HUB,
         NEUTRAL,
         OPPOSING
-    }
-
-    private boolean isFlywheelAtTargetSpeed(TalonFX motor, double targetVelocity) {
-        return MathUtil.isNear(
-            Math.abs(targetVelocity),
-            Math.abs(motor.getVelocity().getValueAsDouble()),
-            Constants.Turret.kFlywheelSpeedTolerance);
     }
 
     private Translation3d getTargetTurretRelative() {

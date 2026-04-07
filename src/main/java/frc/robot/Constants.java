@@ -142,7 +142,7 @@ public final class Constants {
 
 		public static final double kRotationTolerance = 0.25; // degrees
 		public static final double kFlywheelSpeedTolerance = 25.0 / 60.0; // rotations per second (25 rpm)
-        public static final double kIndexerFeedFlywheelToleranceRps = 10.0;
+        public static final double kIndexerFeedFlywheelToleranceRps = 20.0;
 
         public static final double kTurretHeightFromGround = .48;
         public static final double kTurretAngleDegrees = 17;
