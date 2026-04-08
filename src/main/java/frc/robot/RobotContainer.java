@@ -32,18 +32,14 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
-import frc.robot.autonomous.CenterAndDepot;
 import frc.robot.autonomous.CenterBoth;
 import frc.robot.autonomous.CenterDepot;
 import frc.robot.autonomous.LeftBumpDepot;
-import frc.robot.autonomous.LeftSimpleSwipe;
 import frc.robot.autonomous.RightBoth;
-import frc.robot.autonomous.RightDream;
+import frc.robot.autonomous.RightFeed;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
 import frc.robot.commands.HopperDefaultCommand;
-import frc.robot.autonomous.RightSprintAndLever;
-import frc.robot.autonomous.SimpleCenterDepot;
 import frc.robot.commands.ShootPreloadAuto;
 import frc.robot.subsystems.GameManager;
 import frc.robot.subsystems.Hopper;
@@ -175,8 +171,8 @@ public class RobotContainer {
 			() -> operatorController.getLeftTriggerAxis() > 0.7,
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
-			() -> leftTurret.isAbleToShoot(),
-			() -> rightTurret.isAbleToShoot()));
+			() -> leftTurret.isShooterUpToSpeed() && leftTurret.isAbleToShoot(),
+			() -> rightTurret.isShooterUpToSpeed() && leftTurret.isAbleToShoot()));
 
 
 		// force feed override
@@ -242,9 +238,8 @@ public class RobotContainer {
 		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterBoth", new CenterBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("LeftSimpleSwipe", new LeftSimpleSwipe(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("SimpleCenterDepot", new SimpleCenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("RightFeed", new RightFeed(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 	}
 
 	private void configureElastic() {
@@ -278,11 +273,11 @@ public class RobotContainer {
 			.withWidget(BuiltInWidgets.kDial)
 			.withPosition(6, 2)
 			.withSize(2, 2);
-		elasticTab.addBoolean("Left Can Aim", leftTurret::canAim)
+		elasticTab.addBoolean("Left Can Shoot", leftTurret::isAbleToShoot)
 			.withWidget(BuiltInWidgets.kBooleanBox)
 			.withPosition(8, 3)
 			.withSize(1, 1);
-		elasticTab.addBoolean("Right Can Aim", rightTurret::canAim)
+		elasticTab.addBoolean("Right Can Shoot", rightTurret::isAbleToShoot)
 			.withWidget(BuiltInWidgets.kBooleanBox)
 			.withPosition(9, 3)
 			.withSize(1, 1);

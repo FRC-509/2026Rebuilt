@@ -151,7 +151,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.34,Constants.Field.kFieldWidth/2-0.15,1.88),0, 50),
+        HUB(new Translation3d(4.4,Constants.Field.kFieldWidth/2-0.15,1.88),0, 50),
         NEUTRALZONE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
@@ -255,9 +255,7 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean isAbleToShoot() {
-        return canAim
-            && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
-            && isShooterUpToSpeed();
+        return canAim && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance);
     }
 
     public boolean isShooterUpToSpeed() {

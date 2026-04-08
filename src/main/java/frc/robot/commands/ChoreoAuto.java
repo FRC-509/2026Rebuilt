@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.choreo.ChoreoTrajectory;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Turret;
+import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
 import frc.robot.subsystems.Hopper.HopperState;
 import frc.robot.subsystems.Hopper.IndexerState;
@@ -35,19 +36,37 @@ public class ChoreoAuto extends SequentialCommandGroup {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
         double deltaT = 0.0d;
         for (ChoreoStage stage : stages) {
-            sequence.addCommands(
-                Commands.waitSeconds(stage.timestamp - deltaT),
-                Commands.runOnce(
-                    () -> hopper.setFeedFlywheelSpinupRequested(stage.waitForTurretReady || stage.indexerState != IndexerState.PASSIVE),
-                    hopper),
-                stage.waitForTurretReady
-                    ? Commands.waitUntil(() -> leftTurret.isAbleToShoot() || rightTurret.isAbleToShoot())
-                    : Commands.none(),
-                Commands.runOnce(() -> hopper.setHopperState(stage.hopperState, stage.indexerState), hopper)         
-            );
+            sequence.addCommands(Commands.waitSeconds(stage.timestamp - deltaT));
+
+            if (stage.isAimOverrideStage()) {
+                sequence.addCommands(Commands.runOnce(() -> {
+                    leftTurret.setOverrideAimTarget(true, stage.aimTarget);
+                    rightTurret.setOverrideAimTarget(true, stage.aimTarget);
+                    Commands.waitSeconds(stage.duration)
+                        .andThen(Commands.runOnce(() -> {
+                            leftTurret.setOverrideAimTarget(false, stage.aimTarget);
+                            rightTurret.setOverrideAimTarget(false, stage.aimTarget);
+                        }))
+                        .schedule();
+                }));
+            } else {
+                sequence.addCommands(
+                    Commands.runOnce(
+                        () -> hopper.setFeedFlywheelSpinupRequested(stage.waitForTurretReady || stage.indexerState != IndexerState.PASSIVE),
+                        hopper),
+                    stage.waitForTurretReady
+                        ? Commands.waitUntil(() -> leftTurret.isAbleToShoot() || rightTurret.isAbleToShoot())
+                        : Commands.none(),
+                    Commands.runOnce(() -> hopper.setHopperState(stage.hopperState, stage.indexerState), hopper)
+                );
+            }
             deltaT = stage.timestamp;
         }
-        return sequence.finallyDo(() -> hopper.setFeedFlywheelSpinupRequested(false));
+        return sequence.finallyDo(() -> {
+            hopper.setFeedFlywheelSpinupRequested(false);
+            leftTurret.setOverrideAimTarget(false, leftTurret.getAimTarget());
+            rightTurret.setOverrideAimTarget(false, rightTurret.getAimTarget());
+        });
     }
 
     public class ChoreoStage {
@@ -55,6 +74,8 @@ public class ChoreoAuto extends SequentialCommandGroup {
         public IndexerState indexerState;
         public double timestamp;
         public boolean waitForTurretReady;
+        public AimTarget aimTarget;
+        public double duration;
 
         public ChoreoStage(double timestamp, HopperState hopperState, IndexerState indexerState){
             this(timestamp, hopperState, indexerState, false);
@@ -65,6 +86,21 @@ public class ChoreoAuto extends SequentialCommandGroup {
             this.indexerState = indexerState;
             this.timestamp = timestamp;
             this.waitForTurretReady = waitForTurretReady;
+            this.aimTarget = null;
+            this.duration = 0.0d;
+        }
+
+        public ChoreoStage(double timestamp, AimTarget aimTarget, double duration) {
+            this.hopperState = HopperState.PASSIVE;
+            this.indexerState = IndexerState.PASSIVE;
+            this.timestamp = timestamp;
+            this.waitForTurretReady = false;
+            this.aimTarget = aimTarget;
+            this.duration = duration;
+        }
+
+        public boolean isAimOverrideStage() {
+            return aimTarget != null;
         }
     }
 }
