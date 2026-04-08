@@ -303,8 +303,8 @@ public final class Constants {
 		public static final double kTurretFlywheelSupply = 40;
         public static final double kTurretFlywheelStator = 48;
 
-		public static final double kIntakeExtensionSupply = 35;
-        public static final double kIntakeExtensionStator = 35;
+		public static final double kIntakeExtensionSupply = 7;
+        public static final double kIntakeExtensionStator = 22;
 
 		public static final double kIntakeSupply = 30;
         public static final double kIntakeStator = 90;

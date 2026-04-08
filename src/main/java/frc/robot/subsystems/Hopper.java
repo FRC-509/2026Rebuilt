@@ -251,7 +251,7 @@ public class Hopper extends SubsystemBase {
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
         if (!hasZeroedPosition) {
-            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > 20) {
+            if (Math.abs(kIntakeExtension.getTorqueCurrent().getValueAsDouble()) > Constants.CurrentLimits.kIntakeExtensionStator*0.98) {
                 zeroedRotationOffset = kIntakeExtension.getPosition().getValueAsDouble();
                 commandedExtensionSetpoint = clampExtensionPosition(zeroedRotationOffset);
                 kIntakeExtension.setControl(extensionDutyCycle.withPosition(commandedExtensionSetpoint));
