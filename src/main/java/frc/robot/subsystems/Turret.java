@@ -29,8 +29,8 @@ public class Turret extends SubsystemBase {
     private final TalonFX kTopFlywheelMotor;
     private final TalonFX kBottomFlywheelMotor;
 
-    private final VelocityDutyCycle kVelocityDutyCycle = new VelocityDutyCycle(0.0d).withEnableFOC(true);
-    private final PositionDutyCycle kPositionDutyCycle = new PositionDutyCycle(0.0d).withEnableFOC(true);
+    private final VelocityDutyCycle kVelocityDutyCycle = new VelocityDutyCycle(0.0d).withEnableFOC(false);
+    private final PositionDutyCycle kPositionDutyCycle = new PositionDutyCycle(0.0d).withEnableFOC(false);
     private final VoltageOut kVoltageOut = new VoltageOut(0.0d);
 
     private final Translation3d offsetTranslation;
@@ -258,7 +258,9 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean isAbleToShoot() {
-        return canAim && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance);
+        return canAim 
+            && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
+            && robotAngularVelocitySupplier.getAsDouble() < Constants.Turret.kSWIMMaxAngularVelocity;
     }
 
     public boolean isShooterUpToSpeed() {
@@ -680,21 +682,21 @@ public class Turret extends SubsystemBase {
 
         double[] flywheelSpeeds = calculateSpeedsManualMagnus(targetTurretRelative3d);
         if (maxFlywheelOverrideSupplier.getAsBoolean()) flywheelSpeeds = new double[] {Constants.Turret.kFlywheelMechanismMaxRps,Constants.Turret.kFlywheelMechanismMaxRps};
-        SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
-        SmartDashboard.putNumber(side + "FlightTimeSeconds", estimateFlightTimeSeconds(targetTurretRelative3d));
-        SmartDashboard.putNumber(side + "TargetRangeMeters", targetTurretRelative.getNorm());
-        SmartDashboard.putNumber(side + "RobotVX", robotVelocity.getX());
-        SmartDashboard.putNumber(side + "RobotVY", robotVelocity.getY());
-        SmartDashboard.putNumber(side + "TurretTangentialVX", turretTangentialVelocity.getX());
-        SmartDashboard.putNumber(side + "TurretTangentialVY", turretTangentialVelocity.getY());
-        SmartDashboard.putNumber(side + "TurretOmegaRadPerSec", getAllianceRobotAngularVelocityRadiansPerSecond());
-        SmartDashboard.putNumber(side + "LateralVelocityMps", getLateralVelocityMetersPerSecond(
-            turretPosition,
-            uncompensatedTargetPosition,
-            turretVelocity));
-        SmartDashboard.putNumber(side + "AppliedLeadX", appliedLead.getX());
-        SmartDashboard.putNumber(side + "AppliedLeadY", appliedLead.getY());
-        SmartDashboard.putNumber(side + "AppliedLeadMeters", appliedLead.toTranslation2d().getNorm());
+        // SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
+        // SmartDashboard.putNumber(side + "FlightTimeSeconds", estimateFlightTimeSeconds(targetTurretRelative3d));
+        // SmartDashboard.putNumber(side + "TargetRangeMeters", targetTurretRelative.getNorm());
+        // SmartDashboard.putNumber(side + "RobotVX", robotVelocity.getX());
+        // SmartDashboard.putNumber(side + "RobotVY", robotVelocity.getY());
+        // SmartDashboard.putNumber(side + "TurretTangentialVX", turretTangentialVelocity.getX());
+        // SmartDashboard.putNumber(side + "TurretTangentialVY", turretTangentialVelocity.getY());
+        // SmartDashboard.putNumber(side + "TurretOmegaRadPerSec", getAllianceRobotAngularVelocityRadiansPerSecond());
+        // SmartDashboard.putNumber(side + "LateralVelocityMps", getLateralVelocityMetersPerSecond(
+        //     turretPosition,
+        //     uncompensatedTargetPosition,
+        //     turretVelocity));
+        // SmartDashboard.putNumber(side + "AppliedLeadX", appliedLead.getX());
+        // SmartDashboard.putNumber(side + "AppliedLeadY", appliedLead.getY());
+        // SmartDashboard.putNumber(side + "AppliedLeadMeters", appliedLead.toTranslation2d().getNorm());
         SmartDashboard.putNumber(side + "TargetRotationDegrees", targetRotationDegrees);
         SmartDashboard.putNumber(side + "CurrentRotationDegrees", getRotationDegrees());
         SmartDashboard.putBoolean(side + "AbleToShoot", isAbleToShoot());

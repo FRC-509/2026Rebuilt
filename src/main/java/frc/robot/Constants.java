@@ -122,7 +122,7 @@ public final class Constants {
 			Constants.IDs.kLeftBottomFlywheel,
 			new Translation3d(0.14,0.14,0.48),
 			-59.502,
-			191.162,
+			254.3,
 			false);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
@@ -131,7 +131,7 @@ public final class Constants {
 			Constants.IDs.kRightTopFlywheel, 
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(0.14,-0.14,0.48),
-			-191.162,
+			-254.3,
 			64.424,
 			true);
 
@@ -156,11 +156,15 @@ public final class Constants {
 		public static final double kFlywheelSpeedScale = 1;
 
 		public static final double kPrefireLeadTimeSeconds = 2.0;
-        public static final double kMovementCorrectionConstant = 0.02; // TODO: Tune me
+        public static final double kMovementCorrectionConstant = Constants.tunableNumber(
+            "Turret/MovementCorrectionConstant",
+            0.02);
         public static final int kTimeOfFlightIterations = 3;
 		public static final double kMovingLeadScale = 0.6;
 
 		public static final double kAutoTargetZoneHysteresisMeters = 0.35;
+
+        public static final double kSWIMMaxAngularVelocity = 1.5 * Math.PI; // rad/s
 	}
 
 	public static class Hopper { // TODO: find me

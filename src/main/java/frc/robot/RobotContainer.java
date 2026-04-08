@@ -36,6 +36,7 @@ import frc.robot.autonomous.CenterBoth;
 import frc.robot.autonomous.CenterDepot;
 import frc.robot.autonomous.LeftBumpDepot;
 import frc.robot.autonomous.RightBoth;
+import frc.robot.autonomous.RightDouble;
 import frc.robot.autonomous.RightFeed;
 import frc.robot.commands.ChoreoAuto;
 import frc.robot.commands.DefaultDriveCommand;
@@ -88,6 +89,7 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
+			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
 			this::shouldSpinUpFeedFlywheels,
 			() -> operatorController.leftBumper().getAsBoolean(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
@@ -103,6 +105,7 @@ public class RobotContainer {
 				}
 			},
 			() -> swerve.getYaw().getRadians(),
+			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
 			this::shouldSpinUpFeedFlywheels,
 			() -> operatorController.leftBumper().getAsBoolean(),
 			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
@@ -240,6 +243,7 @@ public class RobotContainer {
 		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightFeed", new RightFeed(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("RightDouble", new RightDouble(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 	}
 
 	private void configureElastic() {

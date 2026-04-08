@@ -15,16 +15,16 @@ import frc.robot.Constants;
 public class Hopper extends SubsystemBase {
     
     private final TalonFX kIntakeExtension = new TalonFX(Constants.IDs.kIntakeExtension, Constants.kCanivore);
-    private PositionDutyCycle extensionDutyCycle = new PositionDutyCycle(0.0d);
+    private PositionDutyCycle extensionDutyCycle = new PositionDutyCycle(0.0d).withEnableFOC(false);
     
     private final TalonFX kIntakeRotation = new TalonFX(Constants.IDs.kIntakeRotation, Constants.kCanivore);
-    private VelocityDutyCycle intakeDutyCycle = new VelocityDutyCycle(0.0d);
+    private VelocityDutyCycle intakeDutyCycle = new VelocityDutyCycle(0.0d).withEnableFOC(false);
 
     private final TalonFX kLeftIndexer = new TalonFX(Constants.IDs.kLeftKicker, Constants.kCanivore);
-    private VelocityDutyCycle leftIndexerDutyCycle = new VelocityDutyCycle(0.0d);
+    private VelocityDutyCycle leftIndexerDutyCycle = new VelocityDutyCycle(0.0d).withEnableFOC(false);
 
     private final TalonFX kRightIndexer = new TalonFX(Constants.IDs.kRightKicker, Constants.kCanivore);
-    private VelocityDutyCycle rightIndexerDutyCycle = new VelocityDutyCycle(0.0d);
+    private VelocityDutyCycle rightIndexerDutyCycle = new VelocityDutyCycle(0.0d).withEnableFOC(false);
 
     private VoltageOut voltageOut = new VoltageOut(0);
 
