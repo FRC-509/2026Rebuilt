@@ -205,7 +205,7 @@ public class Hopper extends SubsystemBase {
         }
 
         double cycleTimeSeconds = 2.7;
-        double reverseStartSeconds = 2.45;
+        double reverseStartSeconds = 2.55;
         double cyclePosition = Timer.getFPGATimestamp() % cycleTimeSeconds;
         return cyclePosition >= reverseStartSeconds;
     }
