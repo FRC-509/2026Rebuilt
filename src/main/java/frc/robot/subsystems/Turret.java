@@ -43,6 +43,7 @@ public class Turret extends SubsystemBase {
     private final Translation2dSupplier positionEstimate;
     private final Translation2dSupplier robotVelocitySupplier;
     private final DoubleSupplier robotYawRadiansSupplier;
+    private final DoubleSupplier robotAngularVelocitySupplier;
     private final BooleanSupplier isIndexingSupplier;
     private final BooleanSupplier overshootSupplier;
     private final BooleanSupplier maxFlywheelOverrideSupplier;
@@ -67,6 +68,7 @@ public class Turret extends SubsystemBase {
             Translation2dSupplier positionEstimate,
             Translation2dSupplier robotVelocitySupplier,
             DoubleSupplier robotYawSupplier,
+            DoubleSupplier robotAngularVelocitySupplier,
             BooleanSupplier isIndexingSupplier,
             BooleanSupplier overshootSupplier,
             BooleanSupplier maxFlywheelOverrideSupplier) {
@@ -123,6 +125,7 @@ public class Turret extends SubsystemBase {
         this.maxRotationClockwise = turretConfiguration.maxRotationClockwise();
         this.maxRotationCounterclockwise = turretConfiguration.maxRotationCounterclockwise();
         this.robotYawRadiansSupplier = robotYawSupplier;
+        this.robotAngularVelocitySupplier = robotAngularVelocitySupplier;
         this.isIndexingSupplier = isIndexingSupplier;
 
         this.aimTarget = AimTarget.HUB;
@@ -246,12 +249,12 @@ public class Turret extends SubsystemBase {
         Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity())
             .toTranslation2d()
             .minus(turretPosition);
-        double rotationToTargetDegrees = Math.toDegrees(MathUtil.angleModulus(
-            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX())
-                - getTurretYawRadians()));
-        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
-            ? -rotationToTargetDegrees
-            : rotationToTargetDegrees;
+        double rawRotationToTargetDegrees = Math.toDegrees(
+            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - getTurretYawRadians());
+        if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
+            rawRotationToTargetDegrees = -rawRotationToTargetDegrees;
+        }
+        return getClosestLegalRotationDegrees(rawRotationToTargetDegrees);
     }
 
     public boolean isAbleToShoot() {
@@ -382,7 +385,9 @@ public class Turret extends SubsystemBase {
 
     private Translation3d getTargetTurretRelative(AimTarget target) {
         Translation2d turretPosition = getTurretAlliancePosition();
-        Translation3d targetFieldPosition = getTargetFieldPosition(target, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity());
+        double yawRadians = getTurretYawRadians();
+        Translation2d turretVelocity = getAllianceTurretVelocity(getAllianceRobotVelocity(), yawRadians);
+        Translation3d targetFieldPosition = getTargetFieldPosition(target, turretPosition, yawRadians, turretVelocity);
         return targetFieldPosition.minus(
             new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
     }
@@ -401,8 +406,50 @@ public class Turret extends SubsystemBase {
             : velocity;
     }
 
+    private double getAllianceRobotAngularVelocityRadiansPerSecond() {
+        double angularVelocity = robotAngularVelocitySupplier.getAsDouble();
+        return SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red
+            ? -angularVelocity
+            : angularVelocity;
+    }
+
+    private Translation2d getAllianceTurretVelocity(Translation2d robotVelocity, double yawRadians) {
+        Translation2d turretOffset = new Translation2d(
+            offsetTranslation.getX() * Math.cos(yawRadians) - offsetTranslation.getY() * Math.sin(yawRadians),
+            offsetTranslation.getX() * Math.sin(yawRadians) + offsetTranslation.getY() * Math.cos(yawRadians));
+        double angularVelocity = getAllianceRobotAngularVelocityRadiansPerSecond();
+        Translation2d tangentialVelocity = new Translation2d(
+            -angularVelocity * turretOffset.getY(),
+            angularVelocity * turretOffset.getX());
+        return robotVelocity.plus(tangentialVelocity);
+    }
+
     private Translation3d getTargetFieldPosition(AimTarget target) {
         return getTargetFieldPosition(target, getTurretAlliancePosition(), 0.0, Translation2d.kZero);
+    }
+
+    private double getClosestLegalRotationDegrees(double rawRotationDegrees) {
+        double currentRotationDegrees = getRotationDegrees();
+        double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
+        double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
+
+        double bestLegalRotation = MathUtil.clamp(rawRotationDegrees, minRotationBound, maxRotationBound);
+        double bestError = Double.POSITIVE_INFINITY;
+
+        for (int wraps = -2; wraps <= 2; wraps++) {
+            double candidateRotation = rawRotationDegrees + (wraps * 360.0);
+            if (candidateRotation < minRotationBound || candidateRotation > maxRotationBound) {
+                continue;
+            }
+
+            double candidateError = Math.abs(candidateRotation - currentRotationDegrees);
+            if (candidateError < bestError) {
+                bestError = candidateError;
+                bestLegalRotation = candidateRotation;
+            }
+        }
+
+        return bestLegalRotation;
     }
 
     private Translation3d getTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians, Translation2d robotVelocity) {
@@ -610,21 +657,25 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber(side + "TurretAllianceY", getTurretAlliancePosition().getY());
 
         Translation2d turretPosition = getTurretAlliancePosition();
-        Translation3d uncompensatedTargetPosition = getAllianceAdjustedTargetFieldPosition(aimTarget, turretPosition, getTurretYawRadians());
-        Translation3d compensatedTargetPosition = getTargetFieldPosition(aimTarget, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity());
+        double turretYawRadians = getTurretYawRadians();
+        Translation2d robotVelocity = getAllianceRobotVelocity();
+        Translation2d turretVelocity = getAllianceTurretVelocity(robotVelocity, turretYawRadians);
+        Translation2d turretTangentialVelocity = turretVelocity.minus(robotVelocity);
+        Translation3d uncompensatedTargetPosition = getAllianceAdjustedTargetFieldPosition(aimTarget, turretPosition, turretYawRadians);
+        Translation3d compensatedTargetPosition = getTargetFieldPosition(aimTarget, turretPosition, turretYawRadians, turretVelocity);
         Translation3d appliedLead = uncompensatedTargetPosition.minus(compensatedTargetPosition);
         Translation3d targetTurretRelative3d = getTargetTurretRelative(aimTarget);
         Translation2d targetTurretRelative = targetTurretRelative3d.toTranslation2d();
-        double angleToTarget = Math.toDegrees(MathUtil.angleModulus(
-            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - getTurretYawRadians()));
+        double angleToTarget = Math.toDegrees(
+            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - turretYawRadians);
         if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
             angleToTarget = -angleToTarget;
         }
+        double commandedRotation = getClosestLegalRotationDegrees(angleToTarget);
         double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
         double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
-        canAim = !aimTarget.equals(AimTarget.NONE) && angleToTarget >= minRotationBound && angleToTarget <= maxRotationBound;
+        canAim = !aimTarget.equals(AimTarget.NONE) && commandedRotation >= minRotationBound && commandedRotation <= maxRotationBound;
 
-        double commandedRotation = MathUtil.clamp(angleToTarget, minRotationBound, maxRotationBound);
         setRotationDegrees(commandedRotation);
 
         double[] flywheelSpeeds = calculateSpeedsManualMagnus(targetTurretRelative3d);
@@ -632,12 +683,15 @@ public class Turret extends SubsystemBase {
         SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
         SmartDashboard.putNumber(side + "FlightTimeSeconds", estimateFlightTimeSeconds(targetTurretRelative3d));
         SmartDashboard.putNumber(side + "TargetRangeMeters", targetTurretRelative.getNorm());
-        SmartDashboard.putNumber(side + "RobotVX", getAllianceRobotVelocity().getX());
-        SmartDashboard.putNumber(side + "RobotVY", getAllianceRobotVelocity().getY());
+        SmartDashboard.putNumber(side + "RobotVX", robotVelocity.getX());
+        SmartDashboard.putNumber(side + "RobotVY", robotVelocity.getY());
+        SmartDashboard.putNumber(side + "TurretTangentialVX", turretTangentialVelocity.getX());
+        SmartDashboard.putNumber(side + "TurretTangentialVY", turretTangentialVelocity.getY());
+        SmartDashboard.putNumber(side + "TurretOmegaRadPerSec", getAllianceRobotAngularVelocityRadiansPerSecond());
         SmartDashboard.putNumber(side + "LateralVelocityMps", getLateralVelocityMetersPerSecond(
             turretPosition,
             uncompensatedTargetPosition,
-            getAllianceRobotVelocity()));
+            turretVelocity));
         SmartDashboard.putNumber(side + "AppliedLeadX", appliedLead.getX());
         SmartDashboard.putNumber(side + "AppliedLeadY", appliedLead.getY());
         SmartDashboard.putNumber(side + "AppliedLeadMeters", appliedLead.toTranslation2d().getNorm());
