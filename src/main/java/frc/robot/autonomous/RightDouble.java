@@ -19,18 +19,19 @@ public class RightDouble extends ParallelCommandGroup {
             Commands.parallel(
                 path,
                 ChoreoAuto.StageHopper(hopper, leftTurret, rightTurret,
-                    path.new ChoreoStage(1.1, HopperState.INTAKING, IndexerState.PASSIVE),
+                    path.new ChoreoStage(0.8, HopperState.INTAKING, IndexerState.PASSIVE),
                     // first shoot
-                    path.new ChoreoStage(8.5, AimTarget.HUB, 4),
-                    path.new ChoreoStage(9.3, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH, true),
-                    path.new ChoreoStage(10.2, HopperState.INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(10.85, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(7, AimTarget.HUB, 4),
+                    path.new ChoreoStage(7.5, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH, true),
+                    path.new ChoreoStage(8.7, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(9.4, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(10, HopperState.INDEXING, IndexerState.BOTH),
 
-                    path.new ChoreoStage(11.6, HopperState.PASSIVE, IndexerState.PASSIVE),
+                    path.new ChoreoStage(10.7, HopperState.PASSIVE, IndexerState.PASSIVE),
 
                     // second shot
-                    path.new ChoreoStage(13.13, HopperState.INTAKING, IndexerState.PASSIVE),
-                    path.new ChoreoStage(17, AimTarget.HUB, 4),
+                    path.new ChoreoStage(11.13, HopperState.INTAKING, IndexerState.PASSIVE),
+                    path.new ChoreoStage(16, AimTarget.HUB, 4),
                     path.new ChoreoStage(17.7, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(18.4, HopperState.INDEXING, IndexerState.BOTH),
                     path.new ChoreoStage(19.15, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH)
