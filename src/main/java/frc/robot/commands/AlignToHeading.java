@@ -26,6 +26,7 @@ public class AlignToHeading extends Command {
 		this.translationYSupplier = ySupplier;
 		this.preciseMovementSupplier = preciseMovementSupplier;
         this.heading = heading;
+		this.controller.enableContinuousInput(-180.0, 180.0);
 
 		addRequirements(swerve);
 	}
@@ -54,7 +55,7 @@ public class AlignToHeading extends Command {
 
     @Override
     public boolean isFinished() {
-        return MathUtil.isNear(heading, swerve.getYaw().getDegrees(), 0.25);
+        return Math.abs(MathUtil.inputModulus(heading - swerve.getYaw().getDegrees(), -180.0, 180.0)) <= 0.25;
     }
 
     @Override

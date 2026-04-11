@@ -1,5 +1,6 @@
 package frc.robot.subsystems.drive;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -95,6 +96,8 @@ public class SwerveDrive extends SubsystemBase {
 	
 		headingPassive.setIntegratorRange(-180, 180);
 		headingAggressive.setIntegratorRange(-180, 180);
+		headingPassive.enableContinuousInput(-180, 180);
+		headingAggressive.enableContinuousInput(-180, 180);
 		headingPassive.setTolerance(0.25);
 		headingAggressive.setTolerance(0.25);
 
@@ -153,21 +156,11 @@ public class SwerveDrive extends SubsystemBase {
 			// }
 			rotationOutput = interpolatedRotation;
 		} else {
-			double delta = getYaw().getDegrees() - targetHeading;
-			if (delta > 180.0d) {
-				delta -= 360.0d;
-			}
-			if (delta < -180.0d) {
-				delta += 360.0d;
-			}
-
-			double overallDrift = yawFromWhenWeLastSetTargetHeading - targetHeading;
-			if (overallDrift > 180.0d) {
-				overallDrift -= 360.0d;
-			}
-			if (overallDrift < -180.0d) {
-				overallDrift += 360.0d;
-			}
+			double delta = MathUtil.inputModulus(getYaw().getDegrees() - targetHeading, -180.0d, 180.0d);
+			double overallDrift = MathUtil.inputModulus(
+				yawFromWhenWeLastSetTargetHeading - targetHeading,
+				-180.0d,
+				180.0d);
 
 			double aggressiveOutput = headingAggressive.calculate(delta);
 			double passiveOutput = headingPassive.calculate(delta);
@@ -224,8 +217,8 @@ public class SwerveDrive extends SubsystemBase {
 	}
 
 	public void setTargetHeading(double heading) {
-		yawFromWhenWeLastSetTargetHeading = getYaw().getDegrees() % 360.0;
-		targetHeading = heading % 360.0d;
+		yawFromWhenWeLastSetTargetHeading = MathUtil.inputModulus(getYaw().getDegrees(), -180.0d, 180.0d);
+		targetHeading = MathUtil.inputModulus(heading, -180.0d, 180.0d);
 	}
 
 	public void toggleHeadingCorrection() {

@@ -182,8 +182,10 @@ public class Turret extends SubsystemBase {
     }
 
     private void setRotationDegrees(double degrees) {
-        targetRotationDegrees = degrees;
-        targetRotationMotorPosition = (degrees - zeroedRotationMaximumAdded) / 360 + zeroedRotationOffset;
+        double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
+        double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
+        targetRotationDegrees = MathUtil.clamp(degrees, minRotationBound, maxRotationBound);
+        targetRotationMotorPosition = (targetRotationDegrees - zeroedRotationMaximumAdded) / 360 + zeroedRotationOffset;
         kRotationMotor.setControl(kPositionDutyCycle.withPosition(targetRotationMotorPosition));
     }
 

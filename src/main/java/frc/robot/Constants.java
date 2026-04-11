@@ -171,12 +171,12 @@ public final class Constants {
         public static final double kIntakingVelocity = 85;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 10;
+		public static final double kIntakeExtension = 10+1.08;
 		public static final double kIntakeFullExtensionMeters = 0.29;
         public static final double kRetractedExtensionOffset = 0.7;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
-        public static final double kMinExtensionPosition = 0.5;
+        public static final double kMinExtensionPosition = 0.9;
         public static final double kMaxExtensionPosition = kIntakeExtension;
 	}
 

@@ -239,12 +239,10 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setDesiredIntakeVelocity() {
-        if (getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.65)) kIntakeRotation.setControl(voltageOut.withOutput(0));
-        if (hopperState == HopperState.EXTENDED
-            || hopperState == HopperState.INTAKING
-            || hopperState == HopperState.INTAKING_AND_INDEXING) 
-                kIntakeRotation.setControl(intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
-        kIntakeRotation.setControl(intakeDutyCycle.withVelocity(Constants.Hopper.kIntakingVelocity));
+        kIntakeRotation.setControl(
+            getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.65) || hopperState.equals(HopperState.EXTENDED)
+            ? voltageOut.withOutput(0)
+            : intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
     }
     
     @Override
