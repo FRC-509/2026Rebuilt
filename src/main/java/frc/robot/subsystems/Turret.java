@@ -102,7 +102,7 @@ public class Turret extends SubsystemBase {
         // Flywheel motor config
         TalonFXConfiguration flywheelMotorConfig = new TalonFXConfiguration();
 		flywheelMotorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-		flywheelMotorConfig.MotorOutput.Inverted = turretConfiguration.zeroesCounterClockwise() ? InvertedValue.CounterClockwise_Positive : InvertedValue.Clockwise_Positive;
+		flywheelMotorConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 		flywheelMotorConfig.MotorOutput.DutyCycleNeutralDeadband = 0.02;
 		flywheelMotorConfig.ClosedLoopGeneral.ContinuousWrap = false;
         flywheelMotorConfig.Feedback.SensorToMechanismRatio = Constants.Turret.kFlywheelMotorToMechanismRatio;

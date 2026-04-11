@@ -121,19 +121,19 @@ public final class Constants {
 			Constants.IDs.kLeftTopFlywheel, 
 			Constants.IDs.kLeftBottomFlywheel,
 			new Translation3d(0.14,0.14,0.48),
-			-59.502,
-			254.3,
+			-100.283203,
+			204,
 			false);
 
 		public static final TurretConfiguration kRightTurretConfiguration = new TurretConfiguration(
 			"Right",
 			Constants.IDs.kRightRotationMotor, 
-			Constants.IDs.kRightTopFlywheel, 
+			Constants.IDs.kRightTopFlywheel,
 			Constants.IDs.kRightBottomFlywheel,
 			new Translation3d(0.14,-0.14,0.48),
-			-254.3,
-			64.424,
-			true);
+			-101.25,
+			204,
+			false);
 
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
@@ -171,9 +171,9 @@ public final class Constants {
         public static final double kIntakingVelocity = 85;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 10.73-0.04;
+		public static final double kIntakeExtension = 10;
 		public static final double kIntakeFullExtensionMeters = 0.29;
-        public static final double kRetractedExtensionOffset = 0.5;
+        public static final double kRetractedExtensionOffset = 0.7;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
         public static final double kMinExtensionPosition = 0.5;
@@ -287,7 +287,7 @@ public final class Constants {
             public static final double kExtensionI = 0.15;
             public static final double kExtensionD = 0.03;
 
-			public static final double kIntakeP = 0.02;
+			public static final double kIntakeP = 0.062;
             public static final double kIntakeI = 0.1;
             public static final double kIntakeD = 0;
 			
