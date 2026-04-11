@@ -248,11 +248,13 @@ public class Turret extends SubsystemBase {
 
     public double getRotationToTarget(AimTarget targetPosition) {
         Translation2d turretPosition = getTurretAlliancePosition();
-        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition, turretPosition, getTurretYawRadians(), getAllianceRobotVelocity())
+        double turretYawRadians = getTurretYawRadians();
+        Translation2d turretVelocity = getAllianceTurretVelocity(getAllianceRobotVelocity(), turretYawRadians);
+        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition, turretPosition, turretYawRadians, turretVelocity)
             .toTranslation2d()
             .minus(turretPosition);
         double rawRotationToTargetDegrees = Math.toDegrees(
-            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - getTurretYawRadians());
+            Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - turretYawRadians);
         if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
             rawRotationToTargetDegrees = -rawRotationToTargetDegrees;
         }
