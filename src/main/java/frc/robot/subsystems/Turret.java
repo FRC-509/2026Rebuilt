@@ -39,6 +39,7 @@ public class Turret extends SubsystemBase {
     private final boolean zeroesCounterClockwise;
     private final double zeroedRotationMaximumAdded;
     private final String side;
+    private final double insideAimOffsetSign;
 
     private final Translation2dSupplier positionEstimate;
     private final Translation2dSupplier robotVelocitySupplier;
@@ -144,11 +145,18 @@ public class Turret extends SubsystemBase {
         this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
         this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
         this.side = turretConfiguration.side();
+        this.insideAimOffsetSign = switch (side.toLowerCase()) {
+            case "left" -> -1.0;
+            case "right" -> 1.0;
+            default -> throw new IllegalArgumentException("Unknown turret side: " + side);
+        };
         this.efficiency = Constants.Turret.kEfficiency;
 
         this.overshootSupplier = overshootSupplier;
         this.maxFlywheelOverrideSupplier = maxFlywheelOverrideSupplier;
         SmartDashboard.setDefaultNumber(kEfficiencyDashboardKey, efficiency);
+        SmartDashboard.setDefaultNumber("Turret/LeftInsideAimOffsetMeters", 0.0);
+        SmartDashboard.setDefaultNumber("Turret/RightInsideAimOffsetMeters", 0.0);
     }
  
     public enum AimTarget {
@@ -247,12 +255,8 @@ public class Turret extends SubsystemBase {
     }
 
     public double getRotationToTarget(AimTarget targetPosition) {
-        Translation2d turretPosition = getTurretAlliancePosition();
         double turretYawRadians = getTurretYawRadians();
-        Translation2d turretVelocity = getAllianceTurretVelocity(getAllianceRobotVelocity(), turretYawRadians);
-        Translation2d targetTurretRelative = getTargetFieldPosition(targetPosition, turretPosition, turretYawRadians, turretVelocity)
-            .toTranslation2d()
-            .minus(turretPosition);
+        Translation2d targetTurretRelative = getTargetTurretRelative(targetPosition).toTranslation2d();
         double rawRotationToTargetDegrees = Math.toDegrees(
             Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - turretYawRadians);
         if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
@@ -394,8 +398,38 @@ public class Turret extends SubsystemBase {
         double yawRadians = getTurretYawRadians();
         Translation2d turretVelocity = getAllianceTurretVelocity(getAllianceRobotVelocity(), yawRadians);
         Translation3d targetFieldPosition = getTargetFieldPosition(target, turretPosition, yawRadians, turretVelocity);
-        return targetFieldPosition.minus(
+        Translation3d targetTurretRelative = targetFieldPosition.minus(
             new Translation3d(turretPosition.getX(), turretPosition.getY(), offsetTranslation.getZ()));
+        return applyInsideAimOffset(targetTurretRelative);
+    }
+
+    private Translation3d applyInsideAimOffset(Translation3d targetTurretRelative) {
+        double insideOffsetMeters = getInsideAimOffsetMeters();
+        if (Math.abs(insideOffsetMeters) < 1e-6) {
+            return targetTurretRelative;
+        }
+
+        Translation2d targetVector = targetTurretRelative.toTranslation2d();
+        double distance = targetVector.getNorm();
+        if (distance < 1e-6) {
+            return targetTurretRelative;
+        }
+
+        Translation2d aimUnit = targetVector.div(distance);
+        Translation2d lateralUnit = new Translation2d(-aimUnit.getY(), aimUnit.getX());
+        Translation2d offset = lateralUnit.times(insideOffsetMeters * insideAimOffsetSign);
+
+        return new Translation3d(
+            targetTurretRelative.getX() + offset.getX(),
+            targetTurretRelative.getY() + offset.getY(),
+            targetTurretRelative.getZ());
+    }
+
+    private double getInsideAimOffsetMeters() {
+        String dashboardKey = insideAimOffsetSign < 0.0
+            ? "Turret/LeftInsideAimOffsetMeters"
+            : "Turret/RightInsideAimOffsetMeters";
+        return Constants.tunableNumber(dashboardKey, 0.0);
     }
 
     private double getTurretYawRadians() {
