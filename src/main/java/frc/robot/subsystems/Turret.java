@@ -52,6 +52,7 @@ public class Turret extends SubsystemBase {
     private AimTarget aimTarget;
     private double targetRotationDegrees;
     private double targetRotationMotorPosition;
+    private double targetRotationErrorDegrees;
     private boolean canAim;
     private boolean overrideAimTarget;
     private boolean overridePositionEstimate;
@@ -132,6 +133,7 @@ public class Turret extends SubsystemBase {
         this.aimTarget = AimTarget.HUB;
         this.targetRotationDegrees = 0;
         this.targetRotationMotorPosition = 0;
+        this.targetRotationErrorDegrees = Double.POSITIVE_INFINITY;
         this.overrideAimTarget = false;
         this.overridePositionEstimate = false;
         this.overriddenPositionEstimate = Translation2d.kZero;
@@ -267,8 +269,8 @@ public class Turret extends SubsystemBase {
 
     public boolean isAbleToShoot() {
         return canAim 
-            && MathUtil.isNear(targetRotationDegrees, getRotationDegrees(), Constants.Turret.kRotationTolerance)
-            && robotAngularVelocitySupplier.getAsDouble() < Constants.Turret.kSWIMMaxAngularVelocity;
+            && targetRotationErrorDegrees <= Constants.Turret.kRotationTolerance
+            && Math.abs(robotAngularVelocitySupplier.getAsDouble()) < Constants.Turret.kSWIMMaxAngularVelocity;
     }
 
     public boolean isShooterUpToSpeed() {
@@ -492,6 +494,20 @@ public class Turret extends SubsystemBase {
         return bestLegalRotation;
     }
 
+    private boolean hasLegalRotationSolution(double rawRotationDegrees) {
+        double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
+        double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
+
+        for (int wraps = -2; wraps <= 2; wraps++) {
+            double candidateRotation = rawRotationDegrees + (wraps * 360.0);
+            if (candidateRotation >= minRotationBound && candidateRotation <= maxRotationBound) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private Translation3d getTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians, Translation2d robotVelocity) {
         Translation3d targetPosition = getAllianceAdjustedTargetFieldPosition(target, turretPosition, yawRadians);
         Translation3d compensatedTargetPosition = targetPosition;
@@ -711,12 +727,16 @@ public class Turret extends SubsystemBase {
         if (SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red) {
             angleToTarget = -angleToTarget;
         }
+        boolean hasLegalRotationSolution = hasLegalRotationSolution(angleToTarget);
         double commandedRotation = getClosestLegalRotationDegrees(angleToTarget);
-        double minRotationBound = Math.min(maxRotationClockwise, maxRotationCounterclockwise);
-        double maxRotationBound = Math.max(maxRotationClockwise, maxRotationCounterclockwise);
-        canAim = !aimTarget.equals(AimTarget.NONE) && commandedRotation >= minRotationBound && commandedRotation <= maxRotationBound;
+        canAim = !aimTarget.equals(AimTarget.NONE) && hasLegalRotationSolution;
 
-        setRotationDegrees(commandedRotation);
+        if (canAim) {
+            setRotationDegrees(commandedRotation);
+            targetRotationErrorDegrees = Math.abs(commandedRotation - getRotationDegrees());
+        } else {
+            targetRotationErrorDegrees = Double.POSITIVE_INFINITY;
+        }
 
         double[] flywheelSpeeds = calculateSpeedsManualMagnus(targetTurretRelative3d);
         if (maxFlywheelOverrideSupplier.getAsBoolean()) flywheelSpeeds = new double[] {Constants.Turret.kFlywheelMechanismMaxRps,Constants.Turret.kFlywheelMechanismMaxRps};
@@ -737,6 +757,7 @@ public class Turret extends SubsystemBase {
         // SmartDashboard.putNumber(side + "AppliedLeadMeters", appliedLead.toTranslation2d().getNorm());
         SmartDashboard.putNumber(side + "TargetRotationDegrees", targetRotationDegrees);
         SmartDashboard.putNumber(side + "CurrentRotationDegrees", getRotationDegrees());
+        SmartDashboard.putNumber(side + "TargetRotationErrorDegrees", targetRotationErrorDegrees);
         SmartDashboard.putBoolean(side + "AbleToShoot", isAbleToShoot());
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, Constants.Turret.kFlywheelMechanismMaxRps);

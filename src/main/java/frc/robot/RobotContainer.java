@@ -182,7 +182,7 @@ public class RobotContainer {
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
 			() -> leftTurret.isShooterUpToSpeed() && leftTurret.isAbleToShoot(),
-			() -> rightTurret.isShooterUpToSpeed() && leftTurret.isAbleToShoot()));
+			() -> rightTurret.isShooterUpToSpeed() && rightTurret.isAbleToShoot()));
 
 
 		// force feed override
