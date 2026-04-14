@@ -240,9 +240,9 @@ public class Hopper extends SubsystemBase {
 
     private void setDesiredIntakeVelocity() {
         kIntakeRotation.setControl(
-            getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.65) || hopperState.equals(HopperState.EXTENDED)
+            getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.1) || hopperState.equals(HopperState.EXTENDED)
             ? voltageOut.withOutput(0)
-            : intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+            : intakeDutyCycle.withVelocity(Constants.Hopper.kIntakingVelocity));
     }
     
     @Override
