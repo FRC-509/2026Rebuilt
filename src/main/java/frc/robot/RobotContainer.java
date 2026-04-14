@@ -135,6 +135,8 @@ public class RobotContainer {
 			swerve.setTargetHeading(0);
 		}, swerve));
 
+		driverRight.isDownBind(StickButton.Right, Commands.run(swerve::enterXStance, swerve));
+
 		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
 		// 	new AlignToHeading(
 		// 		swerve, 
