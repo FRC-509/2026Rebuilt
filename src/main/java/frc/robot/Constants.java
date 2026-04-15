@@ -168,11 +168,11 @@ public final class Constants {
 
 		public static class SWIM {
 			public static final String kEfficiencyKey = "TurretEfficiency";
-			public static final String kLeadScaleNearKey = "Turret/LeadScaleNear";
-			public static final String kLeadScaleMidLowLatKey = "Turret/LeadScaleMidLowLat";
-			public static final String kLeadScaleMidHighLatKey = "Turret/LeadScaleMidHighLat";
-			public static final String kLeadScaleFarLowLatKey = "Turret/LeadScaleFarLowLat";
-			public static final String kLeadScaleFarHighLatKey = "Turret/LeadScaleFarHighLat";
+			public static final String kLeadScaleNearKey = "LeadScaleNear";
+			public static final String kLeadScaleMidLowLatKey = "LeadScaleMidLowLat";
+			public static final String kLeadScaleMidHighLatKey = "LeadScaleMidHighLat";
+			public static final String kLeadScaleFarLowLatKey = "LeadScaleFarLowLat";
+			public static final String kLeadScaleFarHighLatKey = "LeadScaleFarHighLat";
 
 			public static final double kEfficiencyDefault = 1.04; // overall shot scale
 			public static final double kLeftInsideAimOffsetMeters = -0.16;
