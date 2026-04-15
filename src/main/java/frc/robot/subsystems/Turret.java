@@ -23,8 +23,7 @@ import frc.robot.subsystems.drive.SwerveDrive;
 import frc.robot.util.Translation2dSupplier;
 
 public class Turret extends SubsystemBase {
-    private static final String kEfficiencyDashboardKey = "TurretEfficiency";
-    
+
     private final TalonFX kRotationMotor;
     private final TalonFX kTopFlywheelMotor;
     private final TalonFX kBottomFlywheelMotor;
@@ -156,19 +155,16 @@ public class Turret extends SubsystemBase {
 
         this.overshootSupplier = overshootSupplier;
         this.maxFlywheelOverrideSupplier = maxFlywheelOverrideSupplier;
-        SmartDashboard.setDefaultNumber(kEfficiencyDashboardKey, efficiency);
-        SmartDashboard.setDefaultNumber("Turret/LeftInsideAimOffsetMeters", 0.0);
-        SmartDashboard.setDefaultNumber("Turret/RightInsideAimOffsetMeters", 0.0);
     }
  
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.4,Constants.Field.kFieldWidth/2-0.15,1.88),0, 50),
-        NEUTRALZONE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
-        NEUTRALZONE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0),
-        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(2,Constants.Field.kFieldWidth - 2,0),0, 0),
-        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(2,2,0), 0, 0);
+        HUB(new Translation3d(4.64,Constants.Field.kFieldWidth/2-0.15,1.88),0, 50),
+        NEUTRALZONE_FEED_LEFT(new Translation3d(2.3,Constants.Field.kFieldWidth - 3.2,0),0, 0),
+        NEUTRALZONE_FEED_RIGHT(new Translation3d(2.3,3.2,0), 0, 0),
+        OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(7,Constants.Field.kFieldWidth - 3.2,0),0, 0),
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(7.3,3.2,0), 0, 0);
 
         public final Translation3d position;
         public final double aimBehindMeters;
@@ -406,7 +402,9 @@ public class Turret extends SubsystemBase {
     }
 
     private Translation3d applyInsideAimOffset(Translation3d targetTurretRelative) {
-        double insideOffsetMeters = getInsideAimOffsetMeters();
+        double insideOffsetMeters = side.equalsIgnoreCase("left")
+            ? Constants.Turret.SWIM.kLeftInsideAimOffsetMeters
+            : Constants.Turret.SWIM.kRightInsideAimOffsetMeters;
         if (Math.abs(insideOffsetMeters) < 1e-6) {
             return targetTurretRelative;
         }
@@ -425,13 +423,6 @@ public class Turret extends SubsystemBase {
             targetTurretRelative.getX() + offset.getX(),
             targetTurretRelative.getY() + offset.getY(),
             targetTurretRelative.getZ());
-    }
-
-    private double getInsideAimOffsetMeters() {
-        String dashboardKey = insideAimOffsetSign < 0.0
-            ? "Turret/LeftInsideAimOffsetMeters"
-            : "Turret/RightInsideAimOffsetMeters";
-        return Constants.tunableNumber(dashboardKey, 0.0);
     }
 
     private double getTurretYawRadians() {
@@ -537,20 +528,53 @@ public class Turret extends SubsystemBase {
             Translation2d robotVelocity) {
         double rangeMeters = turretPosition.getDistance(targetPosition.toTranslation2d());
         double lateralVelocity = Math.abs(getLateralVelocityMetersPerSecond(turretPosition, targetPosition, robotVelocity));
+        double nearScale = Constants.tunableNumber(
+            Constants.Turret.SWIM.kLeadScaleNearKey,
+            Constants.Turret.SWIM.kLeadScaleNearDefault);
+        double midLowLatScale = Constants.tunableNumber(
+            Constants.Turret.SWIM.kLeadScaleMidLowLatKey,
+            Constants.Turret.SWIM.kLeadScaleMidLowLatDefault);
+        double midHighLatScale = Constants.tunableNumber(
+            Constants.Turret.SWIM.kLeadScaleMidHighLatKey,
+            Constants.Turret.SWIM.kLeadScaleMidHighLatDefault);
+        double farLowLatScale = Constants.tunableNumber(
+            Constants.Turret.SWIM.kLeadScaleFarLowLatKey,
+            Constants.Turret.SWIM.kLeadScaleFarLowLatDefault);
+        double farHighLatScale = Constants.tunableNumber(
+            Constants.Turret.SWIM.kLeadScaleFarHighLatKey,
+            Constants.Turret.SWIM.kLeadScaleFarHighLatDefault);
 
-        if (target != AimTarget.HUB) return Constants.tunableNumber("Turret/FeedLeadScale", 0.50);
-        
-        if (rangeMeters < Constants.tunableNumber("Turret/HubLeadNearRangeMeters", 2.5))
-            return Constants.tunableNumber("Turret/HubLeadScaleNear", 0.45);
-        
-        if (rangeMeters < Constants.tunableNumber("Turret/HubLeadMidRangeMeters", 4.0))
-            return lateralVelocity < Constants.tunableNumber("Turret/HubLeadLowLateralSpeed", 1.5)
-                ? Constants.tunableNumber("Turret/HubLeadScaleMidLowLat", 0.60)
-                : Constants.tunableNumber("Turret/HubLeadScaleMidHighLat", 0.68);
-        
-        return lateralVelocity < Constants.tunableNumber("Turret/HubLeadHighLateralSpeed", 1.5)
-            ? Constants.tunableNumber("Turret/HubLeadScaleFarLowLat", 0.75)
-            : Constants.tunableNumber("Turret/HubLeadScaleFarHighLat", 0.85);
+        double midLateralBlend = MathUtil.clamp(
+            lateralVelocity / Constants.Turret.SWIM.kLeadLowLateralSpeed,
+            0.0,
+            1.0);
+        double farLateralBlend = MathUtil.clamp(
+            lateralVelocity / Constants.Turret.SWIM.kLeadHighLateralSpeed,
+            0.0,
+            1.0);
+
+        double midScale = MathUtil.interpolate(midLowLatScale, midHighLatScale, midLateralBlend);
+        double farScale = MathUtil.interpolate(farLowLatScale, farHighLatScale, farLateralBlend);
+
+        if (rangeMeters <= Constants.Turret.SWIM.kLeadNearRangeMeters) {
+            return nearScale;
+        }
+
+        if (rangeMeters <= Constants.Turret.SWIM.kLeadMidRangeMeters) {
+            double rangeBlend = MathUtil.clamp(
+                (rangeMeters - Constants.Turret.SWIM.kLeadNearRangeMeters)
+                    / (Constants.Turret.SWIM.kLeadMidRangeMeters - Constants.Turret.SWIM.kLeadNearRangeMeters),
+                0.0,
+                1.0);
+            return MathUtil.interpolate(nearScale, midScale, rangeBlend);
+        }
+
+        double farRangeBlend = MathUtil.clamp(
+            (rangeMeters - Constants.Turret.SWIM.kLeadMidRangeMeters)
+                / (Constants.Turret.SWIM.kLeadMidRangeMeters - Constants.Turret.SWIM.kLeadNearRangeMeters),
+            0.0,
+            1.0);
+        return MathUtil.interpolate(midScale, farScale, farRangeBlend);
     }
 
     private double getLateralVelocityMetersPerSecond(
@@ -705,21 +729,39 @@ public class Turret extends SubsystemBase {
 
 
         if (!overrideAimTarget) aimTarget = getTargetFromPosition();
-        efficiency = SmartDashboard.getNumber(kEfficiencyDashboardKey, Constants.Turret.kEfficiency);
-
-        SmartDashboard.putString(side + "TurretAimTarget", aimTarget.name());
-        SmartDashboard.putNumber(kEfficiencyDashboardKey, efficiency);
-        SmartDashboard.putNumber(side + "TurretAllianceX", getTurretAlliancePosition().getX());
-        SmartDashboard.putNumber(side + "TurretAllianceY", getTurretAlliancePosition().getY());
+        efficiency = Constants.tunableNumber(
+            Constants.Turret.SWIM.kEfficiencyKey,
+            Constants.Turret.SWIM.kEfficiencyDefault);
+        SmartDashboard.putNumber(
+            Constants.Turret.SWIM.kLeadScaleNearKey,
+            Constants.tunableNumber(
+                Constants.Turret.SWIM.kLeadScaleNearKey,
+                Constants.Turret.SWIM.kLeadScaleNearDefault));
+        SmartDashboard.putNumber(
+            Constants.Turret.SWIM.kLeadScaleMidLowLatKey,
+            Constants.tunableNumber(
+                Constants.Turret.SWIM.kLeadScaleMidLowLatKey,
+                Constants.Turret.SWIM.kLeadScaleMidLowLatDefault));
+        SmartDashboard.putNumber(
+            Constants.Turret.SWIM.kLeadScaleMidHighLatKey,
+            Constants.tunableNumber(
+                Constants.Turret.SWIM.kLeadScaleMidHighLatKey,
+                Constants.Turret.SWIM.kLeadScaleMidHighLatDefault));
+        SmartDashboard.putNumber(
+            Constants.Turret.SWIM.kLeadScaleFarLowLatKey,
+            Constants.tunableNumber(
+                Constants.Turret.SWIM.kLeadScaleFarLowLatKey,
+                Constants.Turret.SWIM.kLeadScaleFarLowLatDefault));
+        SmartDashboard.putNumber(
+            Constants.Turret.SWIM.kLeadScaleFarHighLatKey,
+            Constants.tunableNumber(
+                Constants.Turret.SWIM.kLeadScaleFarHighLatKey,
+                Constants.Turret.SWIM.kLeadScaleFarHighLatDefault));
 
         Translation2d turretPosition = getTurretAlliancePosition();
         double turretYawRadians = getTurretYawRadians();
         Translation2d robotVelocity = getAllianceRobotVelocity();
         Translation2d turretVelocity = getAllianceTurretVelocity(robotVelocity, turretYawRadians);
-        Translation2d turretTangentialVelocity = turretVelocity.minus(robotVelocity);
-        Translation3d uncompensatedTargetPosition = getAllianceAdjustedTargetFieldPosition(aimTarget, turretPosition, turretYawRadians);
-        Translation3d compensatedTargetPosition = getTargetFieldPosition(aimTarget, turretPosition, turretYawRadians, turretVelocity);
-        Translation3d appliedLead = uncompensatedTargetPosition.minus(compensatedTargetPosition);
         Translation3d targetTurretRelative3d = getTargetTurretRelative(aimTarget);
         Translation2d targetTurretRelative = targetTurretRelative3d.toTranslation2d();
         double angleToTarget = Math.toDegrees(
@@ -740,25 +782,6 @@ public class Turret extends SubsystemBase {
 
         double[] flywheelSpeeds = calculateSpeedsManualMagnus(targetTurretRelative3d);
         if (maxFlywheelOverrideSupplier.getAsBoolean()) flywheelSpeeds = new double[] {Constants.Turret.kFlywheelMechanismMaxRps,Constants.Turret.kFlywheelMechanismMaxRps};
-        // SmartDashboard.putNumber(side+" Flywheel Speeds", flywheelSpeeds[0]);
-        // SmartDashboard.putNumber(side + "FlightTimeSeconds", estimateFlightTimeSeconds(targetTurretRelative3d));
-        // SmartDashboard.putNumber(side + "TargetRangeMeters", targetTurretRelative.getNorm());
-        // SmartDashboard.putNumber(side + "RobotVX", robotVelocity.getX());
-        // SmartDashboard.putNumber(side + "RobotVY", robotVelocity.getY());
-        // SmartDashboard.putNumber(side + "TurretTangentialVX", turretTangentialVelocity.getX());
-        // SmartDashboard.putNumber(side + "TurretTangentialVY", turretTangentialVelocity.getY());
-        // SmartDashboard.putNumber(side + "TurretOmegaRadPerSec", getAllianceRobotAngularVelocityRadiansPerSecond());
-        // SmartDashboard.putNumber(side + "LateralVelocityMps", getLateralVelocityMetersPerSecond(
-        //     turretPosition,
-        //     uncompensatedTargetPosition,
-        //     turretVelocity));
-        // SmartDashboard.putNumber(side + "AppliedLeadX", appliedLead.getX());
-        // SmartDashboard.putNumber(side + "AppliedLeadY", appliedLead.getY());
-        // SmartDashboard.putNumber(side + "AppliedLeadMeters", appliedLead.toTranslation2d().getNorm());
-        SmartDashboard.putNumber(side + "TargetRotationDegrees", targetRotationDegrees);
-        SmartDashboard.putNumber(side + "CurrentRotationDegrees", getRotationDegrees());
-        SmartDashboard.putNumber(side + "TargetRotationErrorDegrees", targetRotationErrorDegrees);
-        SmartDashboard.putBoolean(side + "AbleToShoot", isAbleToShoot());
         targetBottomFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[0], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         targetTopFlywheelSpeed = MathUtil.clamp(flywheelSpeeds[1], 0d, Constants.Turret.kFlywheelMechanismMaxRps);
         if (isIndexingSupplier.getAsBoolean() || maxFlywheelOverrideSupplier.getAsBoolean()) {

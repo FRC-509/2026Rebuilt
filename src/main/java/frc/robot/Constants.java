@@ -165,18 +165,42 @@ public final class Constants {
 		public static final double kAutoTargetZoneHysteresisMeters = 0.35;
 
         public static final double kSWIMMaxAngularVelocity = 1.5 * Math.PI; // rad/s
+
+		public static class SWIM {
+			public static final String kEfficiencyKey = "TurretEfficiency";
+			public static final String kLeadScaleNearKey = "Turret/LeadScaleNear";
+			public static final String kLeadScaleMidLowLatKey = "Turret/LeadScaleMidLowLat";
+			public static final String kLeadScaleMidHighLatKey = "Turret/LeadScaleMidHighLat";
+			public static final String kLeadScaleFarLowLatKey = "Turret/LeadScaleFarLowLat";
+			public static final String kLeadScaleFarHighLatKey = "Turret/LeadScaleFarHighLat";
+
+			public static final double kEfficiencyDefault = 1.04; // overall shot scale
+			public static final double kLeftInsideAimOffsetMeters = -0.16;
+			public static final double kRightInsideAimOffsetMeters = -0.16;
+			
+			public static final double kLeadScaleNearDefault = 0.45; // Lead multiplier for near shots.
+			public static final double kLeadScaleMidLowLatDefault = 0.60; // Lead multiplier for mid-range, lower lateral speed shots.
+			public static final double kLeadScaleMidHighLatDefault = 0.68; // Lead multiplier for mid-range, higher lateral speed shots.
+			public static final double kLeadScaleFarLowLatDefault = 0.75; // Lead multiplier for far-range, lower lateral speed shots.
+			public static final double kLeadScaleFarHighLatDefault = 0.85; // Lead multiplier for far-range, higher lateral speed shots.
+
+			public static final double kLeadNearRangeMeters = 2.6; // Range where lead starts blending away from near-shot tuning.
+			public static final double kLeadMidRangeMeters = 3.8; // Range where lead finishes blending to mid-shot tuning.
+			public static final double kLeadLowLateralSpeed = 1.5; // Sideways speed threshold for mid-range low/high lead split.
+			public static final double kLeadHighLateralSpeed = 1.5; // Sideways speed threshold for far-range low/high lead split.
+		}
 	}
 
 	public static class Hopper { // TODO: find me
         public static final double kIntakingVelocity = 85;
 		public static final double kIndexingVelocity = 50;
 		
-		public static final double kIntakeExtension = 10+1.08;
+		public static final double kIntakeExtension = 10.141;
 		public static final double kIntakeFullExtensionMeters = 0.29;
         public static final double kRetractedExtensionOffset = 0.7;
         public static final double kRetractionResistanceTorqueThreshold = 100; // TODO: temp, increase for real
         public static final double kRetractionResistanceHoldOffset = 0.5;
-        public static final double kMinExtensionPosition = 0.9;
+        public static final double kMinExtensionPosition = 0.3;
         public static final double kMaxExtensionPosition = kIntakeExtension;
 	}
 
