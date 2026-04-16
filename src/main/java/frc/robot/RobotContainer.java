@@ -8,9 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Stream;
 
-import edu.wpi.first.cscore.HttpCamera;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -68,7 +66,6 @@ public class RobotContainer {
 	private GameManager gameManager;
 	private final NetworkTable elasticTable;
 	private final ShuffleboardTab elasticTab;
-	private final HttpCamera intakeLimelightCamera;
 	private static final Translation2d kFixedShotPosition = new Translation2d(0,AimTarget.HUB.position.getY());
 
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
@@ -80,9 +77,6 @@ public class RobotContainer {
 		this.vortex = new Vortex(swerve, new Pose2d(), hopper::getIntakeExtensionMeters);
 		this.elasticTable = NetworkTableInstance.getDefault().getTable("Elastic");
 		this.elasticTab = Shuffleboard.getTab("Elastic");
-		this.intakeLimelightCamera = new HttpCamera(
-			"Intake Limelight",
-			String.format("http://%s.local:5800/stream.mjpg", Constants.Vortex.kIntakeLimelightName));
 
 		this.leftTurret = new Turret(
 			Constants.Turret.kLeftTurretConfiguration,
@@ -292,10 +286,6 @@ public class RobotContainer {
 			.withWidget(BuiltInWidgets.kBooleanBox)
 			.withPosition(9, 3)
 			.withSize(1, 1);
-		elasticTab.add("Intake Limelight", intakeLimelightCamera)
-			.withWidget(BuiltInWidgets.kCameraStream)
-			.withPosition(10, 0)
-			.withSize(6, 4);
 
 		if (RobotBase.isSimulation()) {
 			elasticTab.add("Reset Swerve", Commands.runOnce(swerve::resetSimState, swerve))
@@ -357,8 +347,8 @@ public class RobotContainer {
 	}
 
 	private void enableFixedPoseShotMode() {
-		leftTurret.setOverrideAimTarget(true, AimTarget.HUB);
-		rightTurret.setOverrideAimTarget(true, AimTarget.HUB);
+		leftTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
+		rightTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
 		leftTurret.setOverridePositionEstimate(kFixedShotPosition);
 		rightTurret.setOverridePositionEstimate(kFixedShotPosition);
 	}

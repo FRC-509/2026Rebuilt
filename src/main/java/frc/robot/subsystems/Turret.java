@@ -160,11 +160,13 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.64,Constants.Field.kFieldWidth/2-0.15,1.88),0, 50),
+        HUB(new Translation3d(4.64,Constants.Field.kFieldWidth/2,1.88),0, 50),
         NEUTRALZONE_FEED_LEFT(new Translation3d(2.3,Constants.Field.kFieldWidth - 3.2,0),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(2.3,3.2,0), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(7,Constants.Field.kFieldWidth - 3.2,0),0, 0),
-        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(7.3,3.2,0), 0, 0);
+        OPPOSING_ALLIANCE_FEED_RIGHT(new Translation3d(7.3,3.2,0), 0, 0),
+
+        OVERRIDE_BEHIND_HUB(new Translation3d(-4.64,Constants.Field.kFieldWidth/2,0),0, -50);
 
         public final Translation3d position;
         public final double aimBehindMeters;
@@ -405,19 +407,20 @@ public class Turret extends SubsystemBase {
         double insideOffsetMeters = side.equalsIgnoreCase("left")
             ? Constants.Turret.SWIM.kLeftInsideAimOffsetMeters
             : Constants.Turret.SWIM.kRightInsideAimOffsetMeters;
-        if (Math.abs(insideOffsetMeters) < 1e-6) {
-            return targetTurretRelative;
-        }
 
         Translation2d targetVector = targetTurretRelative.toTranslation2d();
         double distance = targetVector.getNorm();
-        if (distance < 1e-6) {
+        if (distance < 1e-6 || Math.abs(insideOffsetMeters) < 1e-6) {
             return targetTurretRelative;
         }
 
         Translation2d aimUnit = targetVector.div(distance);
         Translation2d lateralUnit = new Translation2d(-aimUnit.getY(), aimUnit.getX());
-        Translation2d offset = lateralUnit.times(insideOffsetMeters * insideAimOffsetSign);
+        double scaledOffsetMeters = insideOffsetMeters;
+        if (distance > Constants.Turret.SWIM.kInsideAimStartDistanceMeters) {
+            scaledOffsetMeters *= Constants.Turret.SWIM.kInsideAimStartDistanceMeters / distance * Constants.Turret.SWIM.kInsideAimDistanceScale;
+        }
+        Translation2d offset = lateralUnit.times(scaledOffsetMeters * insideAimOffsetSign);
 
         return new Translation3d(
             targetTurretRelative.getX() + offset.getX(),

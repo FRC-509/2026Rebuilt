@@ -68,7 +68,9 @@ public class SwerveModule {
 		steerMotorConfig.Slot0.kI = Constants.PIDConstants.Drive.kSteerAngleI;
 		steerMotorConfig.Slot0.kD = Constants.PIDConstants.Drive.kSteerAngleD;
 		steerMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+		steerMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 		steerMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kSwerveModuleSupply;
+		steerMotorConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kSwerveModuleStator;
 
 		// Since we've just configured the steer motors to use data from the absolute
 		// encoders, we don't need to divide the steer motor's position by the gear
@@ -88,7 +90,9 @@ public class SwerveModule {
 		driveMotorConfig.Slot0.kS = Constants.PIDConstants.Drive.kDriveVelocityS;
 		driveMotorConfig.Slot0.kV = Constants.PIDConstants.Drive.kDriveVelocityV;
 		driveMotorConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-		driveMotorConfig.CurrentLimits.SupplyCurrentLimit = 35.0d;
+		driveMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+		driveMotorConfig.CurrentLimits.SupplyCurrentLimit = Constants.CurrentLimits.kSwerveModuleSupply;
+		driveMotorConfig.CurrentLimits.StatorCurrentLimit = Constants.CurrentLimits.kSwerveModuleStator;
 
 		this.driveMotor = new TalonFX(configs.driveMotorId(), Constants.kRio);
 		this.driveMotor.getConfigurator().apply(driveMotorConfig);

@@ -174,9 +174,12 @@ public final class Constants {
 			public static final String kLeadScaleFarLowLatKey = "LeadScaleFarLowLat";
 			public static final String kLeadScaleFarHighLatKey = "LeadScaleFarHighLat";
 
-			public static final double kEfficiencyDefault = 1.04; // overall shot scale
+			public static final double kEfficiencyDefault = 1.08; // overall shot scale
+
 			public static final double kLeftInsideAimOffsetMeters = -0.16;
 			public static final double kRightInsideAimOffsetMeters = -0.16;
+			public static final double kInsideAimStartDistanceMeters = 3.3; // Minimum range before inside aim correction begins.
+			public static final double kInsideAimDistanceScale = 0.3; // Scalar for how strongly inside aim offset falls with distance.
 			
 			public static final double kLeadScaleNearDefault = 0.45; // Lead multiplier for near shots.
 			public static final double kLeadScaleMidLowLatDefault = 0.60; // Lead multiplier for mid-range, lower lateral speed shots.
@@ -323,7 +326,7 @@ public final class Constants {
 
 	public static class CurrentLimits {
 		public static final double kSwerveModuleSupply = 35.0d;
-		// SwerveStator ?
+		public static final double kSwerveModuleStator = 67.0d;
 
         public static final double kTurretRotationSupply = 25;
         public static final double kTurretRotationStator = 35;
