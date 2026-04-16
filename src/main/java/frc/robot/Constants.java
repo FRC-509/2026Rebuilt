@@ -174,7 +174,7 @@ public final class Constants {
 			public static final String kLeadScaleFarLowLatKey = "LeadScaleFarLowLat";
 			public static final String kLeadScaleFarHighLatKey = "LeadScaleFarHighLat";
 
-			public static final double kEfficiencyDefault = 1.08; // overall shot scale
+			public static final double kEfficiencyDefault = 1.2; // overall shot scale
 
 			public static final double kLeftInsideAimOffsetMeters = -0.16;
 			public static final double kRightInsideAimOffsetMeters = -0.16;
