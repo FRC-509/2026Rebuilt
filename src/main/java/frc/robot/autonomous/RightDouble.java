@@ -21,21 +21,23 @@ public class RightDouble extends ParallelCommandGroup {
                 ChoreoAuto.StageHopper(hopper, leftTurret, rightTurret,
                     path.new ChoreoStage(0.8, HopperState.INTAKING, IndexerState.PASSIVE),
                     // first shoot
-                    path.new ChoreoStage(6.8, AimTarget.HUB, 4),
-                    path.new ChoreoStage(7.1, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH, true),
-                    path.new ChoreoStage(8.7, HopperState.INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(9.7, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(10.4, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(3.0, AimTarget.HUB, 4),
+                    path.new ChoreoStage(4.72, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH, true),
+                    path.new ChoreoStage(5.6, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(7.7, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(8.4, HopperState.INDEXING, IndexerState.BOTH),
 
-                    path.new ChoreoStage(11.2, HopperState.PASSIVE, IndexerState.PASSIVE),
+                    path.new ChoreoStage(9.35, HopperState.PASSIVE, IndexerState.PASSIVE),
 
                     // second shot
-                    path.new ChoreoStage(13.6, HopperState.INTAKING, IndexerState.PASSIVE),
-                    path.new ChoreoStage(14.6+5, AimTarget.HUB, 4),
-                    path.new ChoreoStage(15.7+5, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(18.4+5, HopperState.INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(19.15+5, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
-                    path.new ChoreoStage(21+5, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH)
+                    path.new ChoreoStage(10.63, HopperState.INTAKING, IndexerState.PASSIVE),
+
+                    path.new ChoreoStage(15.5, AimTarget.HUB, 4),
+                    path.new ChoreoStage(16.1, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(17.2, HopperState.INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(18.3, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(19.4, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),
+                    path.new ChoreoStage(21, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH)
                 )
             )
         );
