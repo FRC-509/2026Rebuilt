@@ -42,11 +42,12 @@ public class Hopper extends SubsystemBase {
     private double commandedExtensionSetpoint;
 
     public enum HopperState {
-        PASSIVE(false, 0.0d),
+        PASSIVE(false, Constants.Hopper.kIntakingVelocity), // this is extended so that it still runs backwards when intaking
         EXTENDED(true, 0.0d),
-        INDEXING(false, 0.0d), // depending on final geometry run intake wheels aswell 
+        INDEXING(false, Constants.Hopper.kIntakingVelocity), // depending on final geometry run intake wheels aswell 
         INTAKING(true, Constants.Hopper.kIntakingVelocity),
-        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity);
+        INTAKING_AND_INDEXING(true, Constants.Hopper.kIntakingVelocity),
+        OUTTAKING(true,-Constants.Hopper.kIntakingVelocity);
 
         public boolean hopperIsExtended;
         public double intakingVelocity;
@@ -242,7 +243,7 @@ public class Hopper extends SubsystemBase {
         kIntakeRotation.setControl(
             getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.1) || hopperState.equals(HopperState.EXTENDED)
             ? voltageOut.withOutput(0)
-            : intakeDutyCycle.withVelocity(Constants.Hopper.kIntakingVelocity));
+            : intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
     }
     
     @Override

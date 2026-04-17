@@ -166,6 +166,7 @@ public class RobotContainer {
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
 			() -> driverRight.getTrigger(),
+			() -> driverLeft.getTrigger(),
 			() -> driverRight.isDown(StickButton.Bottom),
 			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.getLeftTriggerAxis() > 0.7 || driverLeft.isDown(StickButton.Bottom),
 			() -> operatorController.b().getAsBoolean(),

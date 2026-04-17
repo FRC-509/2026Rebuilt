@@ -167,7 +167,6 @@ public final class Constants {
         public static final double kSWIMMaxAngularVelocity = 1.5 * Math.PI; // rad/s
 
 		public static class SWIM {
-			public static final String kEfficiencyKey = "TurretEfficiency";
 			public static final String kLeadScaleNearKey = "LeadScaleNear";
 			public static final String kLeadScaleMidLowLatKey = "LeadScaleMidLowLat";
 			public static final String kLeadScaleMidHighLatKey = "LeadScaleMidHighLat";
@@ -175,17 +174,18 @@ public final class Constants {
 			public static final String kLeadScaleFarHighLatKey = "LeadScaleFarHighLat";
 
 			public static final double kEfficiencyDefault = 1.2; // overall shot scale
+			public static final double kEfficiencyFar = 1.085; // overall shot scale
 
 			public static final double kLeftInsideAimOffsetMeters = -0.16;
 			public static final double kRightInsideAimOffsetMeters = -0.16;
 			public static final double kInsideAimStartDistanceMeters = 3.3; // Minimum range before inside aim correction begins.
 			public static final double kInsideAimDistanceScale = 0.3; // Scalar for how strongly inside aim offset falls with distance.
 			
-			public static final double kLeadScaleNearDefault = 0.45; // Lead multiplier for near shots.
-			public static final double kLeadScaleMidLowLatDefault = 0.60; // Lead multiplier for mid-range, lower lateral speed shots.
-			public static final double kLeadScaleMidHighLatDefault = 0.68; // Lead multiplier for mid-range, higher lateral speed shots.
-			public static final double kLeadScaleFarLowLatDefault = 0.75; // Lead multiplier for far-range, lower lateral speed shots.
-			public static final double kLeadScaleFarHighLatDefault = 0.85; // Lead multiplier for far-range, higher lateral speed shots.
+			public static final double kLeadScaleNearDefault = 0.8; // Lead multiplier for near shots.
+			public static final double kLeadScaleMidLowLatDefault = 0.8; // Lead multiplier for mid-range, lower lateral speed shots.
+			public static final double kLeadScaleMidHighLatDefault = 2.0; // Lead multiplier for mid-range, higher lateral speed shots.
+			public static final double kLeadScaleFarLowLatDefault = 1.0; // Lead multiplier for far-range, lower lateral speed shots.
+			public static final double kLeadScaleFarHighLatDefault = 5.5; // Lead multiplier for far-range, higher lateral speed shots.
 
 			public static final double kLeadNearRangeMeters = 2.6; // Range where lead starts blending away from near-shot tuning.
 			public static final double kLeadMidRangeMeters = 3.8; // Range where lead finishes blending to mid-shot tuning.

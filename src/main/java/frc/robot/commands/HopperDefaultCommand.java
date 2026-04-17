@@ -12,6 +12,7 @@ public class HopperDefaultCommand extends Command {
     private final Hopper hopper;
 
     private BooleanSupplier intakeSupplier;
+    private BooleanSupplier outtakeSupplier;
     private BooleanSupplier keepIntakeExtendedSupplier;
     private BooleanSupplier indexingSupplier;
     private BooleanSupplier reverseIndexingSupplier;
@@ -25,6 +26,7 @@ public class HopperDefaultCommand extends Command {
     public HopperDefaultCommand(
             Hopper hopper,
             BooleanSupplier intakeSupplier,
+            BooleanSupplier outtakeSupplier,
             BooleanSupplier keepIntakeExtendedSupplier,
             BooleanSupplier indexingSupplier,
             BooleanSupplier reverseIndexingSupplier,
@@ -37,6 +39,7 @@ public class HopperDefaultCommand extends Command {
         this.hopper = hopper;
 
         this.intakeSupplier = intakeSupplier;
+        this.outtakeSupplier = outtakeSupplier;
         this.keepIntakeExtendedSupplier = keepIntakeExtendedSupplier;
         this.indexingSupplier = indexingSupplier;
         this.reverseIndexingSupplier = reverseIndexingSupplier;
@@ -61,6 +64,7 @@ public class HopperDefaultCommand extends Command {
         this.hopper = hopper;
 
         this.intakeSupplier = () -> isIntaking;
+        this.outtakeSupplier = () -> false;
         this.keepIntakeExtendedSupplier = () -> false;
         this.indexingSupplier = () -> isIndexing;
         this.reverseIndexingSupplier = () -> false;
@@ -78,7 +82,8 @@ public class HopperDefaultCommand extends Command {
     public void execute() {
         boolean manualIndexing = indexingSupplier.getAsBoolean();
         boolean shouldIndex = manualIndexing || prefireSupplier.getAsBoolean();
-        if (intakeSupplier.getAsBoolean()) {
+        if (outtakeSupplier.getAsBoolean()) hopper.setHopperState(HopperState.OUTTAKING, IndexerState.REVERSE);
+        else if (intakeSupplier.getAsBoolean()) {
             if (reverseIndexingSupplier.getAsBoolean()) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, IndexerState.REVERSE);
             else if (shouldIndex) hopper.setHopperState(HopperState.INTAKING_AND_INDEXING, getDesiredIndexerState());
             else hopper.setHopperState(HopperState.INTAKING, IndexerState.PASSIVE);

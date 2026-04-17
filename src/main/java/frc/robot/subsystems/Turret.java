@@ -15,6 +15,8 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -151,7 +153,7 @@ public class Turret extends SubsystemBase {
             case "right" -> 1.0;
             default -> throw new IllegalArgumentException("Unknown turret side: " + side);
         };
-        this.efficiency = Constants.Turret.kEfficiency;
+        this.efficiency = Constants.Turret.SWIM.kEfficiencyDefault;
 
         this.overshootSupplier = overshootSupplier;
         this.maxFlywheelOverrideSupplier = maxFlywheelOverrideSupplier;
@@ -160,7 +162,7 @@ public class Turret extends SubsystemBase {
     public enum AimTarget {
 
         NONE(Translation3d.kZero, 0, 0),
-        HUB(new Translation3d(4.505,Constants.Field.kFieldWidth/2 - 0.45,1.88),0, 50),
+        HUB(new Translation3d(4.88,Constants.Field.kFieldWidth/2,1.88),0, 50),
         NEUTRALZONE_FEED_LEFT(new Translation3d(2.3,Constants.Field.kFieldWidth - 3.2,0),0, 0),
         NEUTRALZONE_FEED_RIGHT(new Translation3d(2.3,3.2,0), 0, 0),
         OPPOSING_ALLIANCE_FEED_LEFT(new Translation3d(7,Constants.Field.kFieldWidth - 3.2,0),0, 0),
@@ -179,11 +181,11 @@ public class Turret extends SubsystemBase {
         }
 
         public Translation3d aimAccountedTarget(double turretYawRadians, boolean overshoot) { // aim slightly behind target for accuracy, and account for chassis movement
-            double overshootDist = overshoot ? 0.175 : 0;
-            
+            double overshootDist = overshoot ? 0.18 : 0;
+            double centerDiffSide = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
             return new Translation3d(
                 position.getX() + aimBehindMeters * Math.cos(turretYawRadians) + overshootDist,
-                position.getY() + aimBehindMeters * Math.sin(turretYawRadians),
+                position.getY() + aimBehindMeters * Math.sin(turretYawRadians) - centerDiffSide * 0.25,
                 position.getZ()
             );
         }
@@ -514,10 +516,11 @@ public class Turret extends SubsystemBase {
                 break;
             }
 
+            double leadScaleSide = SwerveDrive.getAlliance() == edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? -1 : 1;
             double leadScale = getMovingLeadScale(target, turretPosition, targetPosition, robotVelocity);
             compensatedTargetPosition = targetPosition.minus(new Translation3d(
-                robotVelocity.getX() * flightTimeSeconds * leadScale,
-                robotVelocity.getY() * flightTimeSeconds * leadScale,
+                robotVelocity.getX() * flightTimeSeconds * leadScale * leadScaleSide,
+                robotVelocity.getY() * flightTimeSeconds * leadScale * leadScaleSide,
                 0.0));
         }
 
@@ -531,6 +534,7 @@ public class Turret extends SubsystemBase {
             Translation2d robotVelocity) {
         double rangeMeters = turretPosition.getDistance(targetPosition.toTranslation2d());
         double lateralVelocity = Math.abs(getLateralVelocityMetersPerSecond(turretPosition, targetPosition, robotVelocity));
+        lateralVelocity *= SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
         double nearScale = Constants.tunableNumber(
             Constants.Turret.SWIM.kLeadScaleNearKey,
             Constants.Turret.SWIM.kLeadScaleNearDefault);
@@ -717,6 +721,17 @@ public class Turret extends SubsystemBase {
         return calculateFlywheelRpsFromExitVelocity(finalExitVelocity);
     }
 
+    private double getEfficiencyScale(double rangeMeters) {
+        double nearScale = Constants.Turret.SWIM.kEfficiencyDefault;
+        double farScale = Constants.Turret.SWIM.kEfficiencyFar;
+        double rangeBlend = MathUtil.clamp(
+            rangeMeters / Constants.Turret.SWIM.kLeadMidRangeMeters - 1,
+            0.0,
+            1.0);
+        return MathUtil.interpolate(nearScale, farScale, rangeBlend);
+        // return nearScale + nearScale/farScale * rangeMeters/Constants.Turret.SWIM.kLeadMidRangeMeters;
+    }
+
     @Override
     public void periodic() {
         // zeroing functionality to move until you hit minimum hardstop
@@ -732,9 +747,8 @@ public class Turret extends SubsystemBase {
 
 
         if (!overrideAimTarget) aimTarget = getTargetFromPosition();
-        efficiency = Constants.tunableNumber(
-            Constants.Turret.SWIM.kEfficiencyKey,
-            Constants.Turret.SWIM.kEfficiencyDefault);
+        Translation3d targetTurretRelative3d = getTargetTurretRelative(aimTarget);
+        efficiency = getEfficiencyScale(targetTurretRelative3d.toTranslation2d().getNorm());
         SmartDashboard.putNumber(
             Constants.Turret.SWIM.kLeadScaleNearKey,
             Constants.tunableNumber(
@@ -765,7 +779,6 @@ public class Turret extends SubsystemBase {
         double turretYawRadians = getTurretYawRadians();
         Translation2d robotVelocity = getAllianceRobotVelocity();
         Translation2d turretVelocity = getAllianceTurretVelocity(robotVelocity, turretYawRadians);
-        Translation3d targetTurretRelative3d = getTargetTurretRelative(aimTarget);
         Translation2d targetTurretRelative = targetTurretRelative3d.toTranslation2d();
         double angleToTarget = Math.toDegrees(
             Math.atan2(targetTurretRelative.getY(), targetTurretRelative.getX()) - turretYawRadians);
