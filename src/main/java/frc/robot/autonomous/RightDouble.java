@@ -30,7 +30,7 @@ public class RightDouble extends ParallelCommandGroup {
                     path.new ChoreoStage(9.35, HopperState.PASSIVE, IndexerState.PASSIVE),
 
                     // second shot
-                    path.new ChoreoStage(10.63, HopperState.INTAKING, IndexerState.PASSIVE),
+                    path.new ChoreoStage(11.63, HopperState.INTAKING, IndexerState.PASSIVE),
 
                     path.new ChoreoStage(15.5, AimTarget.HUB, 4),
                     path.new ChoreoStage(16.1, HopperState.INTAKING_AND_INDEXING, IndexerState.BOTH),

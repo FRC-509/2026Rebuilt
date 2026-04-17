@@ -143,10 +143,11 @@ public class Turret extends SubsystemBase {
         this.canAim = false;
         this.lastAutoSelectedTarget = AimTarget.HUB;
 
-        this.hasZeroedPosition = false;
-        this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble(); // temp (?) to assume zeroed on initialize
         this.zeroesCounterClockwise = turretConfiguration.zeroesCounterClockwise();
         this.zeroedRotationMaximumAdded = zeroesCounterClockwise ? maxRotationCounterclockwise : maxRotationClockwise;
+        this.hasZeroedPosition = true;
+        this.zeroedRotationOffset = this.kRotationMotor.getPosition().getValueAsDouble()
+            + zeroedRotationMaximumAdded / 360.0;
         this.side = turretConfiguration.side();
         this.insideAimOffsetSign = switch (side.toLowerCase()) {
             case "left" -> -1.0;
@@ -220,10 +221,6 @@ public class Turret extends SubsystemBase {
 
     public boolean wantsRightFeed() {
         return aimTarget == AimTarget.NEUTRALZONE_FEED_RIGHT || aimTarget == AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT;
-    }
-
-    public void setShootSpeed(boolean isIndexing){
-
     }
 
     public Translation2d getTurretAlliancePosition() {

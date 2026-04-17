@@ -168,12 +168,12 @@ public class RobotContainer {
 			() -> driverRight.getTrigger(),
 			() -> driverLeft.getTrigger(),
 			() -> driverRight.isDown(StickButton.Bottom),
-			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.getLeftTriggerAxis() > 0.7 || driverLeft.isDown(StickButton.Bottom),
+			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.leftBumper().getAsBoolean() || driverLeft.isDown(StickButton.Bottom),
 			() -> operatorController.b().getAsBoolean(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7 
+			() -> operatorController.leftBumper().getAsBoolean()
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
 					&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName),
-			() -> operatorController.getLeftTriggerAxis() > 0.7,
+			() -> operatorController.leftBumper().getAsBoolean(),
 			() -> leftTurret.wantsLeftFeed() || rightTurret.wantsLeftFeed(),
 			() -> leftTurret.wantsRightFeed() || rightTurret.wantsRightFeed(),
 			() -> leftTurret.isShooterUpToSpeed() && leftTurret.isAbleToShoot(),
@@ -341,7 +341,7 @@ public class RobotContainer {
 
 	private boolean shouldSpinUpFeedFlywheels() {
 		boolean manualIndexRequest = operatorController.getRightTriggerAxis() > 0.7;
-		boolean prefireRequest = Math.abs(operatorController.getLeftTriggerAxis()) > 0.7
+		boolean prefireRequest = operatorController.leftBumper().getAsBoolean()
 			&& gameManager.shouldPrefire(getAirtimeEstimate())
 			&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName);
 		return hopper.shouldSpinUpFeedFlywheels() || manualIndexRequest || prefireRequest;

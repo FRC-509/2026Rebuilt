@@ -174,7 +174,7 @@ public final class Constants {
 			public static final String kLeadScaleFarHighLatKey = "LeadScaleFarHighLat";
 
 			public static final double kEfficiencyDefault = 1.2; // overall shot scale
-			public static final double kEfficiencyFar = 1.085; // overall shot scale
+			public static final double kEfficiencyFar = 1.0775; // overall shot scale
 			public static final double kOvershootMinMeters = 0.0;
 			public static final double kOvershootMaxMeters = 0.5;
 
