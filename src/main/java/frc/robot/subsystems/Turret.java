@@ -47,7 +47,7 @@ public class Turret extends SubsystemBase {
     private final DoubleSupplier robotYawRadiansSupplier;
     private final DoubleSupplier robotAngularVelocitySupplier;
     private final BooleanSupplier isIndexingSupplier;
-    private final BooleanSupplier overshootSupplier;
+    private final DoubleSupplier overshootSupplier;
     private final BooleanSupplier maxFlywheelOverrideSupplier;
 
     private AimTarget aimTarget;
@@ -73,7 +73,7 @@ public class Turret extends SubsystemBase {
             DoubleSupplier robotYawSupplier,
             DoubleSupplier robotAngularVelocitySupplier,
             BooleanSupplier isIndexingSupplier,
-            BooleanSupplier overshootSupplier,
+            DoubleSupplier overshootSupplier,
             BooleanSupplier maxFlywheelOverrideSupplier) {
         this.kRotationMotor = new TalonFX(turretConfiguration.rotationMotorId(), Constants.kCanivore);
         this.kTopFlywheelMotor = new TalonFX(turretConfiguration.topFlywheelMotorId(), Constants.kCanivore);
@@ -180,11 +180,10 @@ public class Turret extends SubsystemBase {
             this.targetBackspinRadSec = targetBackspinRadSec;
         }
 
-        public Translation3d aimAccountedTarget(double turretYawRadians, boolean overshoot) { // aim slightly behind target for accuracy, and account for chassis movement
-            double overshootDist = overshoot ? 0.18 : 0;
+        public Translation3d aimAccountedTarget(double turretYawRadians, double overshootMeters) { // aim slightly behind target for accuracy, and account for chassis movement
             double centerDiffSide = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
             return new Translation3d(
-                position.getX() + aimBehindMeters * Math.cos(turretYawRadians) + overshootDist,
+                position.getX() + aimBehindMeters * Math.cos(turretYawRadians) + overshootMeters,
                 position.getY() + aimBehindMeters * Math.sin(turretYawRadians) - centerDiffSide * 0.25,
                 position.getZ()
             );
@@ -602,7 +601,12 @@ public class Turret extends SubsystemBase {
     }
 
     private Translation3d getAllianceAdjustedTargetFieldPosition(AimTarget target, Translation2d turretPosition, double yawRadians) {
-        Translation3d targetPosition = target.aimAccountedTarget(yawRadians, overshootSupplier.getAsBoolean());
+        double overshootInput = MathUtil.clamp(overshootSupplier.getAsDouble(), 0.0, 1.0);
+        double overshootMeters = MathUtil.interpolate(
+            Constants.Turret.SWIM.kOvershootMinMeters,
+            Constants.Turret.SWIM.kOvershootMaxMeters,
+            overshootInput);
+        Translation3d targetPosition = target.aimAccountedTarget(yawRadians, overshootMeters);
         if (target != AimTarget.HUB) {
             return targetPosition;
         }

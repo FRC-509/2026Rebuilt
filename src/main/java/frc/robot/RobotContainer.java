@@ -90,8 +90,8 @@ public class RobotContainer {
 			() -> swerve.getYaw().getRadians(),
 			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
 			this::shouldSpinUpFeedFlywheels,
-			() -> operatorController.leftBumper().getAsBoolean(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
+			operatorController::getLeftTriggerAxis,
+			() -> operatorController.leftBumper().getAsBoolean());
 			
 			
 		this.rightTurret = new Turret(
@@ -106,8 +106,8 @@ public class RobotContainer {
 			() -> swerve.getYaw().getRadians(),
 			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
 			this::shouldSpinUpFeedFlywheels,
-			() -> operatorController.leftBumper().getAsBoolean(),
-			() -> Math.abs(operatorController.getLeftTriggerAxis()) > 0.7);
+			operatorController::getLeftTriggerAxis,
+			() -> operatorController.leftBumper().getAsBoolean());
 
 		configureBindings();
 		addAutonomousRoutines();

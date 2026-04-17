@@ -175,6 +175,8 @@ public final class Constants {
 
 			public static final double kEfficiencyDefault = 1.2; // overall shot scale
 			public static final double kEfficiencyFar = 1.085; // overall shot scale
+			public static final double kOvershootMinMeters = 0.0;
+			public static final double kOvershootMaxMeters = 0.5;
 
 			public static final double kLeftInsideAimOffsetMeters = -0.16;
 			public static final double kRightInsideAimOffsetMeters = -0.16;
