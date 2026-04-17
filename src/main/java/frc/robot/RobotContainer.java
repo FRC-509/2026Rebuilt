@@ -31,7 +31,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.Turret;
 import frc.robot.subsystems.Turret.AimTarget;
 import frc.robot.subsystems.Vortex;
-import frc.robot.autonomous.CenterBoth;
+import frc.robot.autonomous.CenterBothMoving;
 import frc.robot.autonomous.CenterDepot;
 import frc.robot.autonomous.LeftBumpDepot;
 import frc.robot.autonomous.RightBoth;
@@ -241,7 +241,7 @@ public class RobotContainer {
 		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
 		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper, leftTurret, rightTurret));
 		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("CenterBoth", new CenterBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		chooser.addOption("CenterBoth", new CenterBothMoving(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 		chooser.addOption("RightFeed", new RightFeed(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
