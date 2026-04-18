@@ -181,10 +181,10 @@ public class Turret extends SubsystemBase {
             this.targetBackspinRadSec = targetBackspinRadSec;
         }
 
-        public Translation3d aimAccountedTarget(double turretYawRadians, double overshootMeters) { // aim slightly behind target for accuracy, and account for chassis movement
+        public Translation3d aimAccountedTarget(double turretYawRadians) { // aim slightly behind target for accuracy
             double centerDiffSide = SwerveDrive.getAlliance() != edu.wpi.first.wpilibj.DriverStation.Alliance.Red ? 1 : -1;
             return new Translation3d(
-                position.getX() + aimBehindMeters * Math.cos(turretYawRadians) + overshootMeters,
+                position.getX() + aimBehindMeters * Math.cos(turretYawRadians),
                 position.getY() + aimBehindMeters * Math.sin(turretYawRadians) - centerDiffSide * 0.25,
                 position.getZ()
             );
@@ -603,7 +603,16 @@ public class Turret extends SubsystemBase {
             Constants.Turret.SWIM.kOvershootMinMeters,
             Constants.Turret.SWIM.kOvershootMaxMeters,
             overshootInput);
-        Translation3d targetPosition = target.aimAccountedTarget(yawRadians, overshootMeters);
+        Translation3d targetPosition = target.aimAccountedTarget(yawRadians);
+        Translation2d targetVector = targetPosition.toTranslation2d().minus(turretPosition);
+        double targetDistance = targetVector.getNorm();
+        if (targetDistance > 1e-6 && overshootMeters > 0.0) {
+            Translation2d overshootOffset = targetVector.div(targetDistance).times(overshootMeters);
+            targetPosition = new Translation3d(
+                targetPosition.getX() + overshootOffset.getX(),
+                targetPosition.getY() + overshootOffset.getY(),
+                targetPosition.getZ());
+        }
         if (target != AimTarget.HUB) {
             return targetPosition;
         }
