@@ -240,10 +240,7 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setDesiredIntakeVelocity() {
-        kIntakeRotation.setControl(
-            getCurrentExtensionPosition() < (Constants.Hopper.kMaxExtensionPosition * 0.1) || hopperState.equals(HopperState.EXTENDED)
-            ? voltageOut.withOutput(0)
-            : intakeDutyCycle.withVelocity(hopperState.intakingVelocity));
+        kIntakeRotation.setControl(voltageOut.withOutput(0)); //Intake Rotation motor is not going to rotate due to alarming sound created by the two rollers
     }
     
     @Override
