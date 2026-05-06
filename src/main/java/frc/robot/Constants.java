@@ -138,7 +138,7 @@ public final class Constants {
 		// TODO: find me
 		public static final double kRotationMotorToMechanismRatio = 148/12d / 1.23991;
 		public static final double kFlywheelMotorToMechanismRatio = 24.0 / 18.0;
-		public static final double kFlywheelMechanismMaxRps = 100.0d / kFlywheelMotorToMechanismRatio;
+		public static final double kFlywheelMechanismMaxRps = 100.0d / kFlywheelMotorToMechanismRatio * 0.1;
 
 		public static final double kRotationTolerance = 4; // degrees
 		public static final double kFlywheelSpeedTolerance = 25.0 / 60.0; // rotations per second (25 rpm)
