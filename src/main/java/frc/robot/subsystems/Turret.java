@@ -823,3 +823,63 @@ public class Turret extends SubsystemBase {
         this.hasZeroedPosition = false;
     }
 }
+
+
+
+
+
+
+/*
+ * Hello Whoever This May End Up With!!
+ * This is a guide to activitating the robot for 509 day by me! Zac!
+ * Anyway, so...
+ * 1) make sure the robot is turned on. 
+ * 2) go to the wifi settings and connect to the redstorm 509 wifi network.
+ * 3) wait for the happy kraken sound from the robot
+ * 4) press ctrl + shift + p
+ * 5) type in deploy robot code
+ * 6) click/enter that 
+ * 7) wait for the build to become succesful -> if it is not, call either zac or dylan 
+ * 8)go to driver station and enable when the area around the robot is clear
+ * 9) have fun driving!
+ * 
+ * Note: zac will send a photo of the operator controls to dave
+ * Note 2: when the balls are jammed in the hopper, click the extend intake button a tiny bit so the fuel gets unjammed
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
