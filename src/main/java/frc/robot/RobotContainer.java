@@ -122,7 +122,10 @@ public class RobotContainer {
 				() -> nonInvSquare(-driverRight.getX()),
 				() -> driverLeft.getTrigger(),
 				() -> driverRight.getTrigger(),
-				() -> true));
+				() -> false)); 
+				
+				//set to robot relative to make driving easier for newer members. 
+				//Also, there is most likely no field in outreach events
 
 		driverLeft.isPressedBind(StickButton.Left, Commands.runOnce(() -> {
 			pigeon.setYaw(0);
