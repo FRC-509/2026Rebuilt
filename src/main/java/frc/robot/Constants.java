@@ -197,7 +197,7 @@ public final class Constants {
 	}
 
 	public static class Hopper { // TODO: find me
-        public static final double kIntakingVelocity = 85;
+        public static final double kIntakingVelocity = 0;
 		public static final double kIndexingVelocity = 50;
 		
 		public static final double kIntakeExtension = 10.141;

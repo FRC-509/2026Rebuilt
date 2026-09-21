@@ -240,7 +240,7 @@ public class Hopper extends SubsystemBase {
     }
 
     private void setDesiredIntakeVelocity() {
-        kIntakeRotation.setControl(voltageOut.withOutput(0)); //Intake Rotation motor is not going to rotate due to alarming sound created by the two rollers
+        kIntakeRotation.setControl(voltageOut.withOutput(Constants.Hopper.kIntakingVelocity)); //Intake Rotation motor is not going to rotate due to alarming sound created by the two rollers
     }
     
     @Override

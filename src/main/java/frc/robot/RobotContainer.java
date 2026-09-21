@@ -56,7 +56,7 @@ public class RobotContainer {
 
 	private final ThrustmasterJoystick driverLeft = new ThrustmasterJoystick(0);
 	private final ThrustmasterJoystick driverRight = new ThrustmasterJoystick(1);
-	private final CommandXboxController operatorController = new CommandXboxController(2);
+	 private final CommandXboxController operatorController = new CommandXboxController(2);
 	
 	private final SwerveDrive swerve;
 	private final Turret leftTurret;
@@ -73,41 +73,41 @@ public class RobotContainer {
     public RobotContainer() {
 		this.swerve = new SwerveDrive(pigeon);
 		this.gameManager = new GameManager();
-		this.hopper = new Hopper();
-		this.vortex = new Vortex(swerve, new Pose2d(), hopper::getIntakeExtensionMeters);
+		 this.hopper = new Hopper();
+		 this.vortex = new Vortex(swerve, new Pose2d(), hopper::getIntakeExtensionMeters);
 		this.elasticTable = NetworkTableInstance.getDefault().getTable("Elastic");
 		this.elasticTab = Shuffleboard.getTab("Elastic");
 
-		this.leftTurret = new Turret(
-			Constants.Turret.kLeftTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() {
-				public Translation2d getAsTranslation2d() {
-					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
-					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-				}
-			},
-			() -> swerve.getYaw().getRadians(),
-			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
-			this::shouldSpinUpFeedFlywheels,
-			operatorController::getLeftTriggerAxis,
-			() -> operatorController.leftBumper().getAsBoolean());
+		 this.leftTurret = new Turret(
+		 	Constants.Turret.kLeftTurretConfiguration,
+		 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+		 	new Translation2dSupplier() {
+		 		public Translation2d getAsTranslation2d() {
+		 			ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+			return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+		 		}
+		 	},
+		 	() -> swerve.getYaw().getRadians(),
+		 	() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
+		 	this::shouldSpinUpFeedFlywheels,
+		 	operatorController::getLeftTriggerAxis,
+		 	() -> operatorController.leftBumper().getAsBoolean());
 			
 			
-		this.rightTurret = new Turret(
-			Constants.Turret.kRightTurretConfiguration,
-			new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
-			new Translation2dSupplier() {
-				public Translation2d getAsTranslation2d() {
-					ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
-					return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-				}
-			},
-			() -> swerve.getYaw().getRadians(),
-			() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
-			this::shouldSpinUpFeedFlywheels,
-			operatorController::getLeftTriggerAxis,
-			() -> operatorController.leftBumper().getAsBoolean());
+		 this.rightTurret = new Turret(
+		 	Constants.Turret.kRightTurretConfiguration,
+		 	new Translation2dSupplier() { public Translation2d getAsTranslation2d() { return vortex.getEstimatedAlliancePosition(); } },
+		 	new Translation2dSupplier() {
+		 		public Translation2d getAsTranslation2d() {
+		 			ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(swerve.getChassisSpeeds(), swerve.getYaw());
+		 			return new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+	 		}
+	 	},
+	 	() -> swerve.getYaw().getRadians(),
+		 	() -> swerve.getChassisSpeeds().omegaRadiansPerSecond,
+		 	this::shouldSpinUpFeedFlywheels,
+		 	operatorController::getLeftTriggerAxis,
+		 	() -> operatorController.leftBumper().getAsBoolean());
 
 		configureBindings();
 		addAutonomousRoutines();
@@ -122,17 +122,18 @@ public class RobotContainer {
 				() -> nonInvSquare(-driverRight.getX()),
 				() -> driverLeft.getTrigger(),
 				() -> driverRight.getTrigger(),
-				() -> false)); 
+				() -> true)); 
 				
-				//set to robot relative to make driving easier for newer members. 
-				//Also, there is most likely no field in outreach events
-
+				
 		driverLeft.isPressedBind(StickButton.Left, Commands.runOnce(() -> {
 			pigeon.setYaw(0);
 			swerve.setTargetHeading(0);
 		}, swerve));
 
-		driverRight.isDownBind(StickButton.Right, Commands.run(swerve::enterXStance, swerve));
+		driverRight.isDownBind(StickButton.Right, Commands.runEnd(
+			() -> swerve.drive(new Translation2d(0.6,0), 0d, true, false), 
+			() -> swerve.stopModules(), 
+			swerve));
 
 		// (new Trigger(() -> driverRight.getPOV(0) == 0)).onTrue(
 		// 	new AlignToHeading(
@@ -183,113 +184,113 @@ public class RobotContainer {
 			() -> rightTurret.isShooterUpToSpeed() && rightTurret.isAbleToShoot()));
 
 
-		// force feed override
-		(new Trigger(() -> operatorController.povRight().getAsBoolean()))
-			.onTrue(Commands.runOnce(
-				() -> {
-					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-				}, leftTurret, rightTurret))
-			.onFalse(Commands.runOnce(
-			() -> {
-				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-			}, leftTurret, rightTurret));
+		// // force feed override
+		// (new Trigger(() -> operatorController.povRight().getAsBoolean()))
+		// 	.onTrue(Commands.runOnce(
+		// 		() -> {
+		// 			leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+		// 			rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+		// 		}, leftTurret, rightTurret))
+		// 	.onFalse(Commands.runOnce(
+		// 	() -> {
+		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 	}, leftTurret, rightTurret));
 		
-		(new Trigger(() -> operatorController.povLeft().getAsBoolean()))
-			.onTrue(Commands.runOnce(
-				() -> {
-					leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-					rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-				}, leftTurret, rightTurret))
-			.onFalse(Commands.runOnce(
-			() -> {
-				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-			}, leftTurret, rightTurret));
+		// (new Trigger(() -> operatorController.povLeft().getAsBoolean()))
+		// 	.onTrue(Commands.runOnce(
+		// 		() -> {
+		// 			leftTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+		// 			rightTurret.setOverrideAimTarget(true, AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+		// 		}, leftTurret, rightTurret))
+		// 	.onFalse(Commands.runOnce(
+		// 	() -> {
+		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 	}, leftTurret, rightTurret));
 		
-		(new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
-			.onTrue(Commands.runOnce(
-				() -> {
-					boolean leftTurretIsFurtherLeft = leftTurret.getTurretFieldPose().getY() >= rightTurret.getTurretFieldPose().getY();
-					leftTurret.setOverrideAimTarget(
-						true,
-						leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
-					rightTurret.setOverrideAimTarget(
-						true,
-						leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT : AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
-				}, leftTurret, rightTurret))
-			.onFalse(Commands.runOnce(
-			() -> {
-				leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-				rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-			}, leftTurret, rightTurret));
+		// (new Trigger(() -> operatorController.povDown().getAsBoolean())) // force split feed
+		// 	.onTrue(Commands.runOnce(
+		// 		() -> {
+		// 			boolean leftTurretIsFurtherLeft = leftTurret.getTurretFieldPose().getY() >= rightTurret.getTurretFieldPose().getY();
+		// 			leftTurret.setOverrideAimTarget(
+		// 				true,
+		// 				leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_LEFT : AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT);
+		// 			rightTurret.setOverrideAimTarget(
+		// 				true,
+		// 				leftTurretIsFurtherLeft ? AimTarget.OPPOSING_ALLIANCE_FEED_RIGHT : AimTarget.OPPOSING_ALLIANCE_FEED_LEFT);
+		// 		}, leftTurret, rightTurret))
+		// 	.onFalse(Commands.runOnce(
+		// 	() -> {
+		// 		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// 	}, leftTurret, rightTurret));
 
-		operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
-		operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
-		operatorController.a().onTrue(Commands.runOnce(() -> {
-			leftTurret.zeroPosition();
-			rightTurret.zeroPosition();
-		}));
+		// operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
+		// operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
+		// operatorController.a().onTrue(Commands.runOnce(() -> {
+		// 	leftTurret.zeroPosition();
+		// 	rightTurret.zeroPosition();
+		// }));
 
 		// fixed position bind
 		operatorController.rightBumper()
 			.onTrue(Commands.runOnce(this::enableFixedPoseShotMode, leftTurret, rightTurret))
 			.onFalse(Commands.runOnce(this::disableFixedPoseShotMode, leftTurret, rightTurret));
 
-		operatorController.start().onTrue(Commands.runOnce(hopper::zeroPosition, hopper));
+		// operatorController.start().onTrue(Commands.runOnce(hopper::zeroPosition, hopper));
 	}
 
 	private void addAutonomousRoutines() {
-		chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
-		chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper, leftTurret, rightTurret));
-		chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("CenterBoth", new CenterBothMoving(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("RightFeed", new RightFeed(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
-		chooser.addOption("RightDouble", new RightDouble(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("\"Go AFK\" (Null)", new InstantCommand());
+		// chooser.addOption("Shoot Preload", ShootPreloadAuto.create(hopper, leftTurret, rightTurret));
+		// chooser.addOption("CenterDepot", new CenterDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("CenterBoth", new CenterBothMoving(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("RightBoth", new RightBoth(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("LeftBumpDepot", new LeftBumpDepot(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("RightFeed", new RightFeed(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
+		// chooser.addOption("RightDouble", new RightDouble(swerve, pigeon, vortex, hopper, leftTurret, rightTurret));
 	}
 
 	private void configureElastic() {
-		SmartDashboard.putData("Elastic/Robot Field", vortex.getField());
+		// SmartDashboard.putData("Elastic/Robot Field", vortex.getField());
 		SmartDashboard.putData("Elastic/Auto Mode", chooser);
 
-		elasticTab.add("Robot Field", vortex.getField())
-			.withWidget(BuiltInWidgets.kField)
-			.withPosition(0, 0)
-			.withSize(6, 4);
-		elasticTab.add("Auto Mode", chooser)
-			.withWidget(BuiltInWidgets.kComboBoxChooser)
-			.withPosition(6, 0)
-			.withSize(3, 1);
-		elasticTab.addDouble("Match Timer", gameManager::getMatchTimeSeconds).
-			withWidget(BuiltInWidgets.kDial);
-		elasticTab.addString("Match Phase", () -> gameManager.getCurrentPhase().name())
-			.withWidget(BuiltInWidgets.kTextView)
-			.withPosition(8, 1)
-			.withSize(2, 1);
-		elasticTab.addBoolean("Hub is Active", gameManager::isHubActive)
-			.withWidget(BuiltInWidgets.kBooleanBox)
-			.withPosition(8, 2)
-			.withSize(1, 1);
-		elasticTab.addDouble("Time Until Shift", gameManager::getTimeToNextShift)
-			.withWidget(BuiltInWidgets.kNumberBar)
-			.withProperties(Map.of("Min", -1, "Max", 30))
-			.withPosition(9, 2)
-			.withSize(1, 1);
-		elasticTab.addDouble("Swerve Yaw", () -> swerve.getYaw().getDegrees())
-			.withWidget(BuiltInWidgets.kDial)
-			.withPosition(6, 2)
-			.withSize(2, 2);
-		elasticTab.addBoolean("Left Can Shoot", leftTurret::isAbleToShoot)
-			.withWidget(BuiltInWidgets.kBooleanBox)
-			.withPosition(8, 3)
-			.withSize(1, 1);
-		elasticTab.addBoolean("Right Can Shoot", rightTurret::isAbleToShoot)
-			.withWidget(BuiltInWidgets.kBooleanBox)
-			.withPosition(9, 3)
-			.withSize(1, 1);
+		// // elasticTab.add("Robot Field", vortex.getField())
+		// // 	.withWidget(BuiltInWidgets.kField)
+		// // 	.withPosition(0, 0)
+		// // 	.withSize(6, 4);
+		// elasticTab.add("Auto Mode", chooser)
+		// 	.withWidget(BuiltInWidgets.kComboBoxChooser)
+		// 	.withPosition(6, 0)
+		// 	.withSize(3, 1);
+		// elasticTab.addDouble("Match Timer", gameManager::getMatchTimeSeconds).
+		// 	withWidget(BuiltInWidgets.kDial);
+		// elasticTab.addString("Match Phase", () -> gameManager.getCurrentPhase().name())
+		// 	.withWidget(BuiltInWidgets.kTextView)
+		// 	.withPosition(8, 1)
+		// 	.withSize(2, 1);
+		// elasticTab.addBoolean("Hub is Active", gameManager::isHubActive)
+		// 	.withWidget(BuiltInWidgets.kBooleanBox)
+		// 	.withPosition(8, 2)
+		// 	.withSize(1, 1);
+		// elasticTab.addDouble("Time Until Shift", gameManager::getTimeToNextShift)
+		// 	.withWidget(BuiltInWidgets.kNumberBar)
+		// 	.withProperties(Map.of("Min", -1, "Max", 30))
+		// 	.withPosition(9, 2)
+		// 	.withSize(1, 1);
+		// elasticTab.addDouble("Swerve Yaw", () -> swerve.getYaw().getDegrees())
+		// 	.withWidget(BuiltInWidgets.kDial)
+		// 	.withPosition(6, 2)
+		// 	.withSize(2, 2);
+		// elasticTab.addBoolean("Left Can Shoot", leftTurret::isAbleToShoot)
+		// 	.withWidget(BuiltInWidgets.kBooleanBox)
+		// 	.withPosition(8, 3)
+		// 	.withSize(1, 1);
+		// elasticTab.addBoolean("Right Can Shoot", rightTurret::isAbleToShoot)
+		// 	.withWidget(BuiltInWidgets.kBooleanBox)
+		// 	.withPosition(9, 3)
+		// 	.withSize(1, 1);
 
 		if (RobotBase.isSimulation()) {
 			elasticTab.add("Reset Swerve", Commands.runOnce(swerve::resetSimState, swerve))
@@ -304,22 +305,22 @@ public class RobotContainer {
 	}
 
 	public void robotPeriodic() {
-		vortex.pollJetsons();
-		vortex.getField().getObject("left_turret").setPose(leftTurret.getTurretFieldPose());
-		vortex.getField().getObject("right_turret").setPose(rightTurret.getTurretFieldPose());
+		// vortex.pollJetsons();
+		// vortex.getField().getObject("left_turret").setPose(leftTurret.getTurretFieldPose());
+		// vortex.getField().getObject("right_turret").setPose(rightTurret.getTurretFieldPose());
 
-		elasticTable.getEntry("MatchTimer").setString(gameManager.getFormattedMatchTime());
-		elasticTable.getEntry("MatchTimeSeconds").setDouble(gameManager.getMatchTimeSeconds());
-		elasticTable.getEntry("MatchPhase").setString(gameManager.getCurrentPhase().name());
-		elasticTable.getEntry("HubActive").setBoolean(gameManager.isHubActive());
-		elasticTable.getEntry("TimeToNextShiftSeconds").setDouble(gameManager.getTimeToNextShift());
-		elasticTable.getEntry("SwerveYawDegrees").setDouble(swerve.getYaw().getDegrees());
-		elasticTable.getEntry("LeftCanAim").setBoolean(leftTurret.canAim());
-		elasticTable.getEntry("RightCanAim").setBoolean(rightTurret.canAim());
+		// elasticTable.getEntry("MatchTimer").setString(gameManager.getFormattedMatchTime());
+		// elasticTable.getEntry("MatchTimeSeconds").setDouble(gameManager.getMatchTimeSeconds());
+		// elasticTable.getEntry("MatchPhase").setString(gameManager.getCurrentPhase().name());
+		// elasticTable.getEntry("HubActive").setBoolean(gameManager.isHubActive());
+		// elasticTable.getEntry("TimeToNextShiftSeconds").setDouble(gameManager.getTimeToNextShift());
+		// elasticTable.getEntry("SwerveYawDegrees").setDouble(swerve.getYaw().getDegrees());
+		// elasticTable.getEntry("LeftCanAim").setBoolean(leftTurret.canAim());
+		// elasticTable.getEntry("RightCanAim").setBoolean(rightTurret.canAim());
 	}
 
 	public void close() {
-		vortex.closeJetsons();
+		// vortex.closeJetsons();
 	}
 
 	public void zeroMechanisms() {
@@ -335,33 +336,35 @@ public class RobotContainer {
 	}
 
 	private double getAirtimeEstimate() {
-		double estimate = leftTurret.getAirtimeSeconds();
-		if (estimate != 0) return estimate;
-		estimate = rightTurret.getAirtimeSeconds();
-		if (estimate != 0) return estimate;
-		return Constants.Turret.kPrefireLeadTimeSeconds;
+		// double estimate = leftTurret.getAirtimeSeconds();
+		// if (estimate != 0) return estimate;
+		// estimate = rightTurret.getAirtimeSeconds();
+		// if (estimate != 0) return estimate;
+		// return Constants.Turret.kPrefireLeadTimeSeconds;
+		return 0.0;
 	}
 
 	private boolean shouldSpinUpFeedFlywheels() {
-		boolean manualIndexRequest = operatorController.getRightTriggerAxis() > 0.7;
-		boolean prefireRequest = operatorController.leftBumper().getAsBoolean()
-			&& gameManager.shouldPrefire(getAirtimeEstimate())
-			&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName);
-		return hopper.shouldSpinUpFeedFlywheels() || manualIndexRequest || prefireRequest;
+		// boolean manualIndexRequest = operatorController.getRightTriggerAxis() > 0.7;
+		// boolean prefireRequest = operatorController.leftBumper().getAsBoolean()
+		// 	&& gameManager.shouldPrefire(getAirtimeEstimate())
+		// 	&& LimelightHelpers.getTV(Constants.Vortex.kFrontLimelightName);
+		// return hopper.shouldSpinUpFeedFlywheels() || manualIndexRequest || prefireRequest;
+		return false;
 	}
 
 	private void enableFixedPoseShotMode() {
-		leftTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
-		rightTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
-		leftTurret.setOverridePositionEstimate(kFixedShotPosition);
-		rightTurret.setOverridePositionEstimate(kFixedShotPosition);
+		// leftTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
+		// rightTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
+		// leftTurret.setOverridePositionEstimate(kFixedShotPosition);
+		// rightTurret.setOverridePositionEstimate(kFixedShotPosition);
 	}
 
 	private void disableFixedPoseShotMode() {
-		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		leftTurret.clearOverridePositionEstimate();
-		rightTurret.clearOverridePositionEstimate();
+		// leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		// leftTurret.clearOverridePositionEstimate();
+		// rightTurret.clearOverridePositionEstimate();
 	}
   
 }
