@@ -54,9 +54,10 @@ public class RobotContainer {
 	
 	private final PigeonWrapper pigeon = new PigeonWrapper(0);
 
-	private final ThrustmasterJoystick driverLeft = new ThrustmasterJoystick(0);
-	private final ThrustmasterJoystick driverRight = new ThrustmasterJoystick(1);
-	 private final CommandXboxController operatorController = new CommandXboxController(2);
+	//private final ThrustmasterJoystick driverLeft = new ThrustmasterJoystick(0);
+	//private final ThrustmasterJoystick driverRight = new ThrustmasterJoystick(1);
+	private final CommandXboxController operatorController = new CommandXboxController(2);
+	private final CommandXboxController driverController = new CommandXboxControlle(0); //TODO: ID the second controller
 	
 	private final SwerveDrive swerve;
 	private final Turret leftTurret;
@@ -117,20 +118,19 @@ public class RobotContainer {
     private void configureBindings() {
 		
 		swerve.setDefaultCommand(new DefaultDriveCommand(swerve,
-				() -> nonInvSquare(-driverLeft.getY()),
-				() -> nonInvSquare(-driverLeft.getX()),
-				() -> nonInvSquare(-driverRight.getX()),
-				() -> driverLeft.getTrigger(),
-				() -> driverRight.getTrigger(),
+				() -> nonInvSquare(-driverController.getLeftY()), //Y values on left joystick set to left joystick of this XBox controller
+				() -> nonInvSquare(-driverController.getLeftX()), //X values on left joystick set to left joystick of this XBox controller
+				() -> nonInvSquare(-driverController.getRightX()), //X values on right joystick set to right joystick of this XBox controller
+				() -> driverController.leftTrigger().getAsBoolean(), //trigger on left is now left trigger on XBox
+				() -> driverController.RightTrigger().getAsBoolean(), //trigger no right is now right trigger on XBox
 				() -> true)); 
 				
-				
-		driverLeft.isPressedBind(StickButton.Left, Commands.runOnce(() -> {
+		driverController.leftBumber()onTrue(Commands.runOnce(() -> { //
 			pigeon.setYaw(0);
 			swerve.setTargetHeading(0);
 		}, swerve));
 
-		driverRight.isDownBind(StickButton.Right, Commands.runEnd(
+		driverController.rightBumper().whileTrue(Commands.runEnd( //
 			() -> swerve.drive(new Translation2d(0.6,0), 0d, true, false), 
 			() -> swerve.stopModules(), 
 			swerve));
@@ -169,10 +169,10 @@ public class RobotContainer {
 
 
 		hopper.setDefaultCommand(new HopperDefaultCommand(hopper,
-			() -> driverRight.getTrigger(),
-			() -> driverLeft.getTrigger(),
-			() -> driverRight.isDown(StickButton.Bottom),
-			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.leftBumper().getAsBoolean() || driverLeft.isDown(StickButton.Bottom),
+			() -> driverController.rightTrigger().getAsBoolean(), //set trigger on right to right trigger
+			() -> driverController.leftTrigger().getAsBoolean(), //set trigger on left to left trigger
+			() -> driverController.rightBumper().getAsBoolean(), //made the bottom button on right the right bumper
+			() -> operatorController.getRightTriggerAxis() > 0.7 || operatorController.leftBumper().getAsBoolean() || driverController.leftBumper().getAsBoolean(), //made the bottom button on left the left bumper
 			() -> operatorController.b().getAsBoolean(),
 			() -> operatorController.leftBumper().getAsBoolean()
 					&& gameManager.shouldPrefire(getAirtimeEstimate()) 
