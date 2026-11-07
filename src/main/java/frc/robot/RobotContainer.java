@@ -57,7 +57,7 @@ public class RobotContainer {
 	//private final ThrustmasterJoystick driverLeft = new ThrustmasterJoystick(0);
 	//private final ThrustmasterJoystick driverRight = new ThrustmasterJoystick(1);
 	private final CommandXboxController operatorController = new CommandXboxController(2);
-	private final CommandXboxController driverController = new CommandXboxControlle(0); //TODO: ID the second controller
+	private final CommandXboxController driverController = new CommandXboxController(0); //TODO: set "port" for the second controller
 	
 	private final SwerveDrive swerve;
 	private final Turret leftTurret;
@@ -122,10 +122,10 @@ public class RobotContainer {
 				() -> nonInvSquare(-driverController.getLeftX()), //X values on left joystick set to left joystick of this XBox controller
 				() -> nonInvSquare(-driverController.getRightX()), //X values on right joystick set to right joystick of this XBox controller
 				() -> driverController.leftTrigger().getAsBoolean(), //trigger on left is now left trigger on XBox
-				() -> driverController.RightTrigger().getAsBoolean(), //trigger no right is now right trigger on XBox
+				() -> driverController.rightTrigger().getAsBoolean(), //trigger no right is now right trigger on XBox
 				() -> true)); 
 				
-		driverController.leftBumber()onTrue(Commands.runOnce(() -> { //
+		driverController.leftBumper().onTrue(Commands.runOnce(() -> { //.bottom button changed to left bumper here
 			pigeon.setYaw(0);
 			swerve.setTargetHeading(0);
 		}, swerve));
