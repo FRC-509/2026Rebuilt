@@ -56,8 +56,8 @@ public class RobotContainer {
 
 	//private final ThrustmasterJoystick driverLeft = new ThrustmasterJoystick(0);
 	//private final ThrustmasterJoystick driverRight = new ThrustmasterJoystick(1);
-	private final CommandXboxController operatorController = new CommandXboxController(2);
-	private final CommandXboxController driverController = new CommandXboxController(0); //TODO: set "port" for the second controller
+	private final CommandXboxController operatorController = new CommandXboxController(3);
+	private final CommandXboxController driverController = new CommandXboxController(2); //TODO: set "port" for the second controller
 	
 	private final SwerveDrive swerve;
 	private final Turret leftTurret;
@@ -72,6 +72,13 @@ public class RobotContainer {
 	private SendableChooser<Command> chooser = new SendableChooser<Command>();
 
     public RobotContainer() {
+
+		SmartDashboard.putNumber("Driver Left Stick", driverController.getLeftY());
+		SmartDashboard.putNumber("Driver Right Stick", driverController.getRightY());
+
+		SmartDashboard.putNumber("Operator Left Stick", operatorController.getLeftY());
+		SmartDashboard.putNumber("Operator Right Stick", operatorController.getRightY());
+		
 		this.swerve = new SwerveDrive(pigeon);
 		this.gameManager = new GameManager();
 		 this.hopper = new Hopper();
@@ -228,10 +235,12 @@ public class RobotContainer {
 
 		// operatorController.y().onTrue(Commands.runOnce(gameManager::confirmAutoWin, gameManager));
 		// operatorController.x().onTrue(Commands.runOnce(gameManager::clearAutoWin, gameManager));
-		// operatorController.a().onTrue(Commands.runOnce(() -> {
-		// 	leftTurret.zeroPosition();
-		// 	rightTurret.zeroPosition();
-		// }));
+		operatorController.a().onTrue(Commands.runOnce(() -> {
+			leftTurret.zeroPosition();
+			rightTurret.zeroPosition();
+		}));
+
+		
 
 		// fixed position bind
 		operatorController.rightBumper()
@@ -324,9 +333,9 @@ public class RobotContainer {
 	}
 
 	public void zeroMechanisms() {
-		// leftTurret.zeroPosition();
-		// rightTurret.zeroPosition();
-		// hopper.zeroPosition();
+		leftTurret.zeroPosition();
+		rightTurret.zeroPosition();
+		hopper.zeroPosition();
 	}
 
 	private static double nonInvSquare(double axis) {
@@ -354,17 +363,17 @@ public class RobotContainer {
 	}
 
 	private void enableFixedPoseShotMode() {
-		// leftTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
-		// rightTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
-		// leftTurret.setOverridePositionEstimate(kFixedShotPosition);
-		// rightTurret.setOverridePositionEstimate(kFixedShotPosition);
+		leftTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
+		rightTurret.setOverrideAimTarget(true, AimTarget.OVERRIDE_BEHIND_HUB);
+		leftTurret.setOverridePositionEstimate(kFixedShotPosition);
+		rightTurret.setOverridePositionEstimate(kFixedShotPosition);
 	}
 
 	private void disableFixedPoseShotMode() {
-		// leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
-		// leftTurret.clearOverridePositionEstimate();
-		// rightTurret.clearOverridePositionEstimate();
+		leftTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		rightTurret.setOverrideAimTarget(false, AimTarget.NONE);
+		leftTurret.clearOverridePositionEstimate();
+		rightTurret.clearOverridePositionEstimate();
 	}
   
 }
